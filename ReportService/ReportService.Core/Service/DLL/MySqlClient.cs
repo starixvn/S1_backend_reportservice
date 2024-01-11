@@ -1,13 +1,13 @@
 ﻿using System.Data;
 using System.Diagnostics;
 using Dapper;
-using ReportService.Core.DataLayers.Interfaces;
 using ReportService.Core.Models.Enums;
 using Microsoft.Extensions.Logging;
 using MySql.Data.MySqlClient;
+using ReportService.Core.Service.DLL.Interfaces;
 using Serilog.Context;
 
-namespace ReportService.Core.DataLayers
+namespace ReportService.Core.Service.DLL
 {
     public sealed class MySqlClient: IDataBaseInterface
     {

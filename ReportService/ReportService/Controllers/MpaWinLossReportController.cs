@@ -8,4 +8,6 @@ public class MpaWinLossReportController : ControllerBase
     public MpaWinLossReportController(IServiceProvider provider)
     {
     }
+    
+    
 }

@@ -1,7 +1,6 @@
-using ReportService.Core.DataLayers;
 using ReportService.Core.Library;
 using ReportService.Core.Models.Enums;
-using ReportService.Core.Service;
+using ReportService.Core.Service.DLL;
 
 namespace ReportService.Extensions;
 
