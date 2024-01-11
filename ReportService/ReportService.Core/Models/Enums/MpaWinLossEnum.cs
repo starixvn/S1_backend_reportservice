@@ -12,6 +12,13 @@ public enum MpaWinLossGroupByTypeEnum
     Affiliate = 8
 }
 
+public enum MpaGgrCustomizeGameTypeEnum
+{
+    OneGamingPoker = 41,
+    V8Poker = 42,
+    NineW = 51
+}
+
 public enum MpaCommissionCustomizeTpIdEnum
 {
     NineW = 31,

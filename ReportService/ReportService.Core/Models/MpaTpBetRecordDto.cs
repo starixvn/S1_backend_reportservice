@@ -1,3 +1,5 @@
+using ReportService.Core.Models.Enums;
+
 namespace ReportService.Core.Models;
 
 public class MpaTpBetRecordDto
@@ -7,7 +9,7 @@ public class MpaTpBetRecordDto
     public int CategoryId { get; set; }
     public int GameType { get; set; }
     public int SiteId { get; set; }
-    public int CurrencyId { get; set; }
+    public CurrencyEnum CurrencyId { get; set; }
     public int CustId { get; set; }
     public string UserName { get; set; }
     public string TpUserName { get; set; }
