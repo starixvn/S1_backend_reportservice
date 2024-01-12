@@ -1,4 +1,3 @@
-using Newtonsoft.Json;
 using ReportService.Core.Models.Enums;
 using ReportService.Core.Models.Interface;
 
@@ -20,18 +19,18 @@ public class MpaWinLossRequest : IOrderBy, IMultiSiteApiRequest
     /// <summary>
     /// 所有供應商的所有類型遊戲
     /// </summary>
-    public IEnumerable<int> TpGameTypes { get; set; }
+    public IEnumerable<int>? TpGameTypes { get; set; }
 
     /// <summary>
     /// 玩家名稱
     /// </summary>
-    public IEnumerable<string> UserNames { get; set; }
+    public IEnumerable<string>? UserNames { get; set; }
 
 
     /// <summary>
     /// 所有幣別
     /// </summary>
-    public IEnumerable<int> CurrencyIds { get; set; }
+    public IEnumerable<CurrencyEnum>? CurrencyIds { get; set; }
 
     /// <summary>
     /// 包含免費旋轉 => TicketStatus = FreeBetWin(6)
@@ -81,7 +80,7 @@ public class MpaWinLossRequest : IOrderBy, IMultiSiteApiRequest
     /// <summary>
     /// 玩家類型，一般、代理、值播主
     /// </summary>
-    public IEnumerable<MemberTypeEnum> MemberTypes { get; set; }
+    public IEnumerable<MemberTypeEnum>? MemberTypes { get; set; }
 
     /// <summary>
     /// 是否包含測試資料
@@ -91,6 +90,11 @@ public class MpaWinLossRequest : IOrderBy, IMultiSiteApiRequest
     /// <summary>
     /// 各個TpCategory
     /// </summary>
-    public IEnumerable<int> TpCategorys { get; set; }
+    public IEnumerable<int>? TpCategorys { get; set; }
     public IEnumerable<int> SiteIds { get; set; }
+    
+    /// <summary>
+    /// 代理帳號
+    /// </summary>
+    public IEnumerable<string>? AffiliateNames { get; set; }
 }

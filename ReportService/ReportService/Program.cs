@@ -1,4 +1,5 @@
 using Elastic.Apm.SerilogEnricher;
+using Newtonsoft.Json;
 using ReportService.Extensions;
 using Serilog;
 using Serilog.Exceptions;
@@ -27,6 +28,11 @@ builder.Host.UseSerilog((context, Configuration) =>
 builder.Services
     .AddDatabaseConnection(builder.Configuration)
     .RegisterServices(builder.Configuration);
+
+JsonConvert.DefaultSettings = () => new JsonSerializerSettings
+{
+    NullValueHandling = NullValueHandling.Ignore
+};
 
 var app = builder.Build();
 app.MapControllers();

@@ -37,3 +37,4 @@ public class MpaTpBetRecordDto
     public decimal BaProgressiveWinSummary { get; set; }
     public decimal BaProgressiveBetSummary { get; set; }
 }
+

@@ -1,7 +1,6 @@
 using System.Data;
 using Dapper;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 using ReportService.Core.Models;
 using ReportService.Core.Models.Enums;
 
@@ -18,25 +17,22 @@ public class MpaWinLossService
         _logger = logger;
     }
     
-    public Task<IEnumerable<TResult>> GetTpBetRecord<TResult>(IEnumerable<int> siteIds,
-        DateTimeOffset starTime,
-        DateTimeOffset endTime,
-        string format,
-        IEnumerable<MemberTypeEnum> memberTypes,
-        IEnumerable<string> userNames,
-        MpaDateType mpaDateType)
+    public Task<IEnumerable<TResult>> GetTpBetRecord<TResult>(GetTpBetRecordParam input)
     {
         var p = new DynamicParameters();
-        p.Add("_SiteIds", JsonConvert.SerializeObject(siteIds), dbType: DbType.String);
-        p.Add("_StartTime", starTime.ToUniversalTime().DateTime, dbType: DbType.DateTime);
-        p.Add("_EndTime", endTime.ToUniversalTime().DateTime, dbType: DbType.DateTime);
-        p.Add("_Format", format, dbType: DbType.String);
-        p.Add("_MemberTypeJson", JsonConvert.SerializeObject(memberTypes), dbType: DbType.String);
-        p.Add("_UserNames", JsonConvert.SerializeObject(userNames), dbType: DbType.String);
-
+        p.Add("_SiteIds", input.SiteIdsJson, dbType: DbType.String);
+        p.Add("_StartTime", input.StartTime, dbType: DbType.DateTime);
+        p.Add("_EndTime", input.EndTime, dbType: DbType.DateTime);
+        p.Add("_Format", input.DateTimeFormat, dbType: DbType.String);
+        p.Add("_MemberTypes", input.MemberTypesJson, dbType: DbType.String);
+        p.Add("_UserNames", input.UserNamesJson, dbType: DbType.String);
+        p.Add("_SummaryTypes", input.SummaryTypesJson, dbType: DbType.String);
+        p.Add("_GameTypes", input.GameTypesJson, dbType: DbType.String);
+        p.Add("_CurrencyIds", input.CurrencyIdsJson, dbType: DbType.String);
+        p.Add("_CategoryIds", input.CategoryIdsJson, dbType: DbType.String);
+        p.Add("_AffiliateNames", input.AffiliateNamesJson, dbType: DbType.String);
         
-        //todo: 調整新的 SP for service，要整理他們需要的filter
-        var data = _reportDbClient.QueryAsync<TResult>("Admin_TpBetRecordRelayGroupByDate_Get_V6", p);
+        var data = _reportDbClient.QueryAsync<TResult>("Service_TpBetRecordRelayGroupByDate_Get", p);
 
         return data;
     }

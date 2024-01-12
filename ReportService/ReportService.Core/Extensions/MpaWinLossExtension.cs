@@ -7,48 +7,30 @@ public static class MpaWinLossExtension
 {
     public static IEnumerable<MpaTpBetRecordDto> Filter(this IEnumerable<MpaTpBetRecordDto> data, MpaWinLossRequest request)
     {
-        //todo: 在sp做
-        // 過濾 GameType、CurrencyId、CategoryId
-        data = data.Where(r => request.TpGameTypes.Contains(r.GameType) &&
-                               request.CurrencyIds.Contains(r.CurrencyId) && request.TpCategorys.Contains(r.CategoryId));
+        
 
-        //todo: 在sp做
-        //過濾SummaryType
-        if (request.DateType == MpaDateType.SettledDate)
-        {
-            //DateType == SettledDate時，篩選1跟3，3為BA資料
-            data = data.Where(r => r.SummaryType == 1 || r.SummaryType == 3);
-        }
-        else if(request.DateType == MpaDateType.CreatedDate)
-        {
-            //DateType == CreatedDate，篩選2跟4，4為BA資料
-            data = data.Where(r => r.SummaryType == 2 || r.SummaryType == 4);
-        }
+        var exceptTicketStatus = new List<int>();
 
         if (!request.NoDraw)
         {
-            //Win = 1,Lost = 2,Refund = 3,/*Reject, Refund, Void*/,Draw = 4,Related = 5,FreeBetWin = 6
-            data = data.Where(x => x.TicketStatus != 4);
+            exceptTicketStatus.Add((int)TicketStatusEnum.Draw);
         }
 
         if (!request.IncludeFreeSpins)
         {
-            //Win = 1,Lost = 2,Refund = 3,/*Reject, Refund, Void*/,Draw = 4,Related = 5,FreeBetWin = 6
-            data = data.Where(x => x.TicketStatus != 6);
+            exceptTicketStatus.Add((int)TicketStatusEnum.FreeBetWin);
         }
 
-
+        if (exceptTicketStatus.Any())
+        {
+            data = data.Where(x => !exceptTicketStatus.Contains(x.TicketStatus));
+        }
+        
+        // test member
         if (!request.IncludeTest)
         {
-            //istest = 0, test member
             data = data.Where(x => x.IsTest == 0);
         }
-
-        //todo: 在sp做
-        // if (!string.IsNullOrEmpty(request.AffiliateAccounts))
-        // {
-        //     data = data.Where(x => x.AffiliateName == request.AffiliateAccount);
-        // }
 
         return data;
     }
