@@ -1,8 +1,9 @@
 using ReportService.Core.Models.Enums;
+using ReportService.Core.Models.Interface;
 
 namespace ReportService.Core.Models;
 
-public class TpBetRecordByTpGameType
+public class TpBetRecordByTpGameType : ITpBetRecordGroupBy
 {
     public string TpGameTypeName { get; set; }
 

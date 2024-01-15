@@ -1,4 +1,5 @@
 using ReportService.Core.Models.Enums;
+using ReportService.Core.Models.Interface;
 
 namespace ReportService.Core.Models;
 
@@ -9,7 +10,7 @@ public class TpBetRecordByDateWrapper
     public int UniquePlayers { get; set; }
 }
 
-public class MpaWinLossByDateDto
+public class MpaWinLossByDateDto : ITpBetRecordGroupBy
 {
     public DateTime Date { get; set; }
 
@@ -19,7 +20,7 @@ public class MpaWinLossByDateDto
 
     public decimal ValidTurnOver { get; set; }
 
-    public decimal GGR { get; set; }
+    public decimal Ggr { get; set; }
 
     public decimal PlayerWinLoss { get; set; }
     public decimal BaPlayerWinLoss { get; set; }
@@ -29,7 +30,7 @@ public class MpaWinLossByDateDto
     public decimal ProgressiveBet { get; set; }
 
     public decimal Commission { get; set; }
-    public decimal BACommission { get; set; }
+    public decimal BaCommission { get; set; }
 
     public int BetCount { get; set; }
 
