@@ -11,12 +11,14 @@ namespace ReportService.Core.Service.BLL;
 public class MpaWinLossBLL
 {
     private readonly MpaWinLossService _mpaWinLossService;
+    private readonly MpaCommonBLL _mpaCommonBll;
     private readonly ICacheHelper _redisHelper;
     private readonly ILogger<MpaWinLossBLL> _logger;
    
     public MpaWinLossBLL(IServiceProvider provider)
     {
         _mpaWinLossService = provider.GetRequiredService<MpaWinLossService>();
+        _mpaCommonBll = provider.GetRequiredService<MpaCommonBLL>();
         _redisHelper = provider.GetRequiredService<ICacheHelper>();
         _logger = provider.GetRequiredService<ILogger<MpaWinLossBLL>>();
     
@@ -134,6 +136,66 @@ public class MpaWinLossBLL
         return wrapperResult;
     }
     
+    private async Task<TpBetRecordByTpGameTypeWrapper> GetTpBetRecordGroupByTpGameTypeResult(MpaWinLossRequest request, MpaWinLossGroupByTypeEnum groupByType)
+    {
+        var tpGameTypeMap = await _mpaCommonBll.GetTpGameTypeMapper();
+        var betRecordResult = await GetTpBetRecord(request, groupByType);
+        var result = GetGroupResult(betRecordResult);
+
+        IEnumerable<TpBetRecordByTpGameType> GetGroupResult(IEnumerable<MpaTpBetRecordDto> source)
+        {
+            return source
+                .GroupBy(x => new
+                {
+                    x.CurrencyId,
+                    x.GameType,
+                }).Select(r =>
+                {
+                    // 預先計算常用的總和，以避免多次重複計算
+                    var totalStakeSummary = r.Sum(x => x.StakeSummary);
+                    var totalValidBetSummary = r.Sum(x => x.ValidBetSummary);
+                    var totalWinLossSummary = r.Sum(x => x.WinLossSummary);
+                    var totalProgressiveWinSummary = r.Sum(x => x.ProgressiveWinSummary);
+                    var totalProgressiveBetSummary = r.Sum(x => x.ProgressiveBetSummary);
+                    var totalRowCount = r.Sum(x => x.RowCount);
+                    var gameType = r.Key.GameType;
+                    var totalBaCommission = r.Sum(x => x.BaValidBetSummary) * 0.0025m; // BACommission = ValidTurnOver * 0.25%
+                    var totalBaWinLossSummary = r.Sum(x => x.BaWinLossSummary);
+                    var totalWinLossSummaryWithoutBa = totalWinLossSummary - totalBaWinLossSummary;
+                    var ggr = CalculateGgr(gameType, totalWinLossSummaryWithoutBa, totalProgressiveWinSummary,
+                        totalProgressiveBetSummary, r) + totalBaCommission;
+
+                    // 建立新的MpaWinLossByTpGameTypeDto物件並返回
+                    return new TpBetRecordByTpGameType
+                    {
+                        TpGameTypeName = tpGameTypeMap[r.Key.GameType],
+                        CurrencyId = r.Key.CurrencyId,
+                        TurnOver = totalStakeSummary,
+                        ValidTurnOver = totalValidBetSummary,
+                        Ggr = ggr,
+                        PlayerWinLoss = totalWinLossSummaryWithoutBa,
+                        BaPlayerWinLoss = totalBaWinLossSummary,
+                        ProgressiveWin = totalProgressiveWinSummary,
+                        ProgressiveBet = totalProgressiveBetSummary,
+                        Commission = r.Sum(CalculateCommission),
+                        BaCommission = totalBaCommission,
+                        BetCount = totalRowCount,
+                        AvgBetAmount = totalRowCount != 0 ? totalStakeSummary / totalRowCount : 0.00m,
+                        Margin = totalValidBetSummary != 0 ? ggr / totalValidBetSummary : 0.00m,
+                        UniquePlayers = r.DistinctBy(x => x.CustId).Count(),
+                    };
+                });
+        }
+        
+        var wrapperResult = new TpBetRecordByTpGameTypeWrapper()
+        {
+            TpBetRecordResult = result,
+            UniquePlayers = betRecordResult.DistinctBy(x => x.CustId).Count()
+        };
+
+        return wrapperResult;
+    }
+    
     private async Task<List<MpaTpBetRecordDto>> GetTpBetRecord(MpaWinLossRequest request, MpaWinLossGroupByTypeEnum groupByType)
     {
         // 注單過濾
@@ -227,8 +289,6 @@ public class MpaWinLossBLL
             default:
                 return GetGgr(winLossSummary, progressiveWin, progressiveBet);
         }
-        
-        
     }
     
     private static decimal CalculateCommission(MpaTpBetRecordDto x)
