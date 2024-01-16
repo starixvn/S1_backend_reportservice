@@ -4,6 +4,7 @@ using ReportService.Core.Extensions;
 using ReportService.Core.Library;
 using ReportService.Core.Models;
 using ReportService.Core.Models.Enums;
+using ReportService.Core.Models.Interface;
 using ReportService.Core.Service.DLL;
 
 namespace ReportService.Core.Service.BLL;
@@ -29,10 +30,8 @@ public class MpaWinLossBLL
         var betRecordResult = await GetTpBetRecord(request, groupByType);
         //因GGR計算需用gameType分組，計算完再處理回來
         var groupResultByCurrency = GetGroupResultByCurrency(GetGroupResult(betRecordResult));
-
-        #region GetGroupResult
-
-        IEnumerable<MpaWinLossByDateDto> GetGroupResult(IEnumerable<MpaTpBetRecordDto> source)
+        
+        IEnumerable<TpBetRecordGroupByDate> GetGroupResult(IEnumerable<MpaTpBetRecordDto> source)
         {
             return source
                 .GroupBy(x => new
@@ -45,48 +44,19 @@ public class MpaWinLossBLL
                 })
                 .Select(r =>
                 {
-                    var totalStakeSummary = r.Sum(x => x.StakeSummary);
-                    var totalValidBetSummary = r.Sum(x => x.ValidBetSummary);
-                    var totalWinLossSummary = r.Sum(x => x.WinLossSummary);
-                    var totalProgressiveWinSummary = r.Sum(x => x.ProgressiveWinSummary);
-                    var totalProgressiveBetSummary = r.Sum(x => x.ProgressiveBetSummary);
-                    var totalRowCount = r.Sum(x => x.RowCount);
-                    var gameType = r.Key.GameType;
-                    var totalBaCommission = r.Sum(x => x.BaValidBetSummary) * 0.0025m; // BACommission = ValidTurnOver * 0.25%
-                    var totalBaWinLossSummary = r.Sum(x => x.BaWinLossSummary);
-                    var totalWinLossSummaryWithoutBa = totalWinLossSummary - totalBaWinLossSummary;
-                    var ggr = CalculateGgr(gameType, totalWinLossSummaryWithoutBa, totalProgressiveWinSummary,
-                            totalProgressiveBetSummary, r) + totalBaCommission;
+                    var groupBySummary = GetSummary(r, r.Key.GameType, r.Key.CurrencyId);
 
                     // 建立新的MpaWinLossByDateDto物件並返回
-                    return new MpaWinLossByDateDto
+                    return new TpBetRecordGroupByDate(groupBySummary)
                     {
                         SiteId = r.Key.SiteId,
                         CustId = r.Key.CustId,
-                        Date = r.Key.Date,
-                        CurrencyId = r.Key.CurrencyId,
-                        TurnOver = totalStakeSummary,
-                        ValidTurnOver = totalValidBetSummary,
-                        Ggr = ggr,
-                        PlayerWinLoss = totalWinLossSummaryWithoutBa,
-                		BaPlayerWinLoss = totalBaWinLossSummary,
-                        ProgressiveWin = totalProgressiveWinSummary,
-                        ProgressiveBet = totalProgressiveBetSummary,
-                        Commission = r.Sum(CalculateCommission),
-                		BaCommission = totalBaCommission,
-                        BetCount = totalRowCount,
-                        AvgBetAmount = totalRowCount != 0 ? totalStakeSummary / totalRowCount : 0.00m,
-                        Margin = totalValidBetSummary != 0 ? ggr / totalValidBetSummary : 0.00m,
-                        UniquePlayers = r.DistinctBy(x => x.CustId).Count(),
+                        Date = r.Key.Date
                     };
                 });
         }
 
-        #endregion
-
-        #region GetGroupResultByCurrency
-
-        IEnumerable<MpaWinLossByDateDto> GetGroupResultByCurrency(IEnumerable<MpaWinLossByDateDto> source)
+        IEnumerable<TpBetRecordGroupByDate> GetGroupResultByCurrency(IEnumerable<TpBetRecordGroupByDate> source)
         {
             return source
                 .GroupBy(x => new
@@ -98,35 +68,17 @@ public class MpaWinLossBLL
                 })
                 .Select(r =>
                 {
-                    return new MpaWinLossByDateDto
+                    var groupBySummary = GetGroupSummary(r, r.Key.CurrencyId);
+                    
+                    return new TpBetRecordGroupByDate(groupBySummary)
                     {
                         SiteId = r.Key.SiteId,
                         CustId = r.Key.CustId,
-                        Date = r.Key.Date,
-                        CurrencyId = r.Key.CurrencyId,
-                        TurnOver = r.Sum(x => x.TurnOver),
-                        ValidTurnOver = r.Sum(x => x.ValidTurnOver),
-                        Ggr = r.Sum(x => x.Ggr),
-                        PlayerWinLoss = r.Sum(x => x.PlayerWinLoss),
-                        BaPlayerWinLoss = r.Sum(x => x.BaPlayerWinLoss),
-                        ProgressiveWin = r.Sum(x => x.ProgressiveWin),
-                        ProgressiveBet = r.Sum(x => x.ProgressiveBet),
-                        Commission = r.Sum(x => x.Commission),
-                        BaCommission = r.Sum(x => x.BaCommission),
-                        BetCount = r.Sum(x => x.BetCount),
-                        AvgBetAmount = r.Sum(x => x.BetCount) != 0
-                            ? r.Sum(x => x.TurnOver) / r.Sum(x => x.BetCount)
-                            : 0.00m,
-                        Margin = r.Sum(x => x.ValidTurnOver) != 0
-                            ? r.Sum(x => x.Ggr) / r.Sum(x => x.ValidTurnOver)
-                            : 0.00m,
-                        UniquePlayers = r.DistinctBy(x => x.CustId).Count(),
+                        Date = r.Key.Date
                     };
                 });
         }
 
-        #endregion
-        
         var wrapperResult = new TpBetRecordByDateWrapper
         {
             TpBetRecordResult = groupResultByCurrency,
@@ -142,7 +94,7 @@ public class MpaWinLossBLL
         var betRecordResult = await GetTpBetRecord(request, groupByType);
         var result = GetGroupResult(betRecordResult);
 
-        IEnumerable<TpBetRecordByTpGameType> GetGroupResult(IEnumerable<MpaTpBetRecordDto> source)
+        IEnumerable<TpBetRecordGroupByTpGameType> GetGroupResult(IEnumerable<MpaTpBetRecordDto> source)
         {
             return source
                 .GroupBy(x => new
@@ -151,39 +103,10 @@ public class MpaWinLossBLL
                     x.GameType,
                 }).Select(r =>
                 {
-                    // 預先計算常用的總和，以避免多次重複計算
-                    var totalStakeSummary = r.Sum(x => x.StakeSummary);
-                    var totalValidBetSummary = r.Sum(x => x.ValidBetSummary);
-                    var totalWinLossSummary = r.Sum(x => x.WinLossSummary);
-                    var totalProgressiveWinSummary = r.Sum(x => x.ProgressiveWinSummary);
-                    var totalProgressiveBetSummary = r.Sum(x => x.ProgressiveBetSummary);
-                    var totalRowCount = r.Sum(x => x.RowCount);
                     var gameType = r.Key.GameType;
-                    var totalBaCommission = r.Sum(x => x.BaValidBetSummary) * 0.0025m; // BACommission = ValidTurnOver * 0.25%
-                    var totalBaWinLossSummary = r.Sum(x => x.BaWinLossSummary);
-                    var totalWinLossSummaryWithoutBa = totalWinLossSummary - totalBaWinLossSummary;
-                    var ggr = CalculateGgr(gameType, totalWinLossSummaryWithoutBa, totalProgressiveWinSummary,
-                        totalProgressiveBetSummary, r) + totalBaCommission;
+                    var groupBySummary = GetSummary(r, gameType, r.Key.CurrencyId);
 
-                    // 建立新的MpaWinLossByTpGameTypeDto物件並返回
-                    return new TpBetRecordByTpGameType
-                    {
-                        TpGameTypeName = tpGameTypeMap[r.Key.GameType],
-                        CurrencyId = r.Key.CurrencyId,
-                        TurnOver = totalStakeSummary,
-                        ValidTurnOver = totalValidBetSummary,
-                        Ggr = ggr,
-                        PlayerWinLoss = totalWinLossSummaryWithoutBa,
-                        BaPlayerWinLoss = totalBaWinLossSummary,
-                        ProgressiveWin = totalProgressiveWinSummary,
-                        ProgressiveBet = totalProgressiveBetSummary,
-                        Commission = r.Sum(CalculateCommission),
-                        BaCommission = totalBaCommission,
-                        BetCount = totalRowCount,
-                        AvgBetAmount = totalRowCount != 0 ? totalStakeSummary / totalRowCount : 0.00m,
-                        Margin = totalValidBetSummary != 0 ? ggr / totalValidBetSummary : 0.00m,
-                        UniquePlayers = r.DistinctBy(x => x.CustId).Count(),
-                    };
+                    return new TpBetRecordGroupByTpGameType(groupBySummary, tpGameTypeMap[r.Key.GameType]);
                 });
         }
         
@@ -200,9 +123,9 @@ public class MpaWinLossBLL
         {
             var tpCategoryMap = await _mpaCommonBll.GetTpCategoryMapper();
             var betRecordResult = await GetTpBetRecord(request, groupByType);
-            var tpBetRecordResult = GetGroupResultbyCurrency(GetGroupResult(betRecordResult));
+            var tpBetRecordResult = GetGroupResultByCurrency(GetGroupResult(betRecordResult));
 
-            IEnumerable<TpBetRecordByTpCategory> GetGroupResult(IEnumerable<MpaTpBetRecordDto> source)
+            IEnumerable<TpBetRecordGroupByTpCategory> GetGroupResult(IEnumerable<MpaTpBetRecordDto> source)
             {
                 return source
                     .GroupBy(x => new
@@ -212,43 +135,14 @@ public class MpaWinLossBLL
                         x.GameType,
                     }).Select(r =>
                     {
-                        // 預先計算常用的總和，以避免多次重複計算
-                        var totalStakeSummary = r.Sum(x => x.StakeSummary);
-                        var totalValidBetSummary = r.Sum(x => x.ValidBetSummary);
-                        var totalWinLossSummary = r.Sum(x => x.WinLossSummary);
-                        var totalRevenueSummary = r.Sum(x => x.RevenueSummary);
-                        var totalProgressiveWinSummary = r.Sum(x => x.ProgressiveWinSummary);
-                        var totalProgressiveBetSummary = r.Sum(x => x.ProgressiveBetSummary);
-                        var totalRowCount = r.Sum(x => x.RowCount);
                         var gameType = r.Key.GameType;
-                        var totalBaCommission = r.Sum(x => x.BaValidBetSummary) * 0.0025m; // BACommission = ValidTurnOver * 0.25%
-                        var totalBaWinLossSummary = r.Sum(x => x.BaWinLossSummary);
-                        var totalWinLossSummaryWithoutBa = totalWinLossSummary - totalBaWinLossSummary;
-                        var ggr = CalculateGgr(gameType, totalWinLossSummaryWithoutBa, totalProgressiveWinSummary,
-                            totalProgressiveBetSummary, r) + totalBaCommission;
+                        var groupBySummary = GetSummary(r, gameType, r.Key.CurrencyId);
 
-                        return new TpBetRecordByTpCategory
-                        {
-                            TpCategoryName = tpCategoryMap[r.Key.CategoryId],
-                            CurrencyId = r.Key.CurrencyId,
-                            TurnOver = totalStakeSummary,
-                            ValidTurnOver = totalValidBetSummary,
-                            Ggr = ggr,
-                            PlayerWinLoss = totalWinLossSummaryWithoutBa,
-                            BaPlayerWinLoss = totalBaWinLossSummary,
-                            ProgressiveWin = totalProgressiveWinSummary,
-                            ProgressiveBet = totalProgressiveBetSummary,
-                            Commission = r.Sum(x => CalculateCommission(x)),
-                            BaCommission = totalBaCommission,
-                            BetCount = totalRowCount,
-                            AvgBetAmount = totalRowCount != 0 ? totalStakeSummary / totalRowCount : 0.00m,
-                            Margin = totalValidBetSummary != 0 ? ggr / totalValidBetSummary : 0.00m,
-                            UniquePlayers = r.DistinctBy(x => x.CustId).Count(),
-                        };
+                        return new TpBetRecordGroupByTpCategory(groupBySummary, tpCategoryMap[r.Key.CategoryId]);
                     });
             }
             
-            IEnumerable<TpBetRecordByTpCategory> GetGroupResultbyCurrency(IEnumerable<TpBetRecordByTpCategory> source)
+            IEnumerable<TpBetRecordGroupByTpCategory> GetGroupResultByCurrency(IEnumerable<TpBetRecordGroupByTpCategory> source)
             {
                 return source
                     .GroupBy(x => new
@@ -258,28 +152,12 @@ public class MpaWinLossBLL
                     })
                     .Select(r =>
                     {
-                        return new TpBetRecordByTpCategory
-                        {
-                            TpCategoryName = r.Key.TpCategoryName,
-                            CurrencyId = r.Key.CurrencyId,
-                            TurnOver = r.Sum(x => x.TurnOver),
-                            ValidTurnOver = r.Sum(x => x.ValidTurnOver),
-                            Ggr = r.Sum(x => x.Ggr),
-                            PlayerWinLoss = r.Sum(x => x.PlayerWinLoss),
-                            BaPlayerWinLoss = r.Sum(x =>x.BaPlayerWinLoss),
-                            ProgressiveWin = r.Sum(x => x.ProgressiveWin),
-                            ProgressiveBet = r.Sum(x => x.ProgressiveBet),
-                            Commission = r.Sum(x => x.Commission),
-                            BaCommission = r.Sum(x => x.BaCommission),
-                            BetCount = r.Sum(x => x.BetCount),
-                            AvgBetAmount = r.Sum(x => x.BetCount) != 0 ? r.Sum(x => x.TurnOver) / r.Sum(x => x.BetCount) : 0.00m,
-                            Margin = r.Sum(x => x.ValidTurnOver) != 0
-                                ? r.Sum(x => x.Ggr) / r.Sum(x => x.ValidTurnOver)
-                                : 0.00m,
-                            UniquePlayers = r.Sum(x => x.UniquePlayers),
-                        };
+                        var groupBySummary = GetGroupSummary(r, r.Key.CurrencyId);
+                        
+                        return new TpBetRecordGroupByTpCategory(groupBySummary, r.Key.TpCategoryName);
                     });
             }
+            
             var wrapperResult = new TpBetRecordByTpCategoryWrapper()
             {
                 TpBetRecordResult = tpBetRecordResult,
@@ -398,5 +276,64 @@ public class MpaWinLossBLL
     private static decimal GetGgr(decimal winLossSummary, decimal progressiveWinSummary, decimal progressiveBetSummary)
     {
         return winLossSummary * -1 + (progressiveWinSummary - progressiveBetSummary);
+    }
+
+    private static ITpBetRecordGroupBy GetSummary(IEnumerable<MpaTpBetRecordDto> records, int gameType, CurrencyEnum currencyId)
+    {
+        var r = records.ToList();
+        var totalStakeSummary = r.Sum(x => x.StakeSummary);
+        var totalValidBetSummary = r.Sum(x => x.ValidBetSummary);
+        var totalWinLossSummary = r.Sum(x => x.WinLossSummary);
+        var totalProgressiveWinSummary = r.Sum(x => x.ProgressiveWinSummary);
+        var totalProgressiveBetSummary = r.Sum(x => x.ProgressiveBetSummary);
+        var totalRowCount = r.Sum(x => x.RowCount);
+        var totalBaCommission = r.Sum(x => x.BaValidBetSummary) * 0.0025m; // BACommission = ValidTurnOver * 0.25%
+        var totalBaWinLossSummary = r.Sum(x => x.BaWinLossSummary);
+        var totalWinLossSummaryWithoutBa = totalWinLossSummary - totalBaWinLossSummary;
+        var ggr = CalculateGgr(gameType, totalWinLossSummaryWithoutBa, totalProgressiveWinSummary,
+            totalProgressiveBetSummary, r) + totalBaCommission;
+        
+        return new TpBetRecordGroupBy
+        {
+            CurrencyId = currencyId,
+            TurnOver = totalStakeSummary,
+            ValidTurnOver = totalValidBetSummary,
+            Ggr = ggr,
+            PlayerWinLoss = totalWinLossSummaryWithoutBa,
+            BaPlayerWinLoss = totalBaWinLossSummary,
+            ProgressiveWin = totalProgressiveWinSummary,
+            ProgressiveBet = totalProgressiveBetSummary,
+            Commission = r.Sum(CalculateCommission),
+            BaCommission = totalBaCommission,
+            BetCount = totalRowCount,
+            AvgBetAmount = totalRowCount != 0 ? totalStakeSummary / totalRowCount : 0.00m,
+            Margin = totalValidBetSummary != 0 ? ggr / totalValidBetSummary : 0.00m,
+            UniquePlayers = r.DistinctBy(x => x.CustId).Count(),
+        };
+    }
+    
+    private static ITpBetRecordGroupBy GetGroupSummary(IEnumerable<ITpBetRecordGroupBy> groupBySummary, CurrencyEnum currencyId)
+    {
+        var r = groupBySummary.ToList();
+        
+        return new TpBetRecordGroupByTpCategory
+        {
+            CurrencyId = currencyId,
+            TurnOver = r.Sum(x => x.TurnOver),
+            ValidTurnOver = r.Sum(x => x.ValidTurnOver),
+            Ggr = r.Sum(x => x.Ggr),
+            PlayerWinLoss = r.Sum(x => x.PlayerWinLoss),
+            BaPlayerWinLoss = r.Sum(x =>x.BaPlayerWinLoss),
+            ProgressiveWin = r.Sum(x => x.ProgressiveWin),
+            ProgressiveBet = r.Sum(x => x.ProgressiveBet),
+            Commission = r.Sum(x => x.Commission),
+            BaCommission = r.Sum(x => x.BaCommission),
+            BetCount = r.Sum(x => x.BetCount),
+            AvgBetAmount = r.Sum(x => x.BetCount) != 0 ? r.Sum(x => x.TurnOver) / r.Sum(x => x.BetCount) : 0.00m,
+            Margin = r.Sum(x => x.ValidTurnOver) != 0
+                ? r.Sum(x => x.Ggr) / r.Sum(x => x.ValidTurnOver)
+                : 0.00m,
+            UniquePlayers = r.Sum(x => x.UniquePlayers),
+        };
     }
 }
