@@ -1,4 +1,8 @@
+using System.Data;
+using Dapper;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using ReportService.Core.Library;
 using ReportService.Core.Models;
 using ReportService.Core.Models.Enums;
 
@@ -9,11 +13,21 @@ public class MpaCommonService
     private readonly MySqlClient _reportDbClient;
     private readonly ILogger<MpaCommonService> _logger;
 
-    public MpaCommonService(IEnumerable<MySqlClient> sqlClients, ILogger<MpaCommonService> logger)
+    public MpaCommonService(IServiceProvider provider)
     {
-        _reportDbClient = sqlClients.First(p => p.DataBase == DataBase.Report);
-        _logger = logger;
+        _reportDbClient = provider.GetServices<MySqlClient>().First(p => p.DataBase == DataBase.Report);
+        _logger = provider.GetRequiredService<ILogger<MpaCommonService>>();
     }
+    
+    public Task<IEnumerable<MpaRateDto>> GetExchangeRate(DateTimeOffset starTime, DateTimeOffset endTime)
+    {
+        var p = new DynamicParameters();
+        p.Add("_RateDateStart", starTime.Date.AddDays(-1), dbType: DbType.DateTime);
+        p.Add("_RateDateEnd", endTime.Date.AddMonths(1), dbType: DbType.DateTime);
+
+        return _reportDbClient.QueryAsync<MpaRateDto>("Admin_ExchangeRate_Get", p);
+    }
+
     
     public Task<IEnumerable<TpGameTypeOptionDto>> GetTpGameTypeOption()
     {

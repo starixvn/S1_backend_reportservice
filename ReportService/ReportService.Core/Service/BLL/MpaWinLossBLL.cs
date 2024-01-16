@@ -46,7 +46,6 @@ public class MpaWinLossBLL
                 {
                     var groupBySummary = GetSummary(r, r.Key.GameType, r.Key.CurrencyId);
 
-                    // 建立新的MpaWinLossByDateDto物件並返回
                     return new TpBetRecordGroupByDate(groupBySummary)
                     {
                         SiteId = r.Key.SiteId,
@@ -92,24 +91,20 @@ public class MpaWinLossBLL
     {
         var tpGameTypeMap = await _mpaCommonBll.GetTpGameTypeMapper();
         var betRecordResult = await GetTpBetRecord(request, groupByType);
-        var result = GetGroupResult(betRecordResult);
-
-        IEnumerable<TpBetRecordGroupByTpGameType> GetGroupResult(IEnumerable<MpaTpBetRecordDto> source)
-        {
-            return source
-                .GroupBy(x => new
-                {
-                    x.CurrencyId,
-                    x.GameType,
-                }).Select(r =>
-                {
-                    var gameType = r.Key.GameType;
-                    var groupBySummary = GetSummary(r, gameType, r.Key.CurrencyId);
-
-                    return new TpBetRecordGroupByTpGameType(groupBySummary, tpGameTypeMap[r.Key.GameType]);
-                });
-        }
         
+        var result = betRecordResult
+            .GroupBy(x => new
+            {
+                x.CurrencyId,
+                x.GameType,
+            }).Select(r =>
+            {
+                var gameType = r.Key.GameType;
+                var groupBySummary = GetSummary(r, gameType, r.Key.CurrencyId);
+
+                return new TpBetRecordGroupByTpGameType(groupBySummary, tpGameTypeMap[r.Key.GameType]);
+            });
+
         var wrapperResult = new TpBetRecordByTpGameTypeWrapper()
         {
             TpBetRecordResult = result,
@@ -120,53 +115,170 @@ public class MpaWinLossBLL
     }
     
     private async Task<TpBetRecordByTpCategoryWrapper> GetTpBetRecordGroupByTpCategoryResult(MpaWinLossRequest request, MpaWinLossGroupByTypeEnum groupByType)
+    {
+        var tpCategoryMap = await _mpaCommonBll.GetTpCategoryMapper();
+        var betRecordResult = await GetTpBetRecord(request, groupByType);
+        var tpBetRecordResult = GetGroupResultByCurrency(GetGroupResult(betRecordResult));
+
+        IEnumerable<TpBetRecordGroupByTpCategory> GetGroupResult(IEnumerable<MpaTpBetRecordDto> source)
         {
-            var tpCategoryMap = await _mpaCommonBll.GetTpCategoryMapper();
-            var betRecordResult = await GetTpBetRecord(request, groupByType);
-            var tpBetRecordResult = GetGroupResultByCurrency(GetGroupResult(betRecordResult));
+            return source
+                .GroupBy(x => new
+                {
+                    x.CategoryId,
+                    x.CurrencyId,
+                    x.GameType,
+                }).Select(r =>
+                {
+                    var gameType = r.Key.GameType;
+                    var groupBySummary = GetSummary(r, gameType, r.Key.CurrencyId);
 
-            IEnumerable<TpBetRecordGroupByTpCategory> GetGroupResult(IEnumerable<MpaTpBetRecordDto> source)
-            {
-                return source
-                    .GroupBy(x => new
-                    {
-                        x.CategoryId,
-                        x.CurrencyId,
-                        x.GameType,
-                    }).Select(r =>
-                    {
-                        var gameType = r.Key.GameType;
-                        var groupBySummary = GetSummary(r, gameType, r.Key.CurrencyId);
-
-                        return new TpBetRecordGroupByTpCategory(groupBySummary, tpCategoryMap[r.Key.CategoryId]);
-                    });
-            }
-            
-            IEnumerable<TpBetRecordGroupByTpCategory> GetGroupResultByCurrency(IEnumerable<TpBetRecordGroupByTpCategory> source)
-            {
-                return source
-                    .GroupBy(x => new
-                    {
-                        x.TpCategoryName,
-                        x.CurrencyId,
-                    })
-                    .Select(r =>
-                    {
-                        var groupBySummary = GetGroupSummary(r, r.Key.CurrencyId);
-                        
-                        return new TpBetRecordGroupByTpCategory(groupBySummary, r.Key.TpCategoryName);
-                    });
-            }
-            
-            var wrapperResult = new TpBetRecordByTpCategoryWrapper()
-            {
-                TpBetRecordResult = tpBetRecordResult,
-                UniquePlayers = betRecordResult.DistinctBy(x => x.CustId).Count()
-            };
-
-            return wrapperResult;
+                    return new TpBetRecordGroupByTpCategory(groupBySummary, tpCategoryMap[r.Key.CategoryId]);
+                });
         }
+        
+        IEnumerable<TpBetRecordGroupByTpCategory> GetGroupResultByCurrency(IEnumerable<TpBetRecordGroupByTpCategory> source)
+        {
+            return source
+                .GroupBy(x => new
+                {
+                    x.TpCategoryName,
+                    x.CurrencyId,
+                })
+                .Select(r =>
+                {
+                    var groupBySummary = GetGroupSummary(r, r.Key.CurrencyId);
+                    
+                    return new TpBetRecordGroupByTpCategory(groupBySummary, r.Key.TpCategoryName);
+                });
+        }
+        
+        var wrapperResult = new TpBetRecordByTpCategoryWrapper()
+        {
+            TpBetRecordResult = tpBetRecordResult,
+            UniquePlayers = betRecordResult.DistinctBy(x => x.CustId).Count()
+        };
+
+        return wrapperResult;
+    }
+
+    private async Task<TpBetRecordByPlayerWrapper> GetTpBetRecordGroupByPlayerResult(MpaWinLossRequest request,
+        MpaWinLossGroupByTypeEnum groupByType)
+    {
+        var betRecordResult = await GetTpBetRecord(request, groupByType);
+        var tpBetRecordResult = GetGroupResult(betRecordResult);
+
+        IEnumerable<TpBetRecordGroupByPlayer> GetGroupResult(IEnumerable<MpaTpBetRecordDto> source)
+        {
+            return source
+                .GroupBy(x => new
+                {
+                    x.UserName,
+                    x.TpUserName,
+                    x.CurrencyId,
+                    x.SiteId,
+                    x.GameType,
+                })
+                .Select(r =>
+                {
+                    var groupBySummary = GetSummary(r, r.Key.GameType, r.Key.CurrencyId);
+
+                    return new TpBetRecordGroupByPlayer(groupBySummary)
+                    {
+                        SiteId = r.Key.SiteId,
+                        UserName = r.Key.UserName,
+                        TpUserName = r.Key.TpUserName,
+                        ClosingBalance = r.Sum(x => x.ClosingBalance)
+                    };
+                });
+        }
+        
+        var wrapperResult = new TpBetRecordByPlayerWrapper()
+        {
+            TpBetRecordResult = tpBetRecordResult,
+            UniquePlayers = betRecordResult.DistinctBy(x => x.CustId).Count()
+        };
+
+        return wrapperResult;
+    }
     
+    private async Task<TpBetRecordByAffiliateWrapper> GetTpBetRecordGroupByAffiliateResult(MpaWinLossRequest request,
+        MpaWinLossGroupByTypeEnum groupByType)
+    {
+        var betRecordResult = await GetTpBetRecord(request, groupByType);
+        var tpBetRecordResult = GetGroupResult(betRecordResult);
+
+        IEnumerable<TpBetRecordGroupByAffiliate> GetGroupResult(IEnumerable<MpaTpBetRecordDto> source)
+        {
+            return source
+                .GroupBy(x => new
+                {
+                    x.UserName,
+                    x.TpUserName,
+                    x.AffiliateName,
+                    x.CurrencyId,
+                    x.SiteId,
+                    x.GameType,
+                })
+                .Select(r =>
+                {
+                    var groupBySummary = GetSummary(r, r.Key.GameType, r.Key.CurrencyId);
+
+                    return new TpBetRecordGroupByAffiliate(groupBySummary)
+                    {
+                        SiteId = r.Key.SiteId,
+                        UserName = r.Key.UserName,
+                        TpUserName = r.Key.TpUserName,
+                        AffiliateAccount = r.Key.AffiliateName,
+                        ClosingBalance = r.Sum(x => x.ClosingBalance)
+                    };
+                });
+        }
+        
+        var wrapperResult = new TpBetRecordByAffiliateWrapper()
+        {
+            TpBetRecordResult = tpBetRecordResult,
+            UniquePlayers = betRecordResult.DistinctBy(x => x.CustId).Count()
+        };
+
+        return wrapperResult;
+    }
+    
+    private async Task<TpBetRecordByCurrencyWrapper> GetTpBetRecordGroupByCurrencyResult(MpaWinLossRequest request,
+        MpaWinLossGroupByTypeEnum groupByType)
+    {
+        var betRecordResult = await GetTpBetRecord(request, groupByType);
+        var tpBetRecordResult = GetGroupResult(betRecordResult);
+
+        IEnumerable<TpBetRecordGroupByCurrency> GetGroupResult(IEnumerable<MpaTpBetRecordDto> source)
+        {
+            return source
+                .GroupBy(x => new
+                {
+                    x.CurrencyId,
+                    x.GameType,
+                    x.CustId
+                })
+                .Select(r =>
+                {
+                    var groupBySummary = GetSummary(r, r.Key.GameType, r.Key.CurrencyId);
+
+                    return new TpBetRecordGroupByCurrency(groupBySummary)
+                    {
+                        CustId = r.Key.CustId,
+                    };
+                });
+        }
+        
+        var wrapperResult = new TpBetRecordByCurrencyWrapper()
+        {
+            TpBetRecordResult = tpBetRecordResult,
+            UniquePlayers = betRecordResult.DistinctBy(x => x.CustId).Count()
+        };
+
+        return wrapperResult;
+    }
+
     private async Task<List<MpaTpBetRecordDto>> GetTpBetRecord(MpaWinLossRequest request, MpaWinLossGroupByTypeEnum groupByType)
     {
         // 注單過濾
@@ -176,8 +288,11 @@ public class MpaWinLossBLL
             .SetCommissionByNineW(request, format, _mpaWinLossService.Get9WCommission)
             .SetBAdata()
             .ToList();
-
+        
         // TODO: 在轉換時區前須先完成匯率轉換? => 先試試後轉會差到多少 => 好像還是這邊比較好搞嗯嗯嗯?
+        var mapRate = await _mpaCommonBll.GetMapRate(request.StarTime, request.EndTime, request.BaseCurrencyId);
+
+        
         BetRecordSetDateToOffSet(request.StarTime.Offset, tpBetRecordRelayResult, groupByType);
         
         return tpBetRecordRelayResult;
@@ -329,10 +444,10 @@ public class MpaWinLossBLL
             Commission = r.Sum(x => x.Commission),
             BaCommission = r.Sum(x => x.BaCommission),
             BetCount = r.Sum(x => x.BetCount),
-            AvgBetAmount = r.Sum(x => x.BetCount) != 0 ? r.Sum(x => x.TurnOver) / r.Sum(x => x.BetCount) : 0.00m,
+            AvgBetAmount = r.Sum(x => x.BetCount) != 0 
+                ? r.Sum(x => x.TurnOver) / r.Sum(x => x.BetCount) : 0.00m,
             Margin = r.Sum(x => x.ValidTurnOver) != 0
-                ? r.Sum(x => x.Ggr) / r.Sum(x => x.ValidTurnOver)
-                : 0.00m,
+                ? r.Sum(x => x.Ggr) / r.Sum(x => x.ValidTurnOver) : 0.00m,
             UniquePlayers = r.Sum(x => x.UniquePlayers),
         };
     }

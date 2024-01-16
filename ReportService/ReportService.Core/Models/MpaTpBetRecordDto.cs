@@ -28,6 +28,7 @@ public class MpaTpBetRecordDto
     public int IsTest { get; set; }
     public int SummaryType { get; set; }
     
+    public string AffiliateName { get; set; }
     
     // SABA BA玩家使用
     public decimal BaStakeSummary { get; set; }

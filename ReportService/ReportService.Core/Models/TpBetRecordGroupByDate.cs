@@ -30,9 +30,9 @@ public class TpBetRecordGroupByDate : TpBetRecordGroupBy
 
     public decimal TotalDepositAmount { get; set; }
 
-    public int WithDrawCount { get; set; }
+    public int WithdrawalCount { get; set; }
 
-    public decimal TotalWithDrawAmount { get; set; }
+    public decimal TotalWithdrawalAmount { get; set; }
 
     public decimal TotalBonus { get; set; }
 }
