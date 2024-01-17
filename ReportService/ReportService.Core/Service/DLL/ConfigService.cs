@@ -12,7 +12,7 @@ public class ConfigService
         _reportDbClient = provider.GetServices<MySqlClient>().First(p => p.DataBase == DataBase.Report);
     }
 
-    public IEnumerable<T> Query<T>(string sql, object parameters = null)
+    public IEnumerable<T> Query<T>(string sql, object? parameters = null)
     {
         return _reportDbClient.Query<T>(sql, parameters);
     }

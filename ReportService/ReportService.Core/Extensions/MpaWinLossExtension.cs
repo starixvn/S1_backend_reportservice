@@ -1,5 +1,6 @@
 using ReportService.Core.Models;
 using ReportService.Core.Models.Enums;
+using ReportService.Core.Models.Interface;
 
 namespace ReportService.Core.Extensions;
 
@@ -7,8 +8,6 @@ public static class MpaWinLossExtension
 {
     public static IEnumerable<MpaTpBetRecordDto> Filter(this IEnumerable<MpaTpBetRecordDto> data, MpaWinLossRequest request)
     {
-        
-
         var exceptTicketStatus = new List<int>();
 
         if (!request.NoDraw)
@@ -26,14 +25,14 @@ public static class MpaWinLossExtension
             data = data.Where(x => !exceptTicketStatus.Contains(x.TicketStatus));
         }
         
-        // test member
-        if (!request.IncludeTest)
-        {
-            data = data.Where(x => x.IsTest == 0);
-        }
-
+        // filter test user
+        data = FilterTestUser(data, request.IncludeTest);
+        
         return data;
     }
+
+    public static IEnumerable<T> FilterTestUser<T>(this IEnumerable<T> data, bool includeTest) where T : IFilterTestUser
+        => includeTest ? data : data.Where(x => x.IsTest == 0);
     
     // BA用戶是指saba後台設定的特殊用戶，這些用戶的輸贏直接歸沙巴，沙巴會給平台傭金
     public static IEnumerable<MpaTpBetRecordDto> SetBAdata(this IEnumerable<MpaTpBetRecordDto> data)
@@ -66,7 +65,7 @@ public static class MpaWinLossExtension
         string format,
         Func<DateTimeOffset, DateTimeOffset, string, MpaDateType, IEnumerable<Commission9WDto>> getCommission)
     {
-        var commission = getCommission(request.StarTime, request.EndTime, format, request.DateType);
+        var commission = getCommission(request.StartTime, request.EndTime, format, request.DateType);
 
         switch (request.DateType)
         {

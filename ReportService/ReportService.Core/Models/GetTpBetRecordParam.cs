@@ -4,7 +4,7 @@ using ReportService.Core.Models.Enums;
 
 namespace ReportService.Core.Models;
 
-public class GetTpBetRecordParam
+public class GetTpBetRecordParam : GetTransactionParam
 {
     public GetTpBetRecordParam()
     { 
@@ -39,15 +39,7 @@ public class GetTpBetRecordParam
         AffiliateNamesJson = JsonConvert.SerializeObject(req.AffiliateNames);
     }
     
-    public string SiteIdsJson { get; set; }
-    public DateTime StartTime { get; set; }
-    public DateTime EndTime { get; set; }
-    public string DateTimeFormat { get; set; }
-    public string? MemberTypesJson { get; set; }
-    public string? UserNamesJson { get; set; }
     public string? SummaryTypesJson { get; set; }
     public string? GameTypesJson { get; set; }
-    public string? CurrencyIdsJson { get; set; }
     public string? CategoryIdsJson { get; set; }
-    public string? AffiliateNamesJson { get; set; }
 }

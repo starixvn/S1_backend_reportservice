@@ -32,9 +32,37 @@ public class MpaWinLossService
         p.Add("_CategoryIds", input.CategoryIdsJson, dbType: DbType.String);
         p.Add("_AffiliateNames", input.AffiliateNamesJson, dbType: DbType.String);
         
-        var data = _reportDbClient.QueryAsync<TResult>("Service_TpBetRecordRelayGroupByDate_Get", p);
+        return _reportDbClient.QueryAsync<TResult>("Service_TpBetRecordRelayGroupByDate_Get", p);
+    }
+    
+    public Task<IEnumerable<TResult>> GetTransaction<TResult>(GetTransactionParam input)
+    {
+        var p = new DynamicParameters();
+        p.Add("_SiteIds", input.SiteIdsJson, dbType: DbType.String);
+        p.Add("_StartTime", input.StartTime, dbType: DbType.DateTime);
+        p.Add("_EndTime", input.EndTime, dbType: DbType.DateTime);
+        p.Add("_Format", input.DateTimeFormat, dbType: DbType.String);
+        p.Add("_MemberTypes", input.MemberTypesJson, dbType: DbType.String);
+        p.Add("_UserNames", input.UserNamesJson, dbType: DbType.String);
+        p.Add("_CurrencyIds", input.CurrencyIdsJson, dbType: DbType.String);
+        p.Add("_AffiliateNames", input.AffiliateNamesJson, dbType: DbType.String);
 
-        return data;
+        return _reportDbClient.QueryAsync<TResult>("Service_TransactionRelayGroupByDate_Get", p);
+    }
+    
+    public Task<IEnumerable<TResult>> GetClaimBonus<TResult>(GetTransactionParam input)
+    {
+        var p = new DynamicParameters();
+        p.Add("_SiteIds", input.SiteIdsJson, dbType: DbType.String);
+        p.Add("_StartTime", input.StartTime, dbType: DbType.DateTime);
+        p.Add("_EndTime", input.EndTime, dbType: DbType.DateTime);
+        p.Add("_Format", input.DateTimeFormat, dbType: DbType.String);
+        p.Add("_MemberTypes", input.MemberTypesJson, dbType: DbType.String);
+        p.Add("_UserNames", input.UserNamesJson, dbType: DbType.String);
+        p.Add("_CurrencyIds", input.CurrencyIdsJson, dbType: DbType.String);
+        p.Add("_AffiliateNames", input.AffiliateNamesJson, dbType: DbType.String);
+
+        return _reportDbClient.QueryAsync<TResult>("Service_MpaWinLossBonus_Get", p);
     }
     
     public IEnumerable<Commission9WDto> Get9WCommission(DateTimeOffset starTime, DateTimeOffset endTime, string format,
@@ -45,6 +73,7 @@ public class MpaWinLossService
         p.Add("_EndTime", endTime.ToUniversalTime().DateTime, dbType: DbType.DateTime);
         p.Add("_Format", format, dbType: DbType.String);
         p.Add("_DateType", (int)mpaDateType, dbType: DbType.Int16);
+        
         return _reportDbClient.Query<Commission9WDto>("Admin_9WCommission_Get", p);
     }
 }

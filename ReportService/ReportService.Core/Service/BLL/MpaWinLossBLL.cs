@@ -24,12 +24,14 @@ public class MpaWinLossBLL
         _logger = provider.GetRequiredService<ILogger<MpaWinLossBLL>>();
     
     }
-    
+
+    #region GroupByDate
+
     private async Task<TpBetRecordByDateWrapper> GetTpBetRecordGroupByDateResult(MpaWinLossRequest request, MpaWinLossGroupByTypeEnum groupByType)
     {
-        var betRecordResult = await GetTpBetRecord(request, groupByType);
+        var betRecordResult = await GetTpBetRecords(request, groupByType);
         //因GGR計算需用gameType分組，計算完再處理回來
-        var groupResultByCurrency = GetGroupResultByCurrency(GetGroupResult(betRecordResult));
+        var tpBetRecordResult = GetGroupByDateResult(GetGroupResult(betRecordResult));
         
         IEnumerable<TpBetRecordGroupByDate> GetGroupResult(IEnumerable<MpaTpBetRecordDto> source)
         {
@@ -55,7 +57,7 @@ public class MpaWinLossBLL
                 });
         }
 
-        IEnumerable<TpBetRecordGroupByDate> GetGroupResultByCurrency(IEnumerable<TpBetRecordGroupByDate> source)
+        IEnumerable<TpBetRecordGroupByDate> GetGroupByDateResult(IEnumerable<TpBetRecordGroupByDate> source)
         {
             return source
                 .GroupBy(x => new
@@ -80,17 +82,21 @@ public class MpaWinLossBLL
 
         var wrapperResult = new TpBetRecordByDateWrapper
         {
-            TpBetRecordResult = groupResultByCurrency,
+            TpBetRecordResult = tpBetRecordResult,
             UniquePlayers = betRecordResult.DistinctBy(x => x.CustId).Count()
         };
 
         return wrapperResult;
     }
-    
+
+    #endregion
+
+    #region GroupByTpGameType
+
     private async Task<TpBetRecordByTpGameTypeWrapper> GetTpBetRecordGroupByTpGameTypeResult(MpaWinLossRequest request, MpaWinLossGroupByTypeEnum groupByType)
     {
         var tpGameTypeMap = await _mpaCommonBll.GetTpGameTypeMapper();
-        var betRecordResult = await GetTpBetRecord(request, groupByType);
+        var betRecordResult = await GetTpBetRecords(request, groupByType);
         
         var result = betRecordResult
             .GroupBy(x => new
@@ -113,12 +119,16 @@ public class MpaWinLossBLL
 
         return wrapperResult;
     }
-    
+
+    #endregion
+
+    #region GroupByTpCategory
+
     private async Task<TpBetRecordByTpCategoryWrapper> GetTpBetRecordGroupByTpCategoryResult(MpaWinLossRequest request, MpaWinLossGroupByTypeEnum groupByType)
     {
         var tpCategoryMap = await _mpaCommonBll.GetTpCategoryMapper();
-        var betRecordResult = await GetTpBetRecord(request, groupByType);
-        var tpBetRecordResult = GetGroupResultByCurrency(GetGroupResult(betRecordResult));
+        var betRecordResult = await GetTpBetRecords(request, groupByType);
+        var tpBetRecordResult = GetGroupByTpCategoryResult(GetGroupResult(betRecordResult));
 
         IEnumerable<TpBetRecordGroupByTpCategory> GetGroupResult(IEnumerable<MpaTpBetRecordDto> source)
         {
@@ -137,7 +147,7 @@ public class MpaWinLossBLL
                 });
         }
         
-        IEnumerable<TpBetRecordGroupByTpCategory> GetGroupResultByCurrency(IEnumerable<TpBetRecordGroupByTpCategory> source)
+        IEnumerable<TpBetRecordGroupByTpCategory> GetGroupByTpCategoryResult(IEnumerable<TpBetRecordGroupByTpCategory> source)
         {
             return source
                 .GroupBy(x => new
@@ -162,10 +172,14 @@ public class MpaWinLossBLL
         return wrapperResult;
     }
 
+    #endregion
+
+    #region GroupByPlayer
+
     private async Task<TpBetRecordByPlayerWrapper> GetTpBetRecordGroupByPlayerResult(MpaWinLossRequest request,
         MpaWinLossGroupByTypeEnum groupByType)
     {
-        var betRecordResult = await GetTpBetRecord(request, groupByType);
+        var betRecordResult = await GetTpBetRecords(request, groupByType);
         var tpBetRecordResult = GetGroupResult(betRecordResult);
 
         IEnumerable<TpBetRecordGroupByPlayer> GetGroupResult(IEnumerable<MpaTpBetRecordDto> source)
@@ -201,11 +215,15 @@ public class MpaWinLossBLL
 
         return wrapperResult;
     }
-    
+
+    #endregion
+
+    #region GroupByAffiliate
+
     private async Task<TpBetRecordByAffiliateWrapper> GetTpBetRecordGroupByAffiliateResult(MpaWinLossRequest request,
         MpaWinLossGroupByTypeEnum groupByType)
     {
-        var betRecordResult = await GetTpBetRecord(request, groupByType);
+        var betRecordResult = await GetTpBetRecords(request, groupByType);
         var tpBetRecordResult = GetGroupResult(betRecordResult);
 
         IEnumerable<TpBetRecordGroupByAffiliate> GetGroupResult(IEnumerable<MpaTpBetRecordDto> source)
@@ -244,10 +262,14 @@ public class MpaWinLossBLL
         return wrapperResult;
     }
     
+    #endregion
+
+    #region GroupByCurrency
+
     private async Task<TpBetRecordByCurrencyWrapper> GetTpBetRecordGroupByCurrencyResult(MpaWinLossRequest request,
         MpaWinLossGroupByTypeEnum groupByType)
     {
-        var betRecordResult = await GetTpBetRecord(request, groupByType);
+        var betRecordResult = await GetTpBetRecords(request, groupByType);
         var tpBetRecordResult = GetGroupResult(betRecordResult);
 
         IEnumerable<TpBetRecordGroupByCurrency> GetGroupResult(IEnumerable<MpaTpBetRecordDto> source)
@@ -278,10 +300,11 @@ public class MpaWinLossBLL
 
         return wrapperResult;
     }
-
-    private async Task<List<MpaTpBetRecordDto>> GetTpBetRecord(MpaWinLossRequest request, MpaWinLossGroupByTypeEnum groupByType)
+    
+    #endregion
+    
+    private async Task<List<MpaTpBetRecordDto>> GetTpBetRecords(MpaWinLossRequest request, MpaWinLossGroupByTypeEnum groupByType)
     {
-        // 注單過濾
         var format = MapMpaWinLossGroupByTypeEnumFormat(groupByType);
         var data = await GetMapTpBetRecordByDate(request, groupByType);
         var tpBetRecordRelayResult = data.Filter(request)
@@ -290,10 +313,46 @@ public class MpaWinLossBLL
             .ToList();
         
         // TODO: 在轉換時區前須先完成匯率轉換? => 先試試後轉會差到多少 => 好像還是這邊比較好搞嗯嗯嗯?
-        var mapRate = await _mpaCommonBll.GetMapRate(request.StarTime, request.EndTime, request.BaseCurrencyId);
+        var mapRate = await _mpaCommonBll.GetMapRate(request.StartTime, request.EndTime, request.BaseCurrencyId);
 
         
-        BetRecordSetDateToOffSet(request.StarTime.Offset, tpBetRecordRelayResult, groupByType);
+        SetDateToOffSet(request.StartTime.Offset, tpBetRecordRelayResult, groupByType);
+        
+        return tpBetRecordRelayResult;
+    }
+    
+    private async Task<List<MpaTransactionRelayDto>> GetTransactionRecords(MpaWinLossRequest request, MpaWinLossGroupByTypeEnum groupByType)
+    {
+        var format = MapMpaWinLossGroupByTypeEnumFormat(groupByType);
+        var data = 
+            await _mpaWinLossService.GetTransaction<MpaTransactionRelayDto>(new GetTransactionParam(request, format));
+        var tpBetRecordRelayResult = data
+            .FilterTestUser(request.IncludeTest)
+            .ToList();
+
+        // TODO: 匯率
+        var mapRate = await _mpaCommonBll.GetMapRate(request.StartTime, request.EndTime, request.BaseCurrencyId);
+
+        
+        SetDateToOffSet(request.StartTime.Offset, tpBetRecordRelayResult, groupByType);
+        
+        return tpBetRecordRelayResult;
+    }
+    
+    private async Task<List<MpaClaimBonusDto>> GetClaimBonusRecords(MpaWinLossRequest request, MpaWinLossGroupByTypeEnum groupByType)
+    {
+        var format = MapMpaWinLossGroupByTypeEnumFormat(groupByType);
+        var data = 
+            await _mpaWinLossService.GetClaimBonus<MpaClaimBonusDto>(new GetTransactionParam(request, format));
+        var tpBetRecordRelayResult = data
+            .FilterTestUser(request.IncludeTest)
+            .ToList();
+
+        // TODO: 匯率
+        var mapRate = await _mpaCommonBll.GetMapRate(request.StartTime, request.EndTime, request.BaseCurrencyId);
+
+        
+        SetDateToOffSet(request.StartTime.Offset, tpBetRecordRelayResult, groupByType);
         
         return tpBetRecordRelayResult;
     }
@@ -301,7 +360,7 @@ public class MpaWinLossBLL
     private async Task<IEnumerable<MpaTpBetRecordDto>> GetMapTpBetRecordByDate(MpaWinLossRequest request, MpaWinLossGroupByTypeEnum groupByType)
     {
         var format = MapMpaWinLossGroupByTypeEnumFormat(groupByType);
-        var startDate = request.StarTime;
+        var startDate = request.StartTime;
         var endDate = request.EndTime;
         var interval = TimeSpan.FromDays(16);
         var segmentCount = (int)Math.Ceiling((endDate - startDate).TotalDays / interval.TotalDays);
@@ -326,9 +385,9 @@ public class MpaWinLossBLL
         return data;
     }
     
-    private static void BetRecordSetDateToOffSet(TimeSpan offset,
-        List<MpaTpBetRecordDto> betRecordResult,
-        MpaWinLossGroupByTypeEnum groupByType)
+    private static void SetDateToOffSet<T>(TimeSpan offset,
+        List<T> betRecordResult,
+        MpaWinLossGroupByTypeEnum groupByType) where T : IFixDateTimeOffset
     {
         if (groupByType is not (MpaWinLossGroupByTypeEnum.Date or MpaWinLossGroupByTypeEnum.Month))
             return;

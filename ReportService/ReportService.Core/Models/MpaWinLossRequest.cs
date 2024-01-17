@@ -8,7 +8,7 @@ public class MpaWinLossRequest : IOrderBy, IMultiSiteApiRequest
     /// <summary>
     /// 結算起始時間
     /// </summary>
-    public DateTimeOffset StarTime { get; set; }
+    public DateTimeOffset StartTime { get; set; }
 
     /// <summary>
     /// 結算結束時間

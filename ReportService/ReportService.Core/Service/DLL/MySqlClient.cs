@@ -31,7 +31,7 @@ namespace ReportService.Core.Service.DLL
 
         #region Query
 
-         public IEnumerable<T> Query<T>(string name, object parameters = null, CommandType commandType = CommandType.StoredProcedure, int? commandTimeout = null)
+         public IEnumerable<T> Query<T>(string name, object? parameters = null, CommandType commandType = CommandType.StoredProcedure, int? commandTimeout = null)
         {
             IEnumerable<T> result;
             var sw = Stopwatch.StartNew();
@@ -53,7 +53,7 @@ namespace ReportService.Core.Service.DLL
             }
 
             LogContext.PushProperty("elapsed", sw.Elapsed.TotalMilliseconds);
-            _logger.LogDebug($"{name} {sw.Elapsed:c}");
+            _logger.LogInformation($"{name} {sw.Elapsed:c}");
             return result.ToList();
         }
 
@@ -75,7 +75,7 @@ namespace ReportService.Core.Service.DLL
             }
 
             LogContext.PushProperty("elapsed", sw.Elapsed.TotalMilliseconds);
-            _logger.LogDebug($"{name} {sw.Elapsed:c}");
+            _logger.LogInformation($"{name} {sw.Elapsed:c}");
             return result;
         }
 
@@ -98,11 +98,11 @@ namespace ReportService.Core.Service.DLL
             }
 
             LogContext.PushProperty("elapsed", sw.Elapsed.TotalMilliseconds);
-            _logger.LogDebug($"{name} {resultCode} {sw.Elapsed:c}");
+            _logger.LogInformation($"{name} {resultCode} {sw.Elapsed:c}");
             return result;
         }
 
-        public IEnumerable<dynamic> Query(string name, object parameters = null, int? commandTimeout = null)
+        public IEnumerable<dynamic> Query(string name, object? parameters = null, int? commandTimeout = null)
         {
             var sw = Stopwatch.StartNew();
             IEnumerable<dynamic> result;
@@ -120,11 +120,11 @@ namespace ReportService.Core.Service.DLL
             }
 
             LogContext.PushProperty("elapsed", sw.Elapsed.TotalMilliseconds);
-            _logger.LogDebug($"{name} {sw.Elapsed:c}");
+            _logger.LogInformation($"{name} {sw.Elapsed:c}");
             return result;
         }
         
-        public T QueryFirst<T>(string name, IDbTransaction trans , object parameters = null)
+        public T QueryFirst<T>(string name, IDbTransaction trans , object? parameters = null)
         {
             var sw = Stopwatch.StartNew();
             T result;
@@ -142,11 +142,11 @@ namespace ReportService.Core.Service.DLL
             }
 
             LogContext.PushProperty("elapsed", sw.Elapsed.TotalMilliseconds);
-            _logger.LogDebug($"{name} {sw.Elapsed:c}");
+            _logger.LogInformation($"{name} {sw.Elapsed:c}");
             return result;
         }
 
-        public T QueryFirst<T>(string name, object parameters = null, int? commandTimeout = null)
+        public T QueryFirst<T>(string name, object? parameters = null, int? commandTimeout = null)
         {
             var sw = Stopwatch.StartNew();
             T result;
@@ -168,7 +168,7 @@ namespace ReportService.Core.Service.DLL
             }
 
             LogContext.PushProperty("elapsed", sw.Elapsed.TotalMilliseconds);
-            _logger.LogDebug($"{name} {sw.Elapsed:c}");
+            _logger.LogInformation($"{name} {sw.Elapsed:c}");
             return result;
         }
         
@@ -176,7 +176,7 @@ namespace ReportService.Core.Service.DLL
 
         #region Execute
 
-        public async Task<int> ExecuteAsync(string name, object parameters = null)
+        public async Task<int> ExecuteAsync(string name, object? parameters = null)
         {
             var sw = Stopwatch.StartNew();
             int result;
@@ -194,11 +194,11 @@ namespace ReportService.Core.Service.DLL
             }
 
             LogContext.PushProperty("elapsed", sw.Elapsed.TotalMilliseconds);
-            _logger.LogDebug($"{name} {sw.Elapsed:c}");
+            _logger.LogInformation($"{name} {sw.Elapsed:c}");
             return result;
         }
         
-        public int Execute(string name, IDbTransaction trans, object parameters = null)
+        public int Execute(string name, IDbTransaction trans, object? parameters = null)
         {
             var sw = Stopwatch.StartNew();
             int result;
@@ -213,7 +213,7 @@ namespace ReportService.Core.Service.DLL
             }
 
             LogContext.PushProperty("elapsed", sw.Elapsed.TotalMilliseconds);
-            _logger.LogDebug($"{name} {sw.Elapsed:c}");
+            _logger.LogInformation($"{name} {sw.Elapsed:c}");
             return result;
         }
 
@@ -235,7 +235,7 @@ namespace ReportService.Core.Service.DLL
             }
 
             LogContext.PushProperty("elapsed", sw.Elapsed.TotalMilliseconds);
-            _logger.LogDebug($"{name} {sw.Elapsed:c}");
+            _logger.LogInformation($"{name} {sw.Elapsed:c}");
             return result;
         }
 
