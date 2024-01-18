@@ -26,12 +26,138 @@ public class MpaWinLossBLL
     }
 
     #region GroupByDate
+    
+    private async Task<TpBetRecordByDateWrapper> GetMpaGroupByDateResult(MpaWinLossRequest request, MpaWinLossGroupByTypeEnum groupByType)
+    {
+        var winLossResult = await PreProcessTpBetRecordGroupByDateResult(request, groupByType);
+        var transactionResult = await GetTransactionGroupByDateResult(request, groupByType);
+        var claimBonusResult = await GetClaimBonusGroupByDateResult(request, groupByType);
 
-    private async Task<TpBetRecordByDateWrapper> GetTpBetRecordGroupByDateResult(MpaWinLossRequest request, MpaWinLossGroupByTypeEnum groupByType)
+        var combineData = winLossResult.TpBetRecordResult
+            .Concat(transactionResult.TpBetRecordResult)
+            .Concat(claimBonusResult.TpBetRecordResult);
+        
+        var combineResult = combineData.GroupBy(x => new
+            {
+                x.Date,
+                x.CurrencyId,
+            })
+            .Select(r =>
+            {
+                var ggrSum = r.Sum(x => x.Ggr);
+                var turnOverSum = r.Sum(x => x.Ggr);
+                var betCountSum = r.Sum(x => x.BetCount);
+                var validTurnOverSum = r.Sum(x => x.ValidTurnOver);
+
+                return new TpBetRecordGroupByDate
+                {
+                    Date = r.Key.Date,
+                    CurrencyId = r.Key.CurrencyId,
+                    TurnOver = turnOverSum,
+                    ValidTurnOver = validTurnOverSum,
+                    Ggr = ggrSum,
+                    PlayerWinLoss = r.Sum(x => x.PlayerWinLoss),
+                    ProgressiveWin = r.Sum(x => x.ProgressiveWin),
+                    ProgressiveBet = r.Sum(x => x.ProgressiveBet),
+                    BaPlayerWinLoss = r.Sum(x => x.BaPlayerWinLoss),
+                    BaCommission = r.Sum(x => x.BaCommission),
+                    Commission = r.Sum(x => x.Commission),
+                    BetCount = betCountSum,
+                    //UniquePlayers = r.Where(x => x.BetCount != 0).DistinctBy(x => x.CustId).Count(),
+                    DepositCount = r.Sum(x => x.DepositCount),
+                    TotalDepositAmount = r.Sum(x => x.TotalDepositAmount),
+                    WithdrawalCount = r.Sum(x => x.WithdrawalCount),
+                    TotalWithdrawalAmount = r.Sum(x => x.TotalWithdrawalAmount),
+                    AvgBetAmount = betCountSum != 0 ? turnOverSum / betCountSum : 0.00m,
+                    Margin = turnOverSum != 0 ? ggrSum / validTurnOverSum : 0.00m,
+                    TotalBonus = r.Sum(x => x.TotalBonus)
+                };
+            });
+
+        var wrapperResult = new TpBetRecordByDateWrapper()
+        {
+            TpBetRecordResult = result,
+        };
+
+        return wrapperResult;
+    }
+    
+    private async Task<IEnumerable<TpBetRecordGroupByDate>> GetClaimBonusGroupByDateResult(MpaWinLossRequest request, MpaWinLossGroupByTypeEnum groupByType)
+    {
+        var bonusRecords = await GetClaimBonusRecords(request, groupByType);
+        var result = GetGroupResult(bonusRecords);
+
+        IEnumerable<TpBetRecordGroupByDate> GetGroupResult(IEnumerable<MpaClaimBonusDto> source)
+        {
+            return source.GroupBy(x => new
+            {
+                x.Date,
+                x.CurrencyId,
+                x.SiteId,
+                x.CustId
+            }).Select(r => new TpBetRecordGroupByDate
+            {
+                CustId = r.Key.CustId,
+                Date = r.Key.Date,
+                CurrencyId = r.Key.CurrencyId,
+                TotalBonus = r.Sum(x => x.BonusAmountClaim),
+                SiteId = r.Key.SiteId
+            }).ToList();
+        }
+
+        return result;
+    }
+
+    private async Task<IEnumerable<TpBetRecordGroupByDate>> GetTransactionGroupByDateResult(MpaWinLossRequest request, MpaWinLossGroupByTypeEnum groupByType)
+    {
+        var transactionRecords = await GetTransactionRecords(request, groupByType);
+        var result = GetGroupResult(transactionRecords);
+        
+        IEnumerable<TpBetRecordGroupByDate> GetGroupResult(IEnumerable<MpaTransactionRelayDto> source)
+        {
+            return source.GroupBy(x => new
+            {
+                x.Date,
+                x.CurrencyId,
+                x.SummaryType,
+                x.SiteId,
+                x.CustId
+            })
+            .Select(r =>
+            {
+                var data = new TpBetRecordGroupByDate
+                {
+                    CustId = r.Key.CustId,
+                    Date = r.Key.Date,
+                    CurrencyId = r.Key.CurrencyId,
+                    SiteId = r.Key.SiteId
+                };
+
+                switch (r.Key.SummaryType)
+                {
+                    case TransactionRelaySummaryTypeEnum.Deposit:
+                        data.DepositCount = r.Sum(x => x.RowCount);
+                        data.TotalDepositAmount = r.Sum(x => x.Amount);
+                        break;
+                    
+                    case TransactionRelaySummaryTypeEnum.Withdrawal:
+                        data.WithdrawalCount = r.Sum(x => x.RowCount);
+                        data.TotalWithdrawalAmount = r.Sum(x => x.Amount);
+                        break;
+                }
+                
+                return data;
+            });
+        }
+
+        return result;
+    }
+    
+    private async Task<IEnumerable<TpBetRecordGroupByDate>> PreProcessTpBetRecordGroupByDateResult(MpaWinLossRequest request, MpaWinLossGroupByTypeEnum groupByType)
     {
         var betRecordResult = await GetTpBetRecords(request, groupByType);
-        //因GGR計算需用gameType分組，計算完再處理回來
-        var tpBetRecordResult = GetGroupByDateResult(GetGroupResult(betRecordResult));
+        // GGR計算需用gameType分組，計算完再處理回來
+        var result = GetGroupByDateResult(GetGroupResult(betRecordResult));
         
         IEnumerable<TpBetRecordGroupByDate> GetGroupResult(IEnumerable<MpaTpBetRecordDto> source)
         {
@@ -80,13 +206,7 @@ public class MpaWinLossBLL
                 });
         }
 
-        var wrapperResult = new TpBetRecordByDateWrapper
-        {
-            TpBetRecordResult = tpBetRecordResult,
-            UniquePlayers = betRecordResult.DistinctBy(x => x.CustId).Count()
-        };
-
-        return wrapperResult;
+        return result;
     }
 
     #endregion
@@ -312,7 +432,6 @@ public class MpaWinLossBLL
             .SetBAdata()
             .ToList();
         
-        // TODO: 在轉換時區前須先完成匯率轉換? => 先試試後轉會差到多少 => 好像還是這邊比較好搞嗯嗯嗯?
         var mapRate = await _mpaCommonBll.GetMapRate(request.StartTime, request.EndTime, request.BaseCurrencyId);
 
         
@@ -489,25 +608,26 @@ public class MpaWinLossBLL
     private static ITpBetRecordGroupBy GetGroupSummary(IEnumerable<ITpBetRecordGroupBy> groupBySummary, CurrencyEnum currencyId)
     {
         var r = groupBySummary.ToList();
+        var ggrSum = r.Sum(x => x.Ggr);
+        var turnOverSum = r.Sum(x => x.Ggr);
+        var betCountSum = r.Sum(x => x.BetCount);
+        var validTurnOverSum = r.Sum(x => x.ValidTurnOver);
         
-        return new TpBetRecordGroupByTpCategory
+        return new TpBetRecordGroupBy
         {
             CurrencyId = currencyId,
-            TurnOver = r.Sum(x => x.TurnOver),
-            ValidTurnOver = r.Sum(x => x.ValidTurnOver),
-            Ggr = r.Sum(x => x.Ggr),
+            TurnOver = turnOverSum,
+            ValidTurnOver = validTurnOverSum,
+            Ggr = ggrSum,
             PlayerWinLoss = r.Sum(x => x.PlayerWinLoss),
             BaPlayerWinLoss = r.Sum(x =>x.BaPlayerWinLoss),
             ProgressiveWin = r.Sum(x => x.ProgressiveWin),
             ProgressiveBet = r.Sum(x => x.ProgressiveBet),
             Commission = r.Sum(x => x.Commission),
             BaCommission = r.Sum(x => x.BaCommission),
-            BetCount = r.Sum(x => x.BetCount),
-            AvgBetAmount = r.Sum(x => x.BetCount) != 0 
-                ? r.Sum(x => x.TurnOver) / r.Sum(x => x.BetCount) : 0.00m,
-            Margin = r.Sum(x => x.ValidTurnOver) != 0
-                ? r.Sum(x => x.Ggr) / r.Sum(x => x.ValidTurnOver) : 0.00m,
-            UniquePlayers = r.Sum(x => x.UniquePlayers),
+            BetCount = betCountSum,
+            AvgBetAmount = betCountSum != 0 ? turnOverSum / betCountSum : 0.00m,
+            Margin = validTurnOverSum != 0 ? ggrSum / validTurnOverSum : 0.00m
         };
     }
 }

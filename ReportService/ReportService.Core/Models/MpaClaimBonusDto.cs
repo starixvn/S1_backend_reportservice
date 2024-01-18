@@ -1,3 +1,4 @@
+using ReportService.Core.Models.Enums;
 using ReportService.Core.Models.Interface;
 
 namespace ReportService.Core.Models;
@@ -12,7 +13,7 @@ public class MpaClaimBonusDto : IFixDateTimeOffset, IFilterTestUser
 
     public string TpUserName { get; set; }
 
-    public int CurrencyId { get; set; }
+    public CurrencyEnum CurrencyId { get; set; }
 
     public decimal BonusAmountClaim { get; set; }
 
