@@ -1,4 +1,4 @@
-namespace ReportService.Core.Models;
+namespace ReportService.Core.Models.MpaWinLoss;
 
 public class MpaWinLossGroupByWrapper<T>
 {

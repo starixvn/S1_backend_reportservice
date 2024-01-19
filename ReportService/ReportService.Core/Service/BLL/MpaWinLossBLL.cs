@@ -5,6 +5,7 @@ using ReportService.Core.Library;
 using ReportService.Core.Models;
 using ReportService.Core.Models.Enums;
 using ReportService.Core.Models.Interface;
+using ReportService.Core.Models.MpaWinLoss;
 using ReportService.Core.Service.DLL;
 
 namespace ReportService.Core.Service.BLL;
@@ -27,7 +28,67 @@ public class MpaWinLossBLL
 
     #region GroupByDate & Month
 
-    private async Task<MpaWinLossGroupByWrapper<MpaWinLossGroupByDate>> GetMpaGroupByDateResult(MpaWinLossRequest request, MpaWinLossGroupByTypeEnum groupByType)
+    private static string GetDateString(DateTime date, MpaWinLossGroupByTypeEnum groupByType)
+        => groupByType switch
+        {
+            MpaWinLossGroupByTypeEnum.Month => date.ToString("yyyy-MM"),
+            _ => date.ToString("yyyy-MM-dd")
+        };
+    
+    
+    public async Task<IEnumerable<MpaWinLossByDateResponseToFrontEnd>> GetMpaWinLossGroupByDateReport(
+        MpaWinLossRequest request, MpaWinLossGroupByTypeEnum groupByType)
+    {
+        var result = await GetMpaWinLossGroupByDateResult(request, groupByType);
+        
+        var dic = result.ExchangedResult
+            .GroupBy(x => GetDateString(x.Date, groupByType))
+            .ToDictionary(k => k.Key, x =>
+            {
+                var summary = GetMpaGroupSummary(x, request.BaseCurrencyId);
+                var date = x.First().Date;
+                
+                return new MpaWinLossGroupByResponse(summary)
+                {
+                    CurrencyDetail = request.DisplayGroupBreakdownInOriginalCurrency
+                        ? result.Result.Where(r => r.Date == date)
+                            .ToDictionary(k => k.CurrencyId.ToString(), v => new MpaWinLossCurrencyDetail(v))
+                        : x.ToDictionary(k => k.CurrencyId.ToString(), v => new MpaWinLossCurrencyDetail(v))
+                };
+        });
+        
+        #region Sort Data
+
+        var orderByProperty = request.OrderByProperty.Equals("date", StringComparison.CurrentCultureIgnoreCase)
+            ? "key"
+            : request.OrderByProperty;
+
+        dic = request.OrderBy
+            ? CommonExtension.SortApiData(dic, orderByProperty, request.OrderByDirection)
+            : dic;
+
+        foreach (var (_, value) in dic)
+        {
+            var currencyDetail = request.OrderBy
+                ? CommonExtension.SortApiData(value.CurrencyDetail, orderByProperty, request.OrderByDirection)
+                : value.CurrencyDetail;
+            
+            value.CurrencyDetail = currencyDetail;
+        }
+
+        #endregion
+
+        #region total
+
+        var total = GetMpaGroupSummary(dic.Values, request.BaseCurrencyId);
+        dic.Add("total", new MpaWinLossGroupByResponse(total));
+
+        #endregion
+
+        return dic.ToApiFormat();
+    }
+
+    private async Task<MpaWinLossGroupByWrapper<MpaWinLossGroupByDate>> GetMpaWinLossGroupByDateResult(MpaWinLossRequest request, MpaWinLossGroupByTypeEnum groupByType)
     {
         var betRecords = (await PreProcessMpaWinLossGroupBySummaryDateResult(request, groupByType)).ToList();
         var transactionResult = await GetTransactionGroupByDateResult(request, groupByType);
@@ -65,7 +126,7 @@ public class MpaWinLossBLL
         var exchangedResult = combineResult
             .Select(r =>
             {
-                var rate = mapRate[$"{r.Date.DateMapperToRateDate()}{(int)r.CurrencyId}{request.BaseCurrencyId}"];
+                var rate = mapRate[$"{r.Date.DateMapperToRateDate()}{(int)r.CurrencyId}{(int)request.BaseCurrencyId}"];
             
                 return new MpaWinLossGroupByDate(r, rate)
                 {

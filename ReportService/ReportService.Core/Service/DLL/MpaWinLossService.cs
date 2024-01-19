@@ -3,6 +3,7 @@ using Dapper;
 using Microsoft.Extensions.Logging;
 using ReportService.Core.Models;
 using ReportService.Core.Models.Enums;
+using ReportService.Core.Models.MpaWinLoss;
 
 namespace ReportService.Core.Service.DLL;
 

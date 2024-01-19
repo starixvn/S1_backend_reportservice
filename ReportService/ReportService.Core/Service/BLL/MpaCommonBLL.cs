@@ -2,6 +2,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using ReportService.Core.Library;
 using ReportService.Core.Models;
+using ReportService.Core.Models.Enums;
 using ReportService.Core.Service.DLL;
 
 namespace ReportService.Core.Service.BLL;
@@ -20,8 +21,10 @@ public class MpaCommonBLL
     
     }
     
-    public async Task<Dictionary<string, decimal>> GetMapRate(DateTimeOffset starTime, DateTimeOffset endTime, int baseCurrencyId)
+    public async Task<Dictionary<string, decimal>> GetMapRate(DateTimeOffset starTime, DateTimeOffset endTime, CurrencyEnum baseCurrency)
     {
+        var baseCurrencyId = (int) baseCurrency;
+        
         return (await GetMpaExchangeRate(starTime, endTime, baseCurrencyId))
             .Where(x => x.TargetCurrencyId == baseCurrencyId)
             .ToDictionary(k =>

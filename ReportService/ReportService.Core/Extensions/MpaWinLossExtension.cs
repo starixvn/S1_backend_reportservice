@@ -1,6 +1,7 @@
 using ReportService.Core.Models;
 using ReportService.Core.Models.Enums;
 using ReportService.Core.Models.Interface;
+using ReportService.Core.Models.MpaWinLoss;
 
 namespace ReportService.Core.Extensions;
 
@@ -103,5 +104,51 @@ public static class MpaWinLossExtension
             default:
                 return data;
         }
+    }
+    
+    public static IEnumerable<MpaWinLossByDateResponseToFrontEnd> ToApiFormat(this Dictionary<string, MpaWinLossGroupByResponse> source)
+    {
+        var result = new List<MpaWinLossByDateResponseToFrontEnd>();
+
+        foreach (var (key, value) in source)
+        {
+            var data = new MpaWinLossByDateResponseToFrontEnd
+            {
+                DisplayKey = key,
+                TurnOver = value.TurnOver,
+                ValidTurnOver = value.ValidTurnOver,
+                GGR = value.Ggr,
+                BAPlayerWinLoss = value.BaPlayerWinLoss,
+                PlayerWinLoss = value.PlayerWinLoss,
+                ProgressiveWin = value.ProgressiveWin,
+                ProgressiveBet = value.ProgressiveBet,
+                BACommission = value.BaCommission,
+                Commission = value.Commission,
+                BetCount = value.BetCount,
+                AvgBetAmount = value.AvgBetAmount,
+                UniquePlayers = value.UniquePlayers,
+                Margin = value.Margin,
+                DepositCount = value.DepositCount,
+                TotalDepositAmount = value.TotalDepositAmount,
+                WithDrawCount = value.WithdrawalCount,
+                TotalWithDrawAmount = value.TotalWithdrawalAmount,
+                TotalBonus = value.TotalBonus
+            };
+
+            // 處理 children
+            var children = value.CurrencyDetail
+                .Select(childrenItem =>
+                    new MpaWinLossCurrencyDetailForFrontEnd<MpaWinLossCurrencyDetail>
+                    {
+                        DisplayKey = childrenItem.Key,
+                        Data = childrenItem.Value
+                    })
+                .ToList();
+            data.Children = children;
+
+            result.Add(data);
+        }
+
+        return result;
     }
 }

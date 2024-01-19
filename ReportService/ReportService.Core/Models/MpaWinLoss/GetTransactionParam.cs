@@ -1,8 +1,6 @@
 using Newtonsoft.Json;
-using ReportService.Core.Extensions;
-using ReportService.Core.Models.Enums;
 
-namespace ReportService.Core.Models;
+namespace ReportService.Core.Models.MpaWinLoss;
 
 public class GetTransactionParam
 {

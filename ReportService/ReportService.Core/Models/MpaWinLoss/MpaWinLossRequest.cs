@@ -1,7 +1,7 @@
 using ReportService.Core.Models.Enums;
 using ReportService.Core.Models.Interface;
 
-namespace ReportService.Core.Models;
+namespace ReportService.Core.Models.MpaWinLoss;
 
 public class MpaWinLossRequest : IOrderBy, IMultiSiteApiRequest
 {
@@ -49,7 +49,7 @@ public class MpaWinLossRequest : IOrderBy, IMultiSiteApiRequest
     public bool DisplayGroupBreakdownInOriginalCurrency;
 
 
-    public int BaseCurrencyId { get; set; }
+    public CurrencyEnum BaseCurrencyId { get; set; }
 
 
     public bool OrderBy { get; set; }
