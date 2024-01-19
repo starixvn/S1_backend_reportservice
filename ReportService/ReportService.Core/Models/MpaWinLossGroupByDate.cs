@@ -3,15 +3,6 @@ using ReportService.Core.Models.Interface;
 
 namespace ReportService.Core.Models;
 
-public class MpaWinLossGroupByDateWrapper
-{
-    public IEnumerable<MpaWinLossGroupByDate> Result { get; set; }
-    
-    public IEnumerable<MpaWinLossGroupByDate> ExchangedResult { get; set; }
-
-    public int UniquePlayers { get; set; }
-}
-
 public class MpaWinLossGroupByDate : MpaWinLossGroupBySummary, IFixDateTimeOffset
 {
     public MpaWinLossGroupByDate()

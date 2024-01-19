@@ -25,9 +25,9 @@ public class MpaWinLossBLL
     
     }
 
-    #region GroupByDate
-    
-    private async Task<MpaWinLossGroupByDateWrapper> GetMpaGroupByDateResult(MpaWinLossRequest request, MpaWinLossGroupByTypeEnum groupByType)
+    #region GroupByDate & Month
+
+    private async Task<MpaWinLossGroupByWrapper<MpaWinLossGroupByDate>> GetMpaGroupByDateResult(MpaWinLossRequest request, MpaWinLossGroupByTypeEnum groupByType)
     {
         var betRecords = (await PreProcessMpaWinLossGroupBySummaryDateResult(request, groupByType)).ToList();
         var transactionResult = await GetTransactionGroupByDateResult(request, groupByType);
@@ -41,7 +41,8 @@ public class MpaWinLossBLL
         // 處理時區
         SetDateToOffSet(request.StartTime.Offset, combineData);
         
-        var combineResult = combineData.GroupBy(x => new
+        var combineResult = combineData
+            .GroupBy(x => new
             {
                 x.Date,
                 x.CurrencyId,
@@ -72,7 +73,40 @@ public class MpaWinLossBLL
                 };
             });
 
-        var wrapperResult = new MpaWinLossGroupByDateWrapper
+        #region GroupByMonth
+        
+        if (groupByType == MpaWinLossGroupByTypeEnum.Month)
+        {
+            combineResult = GetGroupByMonthResult(combineResult).ToList();
+            exchangedResult = GetGroupByMonthResult(exchangedResult);
+        }
+
+        IEnumerable<MpaWinLossGroupByDate> GetGroupByMonthResult(IEnumerable<MpaWinLossGroupByDate> source)
+        {
+            return source
+                .GroupBy(x => new
+                {
+                    Date = new DateTime(x.Date.Year, x.Date.Month, 1),
+                    x.CurrencyId,
+                })
+                .Select(r =>
+                {
+                    var groupSummary = GetMpaGroupSummary(r, r.Key.CurrencyId);
+
+                    return new MpaWinLossGroupByDate(groupSummary)
+                    {
+                        Date = r.Key.Date,
+                        UniquePlayers = betRecords
+                            .Where(x => x.Date.Year == r.Key.Date.Year && x.Date.Month == r.Key.Date.Month)
+                            .DistinctBy(x => x.CustId)
+                            .Count(),
+                    };
+                });
+        }
+
+        #endregion
+
+        var wrapperResult = new MpaWinLossGroupByWrapper<MpaWinLossGroupByDate>
         {
             Result = combineResult,
             ExchangedResult = exchangedResult,
@@ -631,8 +665,8 @@ public class MpaWinLossBLL
             Commission = r.Sum(x => x.Commission),
             BaCommission = r.Sum(x => x.BaCommission),
             BetCount = betCountSum,
-            AvgBetAmount = (betCountSum != 0 ? turnOverSum / betCountSum : 0.00m),
-            Margin = (validTurnOverSum != 0 ? ggrSum / validTurnOverSum : 0.00m),
+            AvgBetAmount = betCountSum != 0 ? turnOverSum / betCountSum : 0.00m,
+            Margin = validTurnOverSum != 0 ? ggrSum / validTurnOverSum : 0.00m,
             DepositCount = r.Sum(x => x.DepositCount),
             TotalDepositAmount = r.Sum(x => x.TotalDepositAmount),
             WithdrawalCount = r.Sum(x => x.WithdrawalCount),
