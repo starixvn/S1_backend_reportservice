@@ -27,15 +27,19 @@ public class MpaWinLossBLL
 
     #region GroupByDate
     
-    private async Task<TpBetRecordByDateWrapper> GetMpaGroupByDateResult(MpaWinLossRequest request, MpaWinLossGroupByTypeEnum groupByType)
+    private async Task<MpaWinLossGroupByDateWrapper> GetMpaGroupByDateResult(MpaWinLossRequest request, MpaWinLossGroupByTypeEnum groupByType)
     {
-        var winLossResult = await PreProcessTpBetRecordGroupByDateResult(request, groupByType);
+        var betRecords = (await PreProcessMpaWinLossGroupBySummaryDateResult(request, groupByType)).ToList();
         var transactionResult = await GetTransactionGroupByDateResult(request, groupByType);
         var claimBonusResult = await GetClaimBonusGroupByDateResult(request, groupByType);
 
-        var combineData = winLossResult.TpBetRecordResult
-            .Concat(transactionResult.TpBetRecordResult)
-            .Concat(claimBonusResult.TpBetRecordResult);
+        var combineData = betRecords
+            .Concat(transactionResult)
+            .Concat(claimBonusResult)
+            .ToList();
+
+        // 處理時區
+        SetDateToOffSet(request.StartTime.Offset, combineData);
         
         var combineResult = combineData.GroupBy(x => new
             {
@@ -44,93 +48,81 @@ public class MpaWinLossBLL
             })
             .Select(r =>
             {
-                var ggrSum = r.Sum(x => x.Ggr);
-                var turnOverSum = r.Sum(x => x.Ggr);
-                var betCountSum = r.Sum(x => x.BetCount);
-                var validTurnOverSum = r.Sum(x => x.ValidTurnOver);
+                var groupSummary = GetMpaGroupSummary(r, r.Key.CurrencyId);
 
-                return new TpBetRecordGroupByDate
+                return new MpaWinLossGroupByDate(groupSummary)
                 {
                     Date = r.Key.Date,
-                    CurrencyId = r.Key.CurrencyId,
-                    TurnOver = turnOverSum,
-                    ValidTurnOver = validTurnOverSum,
-                    Ggr = ggrSum,
-                    PlayerWinLoss = r.Sum(x => x.PlayerWinLoss),
-                    ProgressiveWin = r.Sum(x => x.ProgressiveWin),
-                    ProgressiveBet = r.Sum(x => x.ProgressiveBet),
-                    BaPlayerWinLoss = r.Sum(x => x.BaPlayerWinLoss),
-                    BaCommission = r.Sum(x => x.BaCommission),
-                    Commission = r.Sum(x => x.Commission),
-                    BetCount = betCountSum,
-                    //UniquePlayers = r.Where(x => x.BetCount != 0).DistinctBy(x => x.CustId).Count(),
-                    DepositCount = r.Sum(x => x.DepositCount),
-                    TotalDepositAmount = r.Sum(x => x.TotalDepositAmount),
-                    WithdrawalCount = r.Sum(x => x.WithdrawalCount),
-                    TotalWithdrawalAmount = r.Sum(x => x.TotalWithdrawalAmount),
-                    AvgBetAmount = betCountSum != 0 ? turnOverSum / betCountSum : 0.00m,
-                    Margin = turnOverSum != 0 ? ggrSum / validTurnOverSum : 0.00m,
-                    TotalBonus = r.Sum(x => x.TotalBonus)
+                    UniquePlayers = r.Where(x => x.BetCount != 0)
+                        .DistinctBy(x => x.CustId).Count(),
+                };
+            })
+            .ToList();
+        
+        // 匯率轉換
+        var mapRate = await _mpaCommonBll.GetMapRate(request.StartTime, request.EndTime, request.BaseCurrencyId);
+        var exchangedResult = combineResult
+            .Select(r =>
+            {
+                var rate = mapRate[$"{r.Date.DateMapperToRateDate()}{(int)r.CurrencyId}{request.BaseCurrencyId}"];
+            
+                return new MpaWinLossGroupByDate(r, rate)
+                {
+                    Date = r.Date
                 };
             });
 
-        var wrapperResult = new TpBetRecordByDateWrapper()
+        var wrapperResult = new MpaWinLossGroupByDateWrapper
         {
-            TpBetRecordResult = result,
+            Result = combineResult,
+            ExchangedResult = exchangedResult,
+            UniquePlayers = betRecords.DistinctBy(x => x.CustId).Count()
         };
 
         return wrapperResult;
     }
     
-    private async Task<IEnumerable<TpBetRecordGroupByDate>> GetClaimBonusGroupByDateResult(MpaWinLossRequest request, MpaWinLossGroupByTypeEnum groupByType)
+    private async Task<IEnumerable<MpaWinLossGroupByDate>> GetClaimBonusGroupByDateResult(MpaWinLossRequest request, MpaWinLossGroupByTypeEnum groupByType)
     {
         var bonusRecords = await GetClaimBonusRecords(request, groupByType);
         var result = GetGroupResult(bonusRecords);
 
-        IEnumerable<TpBetRecordGroupByDate> GetGroupResult(IEnumerable<MpaClaimBonusDto> source)
+        IEnumerable<MpaWinLossGroupByDate> GetGroupResult(IEnumerable<MpaClaimBonusDto> source)
         {
             return source.GroupBy(x => new
             {
                 x.Date,
-                x.CurrencyId,
-                x.SiteId,
-                x.CustId
-            }).Select(r => new TpBetRecordGroupByDate
+                x.CurrencyId
+            }).Select(r => new MpaWinLossGroupByDate
             {
-                CustId = r.Key.CustId,
                 Date = r.Key.Date,
                 CurrencyId = r.Key.CurrencyId,
-                TotalBonus = r.Sum(x => x.BonusAmountClaim),
-                SiteId = r.Key.SiteId
+                TotalBonus = r.Sum(x => x.BonusAmountClaim)
             }).ToList();
         }
 
         return result;
     }
 
-    private async Task<IEnumerable<TpBetRecordGroupByDate>> GetTransactionGroupByDateResult(MpaWinLossRequest request, MpaWinLossGroupByTypeEnum groupByType)
+    private async Task<IEnumerable<MpaWinLossGroupByDate>> GetTransactionGroupByDateResult(MpaWinLossRequest request, MpaWinLossGroupByTypeEnum groupByType)
     {
         var transactionRecords = await GetTransactionRecords(request, groupByType);
         var result = GetGroupResult(transactionRecords);
         
-        IEnumerable<TpBetRecordGroupByDate> GetGroupResult(IEnumerable<MpaTransactionRelayDto> source)
+        IEnumerable<MpaWinLossGroupByDate> GetGroupResult(IEnumerable<MpaTransactionRelayDto> source)
         {
             return source.GroupBy(x => new
             {
                 x.Date,
                 x.CurrencyId,
-                x.SummaryType,
-                x.SiteId,
-                x.CustId
+                x.SummaryType
             })
             .Select(r =>
             {
-                var data = new TpBetRecordGroupByDate
+                var data = new MpaWinLossGroupByDate
                 {
-                    CustId = r.Key.CustId,
                     Date = r.Key.Date,
-                    CurrencyId = r.Key.CurrencyId,
-                    SiteId = r.Key.SiteId
+                    CurrencyId = r.Key.CurrencyId
                 };
 
                 switch (r.Key.SummaryType)
@@ -153,13 +145,30 @@ public class MpaWinLossBLL
         return result;
     }
     
-    private async Task<IEnumerable<TpBetRecordGroupByDate>> PreProcessTpBetRecordGroupByDateResult(MpaWinLossRequest request, MpaWinLossGroupByTypeEnum groupByType)
+    private async Task<IEnumerable<MpaWinLossGroupByDate>> PreProcessMpaWinLossGroupBySummaryDateResult(MpaWinLossRequest request, MpaWinLossGroupByTypeEnum groupByType)
     {
         var betRecordResult = await GetTpBetRecords(request, groupByType);
-        // GGR計算需用gameType分組，計算完再處理回來
-        var result = GetGroupByDateResult(GetGroupResult(betRecordResult));
-        
-        IEnumerable<TpBetRecordGroupByDate> GetGroupResult(IEnumerable<MpaTpBetRecordDto> source)
+        var result = betRecordResult
+            .GroupBy(x => new
+            {
+                x.Date,
+                x.CurrencyId,
+                x.GameType, // GGR計算需用gameType分組
+                x.CustId
+            })
+            .Select(r =>
+            {
+                var groupBySummary = GetSummary(r, r.Key.GameType, r.Key.CurrencyId);
+
+                return new MpaWinLossGroupByDate(groupBySummary)
+                {
+                    CustId = r.Key.CustId,
+                    Date = r.Key.Date
+                };
+            });
+            
+        /* GetGroupResult(betRecordResult);
+        IEnumerable<MpaWinLossGroupByDate> GetGroupResult(IEnumerable<MpaTpBetRecordDto> source)
         {
             return source
                 .GroupBy(x => new
@@ -167,23 +176,21 @@ public class MpaWinLossBLL
                     x.Date,
                     x.CurrencyId,
                     x.GameType,
-                    x.CustId,
-                    x.SiteId
+                    x.CustId
                 })
                 .Select(r =>
                 {
                     var groupBySummary = GetSummary(r, r.Key.GameType, r.Key.CurrencyId);
 
-                    return new TpBetRecordGroupByDate(groupBySummary)
+                    return new MpaWinLossGroupByDate(groupBySummary)
                     {
-                        SiteId = r.Key.SiteId,
                         CustId = r.Key.CustId,
                         Date = r.Key.Date
                     };
                 });
         }
-
-        IEnumerable<TpBetRecordGroupByDate> GetGroupByDateResult(IEnumerable<TpBetRecordGroupByDate> source)
+        
+        IEnumerable<MpaWinLossGroupByDate> GetGroupByDateResult(IEnumerable<MpaWinLossGroupByDate> source)
         {
             return source
                 .GroupBy(x => new
@@ -191,20 +198,20 @@ public class MpaWinLossBLL
                     x.Date,
                     x.CurrencyId,
                     x.CustId,
-                    x.SiteId
+                    //x.SiteId
                 })
                 .Select(r =>
                 {
                     var groupBySummary = GetGroupSummary(r, r.Key.CurrencyId);
                     
-                    return new TpBetRecordGroupByDate(groupBySummary)
+                    return new MpaWinLossGroupByDate(groupBySummary)
                     {
-                        SiteId = r.Key.SiteId,
+                        //SiteId = r.Key.SiteId,
                         CustId = r.Key.CustId,
                         Date = r.Key.Date
                     };
                 });
-        }
+        }*/
 
         return result;
     }
@@ -213,7 +220,7 @@ public class MpaWinLossBLL
 
     #region GroupByTpGameType
 
-    private async Task<TpBetRecordByTpGameTypeWrapper> GetTpBetRecordGroupByTpGameTypeResult(MpaWinLossRequest request, MpaWinLossGroupByTypeEnum groupByType)
+    private async Task<TpBetRecordByTpGameTypeWrapper> GetMpaWinLossGroupBySummaryTpGameTypeResult(MpaWinLossRequest request, MpaWinLossGroupByTypeEnum groupByType)
     {
         var tpGameTypeMap = await _mpaCommonBll.GetTpGameTypeMapper();
         var betRecordResult = await GetTpBetRecords(request, groupByType);
@@ -228,7 +235,7 @@ public class MpaWinLossBLL
                 var gameType = r.Key.GameType;
                 var groupBySummary = GetSummary(r, gameType, r.Key.CurrencyId);
 
-                return new TpBetRecordGroupByTpGameType(groupBySummary, tpGameTypeMap[r.Key.GameType]);
+                return new MpaWinLossGroupBySummaryTpGameType(groupBySummary, tpGameTypeMap[r.Key.GameType]);
             });
 
         var wrapperResult = new TpBetRecordByTpGameTypeWrapper()
@@ -244,13 +251,13 @@ public class MpaWinLossBLL
 
     #region GroupByTpCategory
 
-    private async Task<TpBetRecordByTpCategoryWrapper> GetTpBetRecordGroupByTpCategoryResult(MpaWinLossRequest request, MpaWinLossGroupByTypeEnum groupByType)
+    private async Task<TpBetRecordByTpCategoryWrapper> GetMpaWinLossGroupBySummaryTpCategoryResult(MpaWinLossRequest request, MpaWinLossGroupByTypeEnum groupByType)
     {
         var tpCategoryMap = await _mpaCommonBll.GetTpCategoryMapper();
         var betRecordResult = await GetTpBetRecords(request, groupByType);
         var tpBetRecordResult = GetGroupByTpCategoryResult(GetGroupResult(betRecordResult));
 
-        IEnumerable<TpBetRecordGroupByTpCategory> GetGroupResult(IEnumerable<MpaTpBetRecordDto> source)
+        IEnumerable<MpaWinLossGroupBySummaryTpCategory> GetGroupResult(IEnumerable<MpaTpBetRecordDto> source)
         {
             return source
                 .GroupBy(x => new
@@ -263,11 +270,11 @@ public class MpaWinLossBLL
                     var gameType = r.Key.GameType;
                     var groupBySummary = GetSummary(r, gameType, r.Key.CurrencyId);
 
-                    return new TpBetRecordGroupByTpCategory(groupBySummary, tpCategoryMap[r.Key.CategoryId]);
+                    return new MpaWinLossGroupBySummaryTpCategory(groupBySummary, tpCategoryMap[r.Key.CategoryId]);
                 });
         }
         
-        IEnumerable<TpBetRecordGroupByTpCategory> GetGroupByTpCategoryResult(IEnumerable<TpBetRecordGroupByTpCategory> source)
+        IEnumerable<MpaWinLossGroupBySummaryTpCategory> GetGroupByTpCategoryResult(IEnumerable<MpaWinLossGroupBySummaryTpCategory> source)
         {
             return source
                 .GroupBy(x => new
@@ -277,9 +284,9 @@ public class MpaWinLossBLL
                 })
                 .Select(r =>
                 {
-                    var groupBySummary = GetGroupSummary(r, r.Key.CurrencyId);
+                    var groupBySummary = GetMpaGroupSummary(r, r.Key.CurrencyId);
                     
-                    return new TpBetRecordGroupByTpCategory(groupBySummary, r.Key.TpCategoryName);
+                    return new MpaWinLossGroupBySummaryTpCategory(groupBySummary, r.Key.TpCategoryName);
                 });
         }
         
@@ -296,13 +303,13 @@ public class MpaWinLossBLL
 
     #region GroupByPlayer
 
-    private async Task<TpBetRecordByPlayerWrapper> GetTpBetRecordGroupByPlayerResult(MpaWinLossRequest request,
+    private async Task<TpBetRecordByPlayerWrapper> GetMpaWinLossGroupBySummaryPlayerResult(MpaWinLossRequest request,
         MpaWinLossGroupByTypeEnum groupByType)
     {
         var betRecordResult = await GetTpBetRecords(request, groupByType);
         var tpBetRecordResult = GetGroupResult(betRecordResult);
 
-        IEnumerable<TpBetRecordGroupByPlayer> GetGroupResult(IEnumerable<MpaTpBetRecordDto> source)
+        IEnumerable<MpaWinLossGroupBySummaryPlayer> GetGroupResult(IEnumerable<MpaTpBetRecordDto> source)
         {
             return source
                 .GroupBy(x => new
@@ -317,7 +324,7 @@ public class MpaWinLossBLL
                 {
                     var groupBySummary = GetSummary(r, r.Key.GameType, r.Key.CurrencyId);
 
-                    return new TpBetRecordGroupByPlayer(groupBySummary)
+                    return new MpaWinLossGroupBySummaryPlayer(groupBySummary)
                     {
                         SiteId = r.Key.SiteId,
                         UserName = r.Key.UserName,
@@ -340,13 +347,13 @@ public class MpaWinLossBLL
 
     #region GroupByAffiliate
 
-    private async Task<TpBetRecordByAffiliateWrapper> GetTpBetRecordGroupByAffiliateResult(MpaWinLossRequest request,
+    private async Task<TpBetRecordByAffiliateWrapper> GetMpaWinLossGroupBySummaryAffiliateResult(MpaWinLossRequest request,
         MpaWinLossGroupByTypeEnum groupByType)
     {
         var betRecordResult = await GetTpBetRecords(request, groupByType);
         var tpBetRecordResult = GetGroupResult(betRecordResult);
 
-        IEnumerable<TpBetRecordGroupByAffiliate> GetGroupResult(IEnumerable<MpaTpBetRecordDto> source)
+        IEnumerable<MpaWinLossGroupBySummaryAffiliate> GetGroupResult(IEnumerable<MpaTpBetRecordDto> source)
         {
             return source
                 .GroupBy(x => new
@@ -362,7 +369,7 @@ public class MpaWinLossBLL
                 {
                     var groupBySummary = GetSummary(r, r.Key.GameType, r.Key.CurrencyId);
 
-                    return new TpBetRecordGroupByAffiliate(groupBySummary)
+                    return new MpaWinLossGroupBySummaryAffiliate(groupBySummary)
                     {
                         SiteId = r.Key.SiteId,
                         UserName = r.Key.UserName,
@@ -386,13 +393,13 @@ public class MpaWinLossBLL
 
     #region GroupByCurrency
 
-    private async Task<TpBetRecordByCurrencyWrapper> GetTpBetRecordGroupByCurrencyResult(MpaWinLossRequest request,
+    private async Task<TpBetRecordByCurrencyWrapper> GetMpaWinLossGroupBySummaryCurrencyResult(MpaWinLossRequest request,
         MpaWinLossGroupByTypeEnum groupByType)
     {
         var betRecordResult = await GetTpBetRecords(request, groupByType);
         var tpBetRecordResult = GetGroupResult(betRecordResult);
 
-        IEnumerable<TpBetRecordGroupByCurrency> GetGroupResult(IEnumerable<MpaTpBetRecordDto> source)
+        IEnumerable<MpaWinLossGroupBySummaryCurrency> GetGroupResult(IEnumerable<MpaTpBetRecordDto> source)
         {
             return source
                 .GroupBy(x => new
@@ -405,7 +412,7 @@ public class MpaWinLossBLL
                 {
                     var groupBySummary = GetSummary(r, r.Key.GameType, r.Key.CurrencyId);
 
-                    return new TpBetRecordGroupByCurrency(groupBySummary)
+                    return new MpaWinLossGroupBySummaryCurrency(groupBySummary)
                     {
                         CustId = r.Key.CustId,
                     };
@@ -432,10 +439,10 @@ public class MpaWinLossBLL
             .SetBAdata()
             .ToList();
         
-        var mapRate = await _mpaCommonBll.GetMapRate(request.StartTime, request.EndTime, request.BaseCurrencyId);
+        //var mapRate = await _mpaCommonBll.GetMapRate(request.StartTime, request.EndTime, request.BaseCurrencyId);
 
         
-        SetDateToOffSet(request.StartTime.Offset, tpBetRecordRelayResult, groupByType);
+        //SetDateToOffSet(request.StartTime.Offset, tpBetRecordRelayResult, groupByType);
         
         return tpBetRecordRelayResult;
     }
@@ -450,10 +457,10 @@ public class MpaWinLossBLL
             .ToList();
 
         // TODO: 匯率
-        var mapRate = await _mpaCommonBll.GetMapRate(request.StartTime, request.EndTime, request.BaseCurrencyId);
-
-        
-        SetDateToOffSet(request.StartTime.Offset, tpBetRecordRelayResult, groupByType);
+        // var mapRate = await _mpaCommonBll.GetMapRate(request.StartTime, request.EndTime, request.BaseCurrencyId);
+        //
+        //
+        // SetDateToOffSet(request.StartTime.Offset, tpBetRecordRelayResult, groupByType);
         
         return tpBetRecordRelayResult;
     }
@@ -468,10 +475,10 @@ public class MpaWinLossBLL
             .ToList();
 
         // TODO: 匯率
-        var mapRate = await _mpaCommonBll.GetMapRate(request.StartTime, request.EndTime, request.BaseCurrencyId);
+        //var mapRate = await _mpaCommonBll.GetMapRate(request.StartTime, request.EndTime, request.BaseCurrencyId);
 
         
-        SetDateToOffSet(request.StartTime.Offset, tpBetRecordRelayResult, groupByType);
+        //SetDateToOffSet(request.StartTime.Offset, tpBetRecordRelayResult, groupByType);
         
         return tpBetRecordRelayResult;
     }
@@ -504,12 +511,10 @@ public class MpaWinLossBLL
         return data;
     }
     
-    private static void SetDateToOffSet<T>(TimeSpan offset,
-        List<T> betRecordResult,
-        MpaWinLossGroupByTypeEnum groupByType) where T : IFixDateTimeOffset
+    private static void SetDateToOffSet<T>(TimeSpan offset, List<T> betRecordResult) where T : IFixDateTimeOffset
     {
-        if (groupByType is not (MpaWinLossGroupByTypeEnum.Date or MpaWinLossGroupByTypeEnum.Month))
-            return;
+        // if (groupByType is not (MpaWinLossGroupByTypeEnum.Date or MpaWinLossGroupByTypeEnum.Month))
+        //     return;
         
         betRecordResult.ForEach(item
             => { item.Date = item.Date.ToOffSetReturnDate(offset); });
@@ -571,7 +576,7 @@ public class MpaWinLossBLL
         return winLossSummary * -1 + (progressiveWinSummary - progressiveBetSummary);
     }
 
-    private static ITpBetRecordGroupBy GetSummary(IEnumerable<MpaTpBetRecordDto> records, int gameType, CurrencyEnum currencyId)
+    private static IMpaWinLossGroupBySummary GetSummary(IEnumerable<MpaTpBetRecordDto> records, int gameType, CurrencyEnum currencyId)
     {
         var r = records.ToList();
         var totalStakeSummary = r.Sum(x => x.StakeSummary);
@@ -586,7 +591,7 @@ public class MpaWinLossBLL
         var ggr = CalculateGgr(gameType, totalWinLossSummaryWithoutBa, totalProgressiveWinSummary,
             totalProgressiveBetSummary, r) + totalBaCommission;
         
-        return new TpBetRecordGroupBy
+        return new MpaWinLossGroupBySummary
         {
             CurrencyId = currencyId,
             TurnOver = totalStakeSummary,
@@ -605,7 +610,7 @@ public class MpaWinLossBLL
         };
     }
     
-    private static ITpBetRecordGroupBy GetGroupSummary(IEnumerable<ITpBetRecordGroupBy> groupBySummary, CurrencyEnum currencyId)
+    private static IMpaWinLossGroupBySummary GetMpaGroupSummary(IEnumerable<IMpaWinLossGroupBySummary> groupBySummary, CurrencyEnum currencyId)
     {
         var r = groupBySummary.ToList();
         var ggrSum = r.Sum(x => x.Ggr);
@@ -613,7 +618,7 @@ public class MpaWinLossBLL
         var betCountSum = r.Sum(x => x.BetCount);
         var validTurnOverSum = r.Sum(x => x.ValidTurnOver);
         
-        return new TpBetRecordGroupBy
+        return new MpaWinLossGroupBySummary
         {
             CurrencyId = currencyId,
             TurnOver = turnOverSum,
@@ -626,8 +631,14 @@ public class MpaWinLossBLL
             Commission = r.Sum(x => x.Commission),
             BaCommission = r.Sum(x => x.BaCommission),
             BetCount = betCountSum,
-            AvgBetAmount = betCountSum != 0 ? turnOverSum / betCountSum : 0.00m,
-            Margin = validTurnOverSum != 0 ? ggrSum / validTurnOverSum : 0.00m
+            AvgBetAmount = (betCountSum != 0 ? turnOverSum / betCountSum : 0.00m),
+            Margin = (validTurnOverSum != 0 ? ggrSum / validTurnOverSum : 0.00m),
+            DepositCount = r.Sum(x => x.DepositCount),
+            TotalDepositAmount = r.Sum(x => x.TotalDepositAmount),
+            WithdrawalCount = r.Sum(x => x.WithdrawalCount),
+            TotalWithdrawalAmount = r.Sum(x => x.TotalWithdrawalAmount),
+            TotalBonus = r.Sum(x => x.TotalBonus)
         };
     }
+    
 }

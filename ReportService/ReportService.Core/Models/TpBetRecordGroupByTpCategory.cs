@@ -3,13 +3,13 @@ using ReportService.Core.Models.Interface;
 
 namespace ReportService.Core.Models;
 
-public class TpBetRecordGroupByTpCategory : TpBetRecordGroupBy
+public class MpaWinLossGroupBySummaryTpCategory : MpaWinLossGroupBySummary
 {
-    public TpBetRecordGroupByTpCategory()
+    public MpaWinLossGroupBySummaryTpCategory()
     {
     }
     
-    public TpBetRecordGroupByTpCategory(ITpBetRecordGroupBy data, string tpCategoryName)
+    public MpaWinLossGroupBySummaryTpCategory(IMpaWinLossGroupBySummary data, string tpCategoryName)
         : base(data)
     {
         TpCategoryName = tpCategoryName;
@@ -20,7 +20,7 @@ public class TpBetRecordGroupByTpCategory : TpBetRecordGroupBy
 
 public class TpBetRecordByTpCategoryWrapper
 {
-    public IEnumerable<TpBetRecordGroupByTpCategory> TpBetRecordResult { get; set; }
+    public IEnumerable<MpaWinLossGroupBySummaryTpCategory> TpBetRecordResult { get; set; }
 
     public int UniquePlayers { get; set; }
 }

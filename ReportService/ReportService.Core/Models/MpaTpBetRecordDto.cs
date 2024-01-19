@@ -3,7 +3,7 @@ using ReportService.Core.Models.Interface;
 
 namespace ReportService.Core.Models;
 
-public class MpaTpBetRecordDto : IFixDateTimeOffset, IFilterTestUser
+public class MpaTpBetRecordDto : IFilterTestUser
 {
     public DateTime Date { get; set; }
     public int TpId { get; set; }

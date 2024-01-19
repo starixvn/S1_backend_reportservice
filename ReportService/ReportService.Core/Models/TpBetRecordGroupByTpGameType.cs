@@ -1,15 +1,14 @@
-using ReportService.Core.Models.Enums;
 using ReportService.Core.Models.Interface;
 
 namespace ReportService.Core.Models;
 
-public class TpBetRecordGroupByTpGameType : TpBetRecordGroupBy
+public class MpaWinLossGroupBySummaryTpGameType : MpaWinLossGroupBySummary
 {
-    public TpBetRecordGroupByTpGameType()
+    public MpaWinLossGroupBySummaryTpGameType()
     {
     }
     
-    public TpBetRecordGroupByTpGameType(ITpBetRecordGroupBy data, string tpGameTypeName)
+    public MpaWinLossGroupBySummaryTpGameType(IMpaWinLossGroupBySummary data, string tpGameTypeName)
         : base(data)
     {
         TpGameTypeName = tpGameTypeName;
@@ -20,7 +19,7 @@ public class TpBetRecordGroupByTpGameType : TpBetRecordGroupBy
 
 public class TpBetRecordByTpGameTypeWrapper
 {
-    public IEnumerable<TpBetRecordGroupByTpGameType> TpBetRecordResult { get; set; }
+    public IEnumerable<MpaWinLossGroupBySummaryTpGameType> TpBetRecordResult { get; set; }
 
     public int UniquePlayers { get; set; }
 }

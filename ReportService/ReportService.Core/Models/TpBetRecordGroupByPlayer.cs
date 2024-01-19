@@ -2,13 +2,13 @@ using ReportService.Core.Models.Interface;
 
 namespace ReportService.Core.Models;
 
-public class TpBetRecordGroupByPlayer : TpBetRecordGroupBy
+public class MpaWinLossGroupBySummaryPlayer : MpaWinLossGroupBySummary
 {
-    public TpBetRecordGroupByPlayer()
+    public MpaWinLossGroupBySummaryPlayer()
     {
     }
 
-    public TpBetRecordGroupByPlayer(ITpBetRecordGroupBy data): base(data)
+    public MpaWinLossGroupBySummaryPlayer(IMpaWinLossGroupBySummary data): base(data)
     {
     }
     
@@ -35,7 +35,7 @@ public class TpBetRecordGroupByPlayer : TpBetRecordGroupBy
 
 public class TpBetRecordByPlayerWrapper
 {
-    public IEnumerable<TpBetRecordGroupByPlayer> TpBetRecordResult { get; set; }
+    public IEnumerable<MpaWinLossGroupBySummaryPlayer> TpBetRecordResult { get; set; }
 
     public int UniquePlayers { get; set; }
 }
