@@ -1,7 +1,6 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-using ReportService.Core.Models.Enums;
+﻿using ReportService.Core.Models.Enums;
 
-namespace ReportService.Core.Service.DLL;
+namespace ReportService.Service.DAL;
 
 public class ConfigService
 {

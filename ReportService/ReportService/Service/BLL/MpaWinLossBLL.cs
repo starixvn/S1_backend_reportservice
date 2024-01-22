@@ -1,14 +1,13 @@
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 using ReportService.Core.Extensions;
 using ReportService.Core.Library;
 using ReportService.Core.Models;
 using ReportService.Core.Models.Enums;
 using ReportService.Core.Models.Interface;
 using ReportService.Core.Models.MpaWinLoss;
-using ReportService.Core.Service.DLL;
+using ReportService.Service.DAL;
 
-namespace ReportService.Core.Service.BLL;
+namespace ReportService.Service.BLL;
 
 public class MpaWinLossBLL
 {
@@ -84,8 +83,13 @@ public class MpaWinLossBLL
         dic.Add("total", new MpaWinLossGroupByResponse(total));
 
         #endregion
+        
+        
+        var r = dic.ToApiFormat();
+        
+        Console.WriteLine(JsonConvert.SerializeObject(r));
 
-        return dic.ToApiFormat();
+        return r;
     }
 
     private async Task<MpaWinLossGroupByWrapper<MpaWinLossGroupByDate>> GetMpaWinLossGroupByDateResult(MpaWinLossRequest request, MpaWinLossGroupByTypeEnum groupByType)
@@ -551,12 +555,6 @@ public class MpaWinLossBLL
             .FilterTestUser(request.IncludeTest)
             .ToList();
 
-        // TODO: 匯率
-        // var mapRate = await _mpaCommonBll.GetMapRate(request.StartTime, request.EndTime, request.BaseCurrencyId);
-        //
-        //
-        // SetDateToOffSet(request.StartTime.Offset, tpBetRecordRelayResult, groupByType);
-        
         return tpBetRecordRelayResult;
     }
     
@@ -569,12 +567,6 @@ public class MpaWinLossBLL
             .FilterTestUser(request.IncludeTest)
             .ToList();
 
-        // TODO: 匯率
-        //var mapRate = await _mpaCommonBll.GetMapRate(request.StartTime, request.EndTime, request.BaseCurrencyId);
-
-        
-        //SetDateToOffSet(request.StartTime.Offset, tpBetRecordRelayResult, groupByType);
-        
         return tpBetRecordRelayResult;
     }
     
@@ -608,9 +600,6 @@ public class MpaWinLossBLL
     
     private static void SetDateToOffSet<T>(TimeSpan offset, List<T> betRecordResult) where T : IFixDateTimeOffset
     {
-        // if (groupByType is not (MpaWinLossGroupByTypeEnum.Date or MpaWinLossGroupByTypeEnum.Month))
-        //     return;
-        
         betRecordResult.ForEach(item
             => { item.Date = item.Date.ToOffSetReturnDate(offset); });
     }

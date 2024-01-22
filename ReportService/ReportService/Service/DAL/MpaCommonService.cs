@@ -1,12 +1,9 @@
 using System.Data;
 using Dapper;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using ReportService.Core.Library;
 using ReportService.Core.Models;
 using ReportService.Core.Models.Enums;
 
-namespace ReportService.Core.Service.DLL;
+namespace ReportService.Service.DAL;
 
 public class MpaCommonService
 {

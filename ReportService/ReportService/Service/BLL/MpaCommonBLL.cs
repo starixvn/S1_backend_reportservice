@@ -1,11 +1,9 @@
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 using ReportService.Core.Library;
 using ReportService.Core.Models;
 using ReportService.Core.Models.Enums;
-using ReportService.Core.Service.DLL;
+using ReportService.Service.DAL;
 
-namespace ReportService.Core.Service.BLL;
+namespace ReportService.Service.BLL;
 
 public class MpaCommonBLL
 {

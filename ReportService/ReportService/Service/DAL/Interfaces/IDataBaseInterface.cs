@@ -1,6 +1,6 @@
 using ReportService.Core.Models.Enums;
 
-namespace ReportService.Core.Service.DLL.Interfaces
+namespace ReportService.Service.DAL.Interfaces
 {
     public interface IDataBaseInterface
     {
