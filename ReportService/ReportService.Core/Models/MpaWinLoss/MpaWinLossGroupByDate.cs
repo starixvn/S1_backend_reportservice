@@ -13,10 +13,6 @@ public class MpaWinLossGroupByDate : MpaWinLossGroupBySummary, IFixDateTimeOffse
     {
     }
     
-    public MpaWinLossGroupByDate(IMpaWinLossGroupBySummary data, decimal rate): base(data, rate)
-    {
-    }
-    
     public DateTime Date { get; set; }
 
     public int CustId { get; set; }

@@ -70,27 +70,30 @@ public class MpaWinLossGroupBySummary : IMpaWinLossGroupBySummary
         TotalBonus = data.TotalBonus;
     }
     
-    public MpaWinLossGroupBySummary(IMpaWinLossGroupBySummary data, decimal rate)
+    public MpaWinLossGroupBySummary ExchangeMpaWinLossGroupBySummary(decimal rate)
     {
-        CurrencyId = data.CurrencyId;
-        TurnOver = data.TurnOver * rate;
-        ValidTurnOver = data.ValidTurnOver * rate;
-        Ggr = data.Ggr * rate;
-        PlayerWinLoss = data.PlayerWinLoss * rate;
-        BaPlayerWinLoss = data.BaPlayerWinLoss * rate;
-        ProgressiveWin = data.ProgressiveWin * rate;
-        ProgressiveBet = data.ProgressiveBet * rate;
-        Commission = data.Commission * rate;
-        BaCommission = data.BaCommission * rate;
-        BetCount = data.BetCount;
-        AvgBetAmount = data.AvgBetAmount * rate;
-        UniquePlayers = data.UniquePlayers;
-        Margin = data.Margin * rate;
-        DepositCount = data.DepositCount;
-        TotalDepositAmount = data.TotalDepositAmount * rate;
-        WithdrawalCount = data.WithdrawalCount;
-        TotalWithdrawalAmount = data.TotalWithdrawalAmount * rate;
-        TotalBonus = data.TotalBonus * rate;
+        return new MpaWinLossGroupBySummary
+        {
+            CurrencyId = CurrencyId,
+            TurnOver = TurnOver * rate,
+            ValidTurnOver = ValidTurnOver * rate,
+            Ggr = Ggr * rate,
+            PlayerWinLoss = PlayerWinLoss * rate,
+            BaPlayerWinLoss = BaPlayerWinLoss * rate,
+            ProgressiveWin = ProgressiveWin * rate,
+            ProgressiveBet = ProgressiveBet * rate,
+            Commission = Commission * rate,
+            BaCommission = BaCommission * rate,
+            BetCount = BetCount,
+            AvgBetAmount = AvgBetAmount * rate,
+            UniquePlayers = UniquePlayers,
+            Margin = Margin * rate,
+            DepositCount = DepositCount,
+            TotalDepositAmount = TotalDepositAmount * rate,
+            WithdrawalCount = WithdrawalCount,
+            TotalWithdrawalAmount = TotalWithdrawalAmount * rate,
+            TotalBonus = TotalBonus * rate
+        };
     }
     
     public CurrencyEnum CurrencyId { get; set; }

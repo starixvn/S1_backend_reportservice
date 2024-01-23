@@ -24,7 +24,6 @@ public class MpaTpBetRecordDto : IFilterTestUser
     public decimal RevenueSummary { get; set; }
     public decimal ProgressiveWinSummary { get; set; }
     public decimal ProgressiveBetSummary { get; set; }
-    public decimal ClosingBalance { get; set; }
     public int RowCount { get; set; }
     public int IsTest { get; set; }
     public int SummaryType { get; set; }
