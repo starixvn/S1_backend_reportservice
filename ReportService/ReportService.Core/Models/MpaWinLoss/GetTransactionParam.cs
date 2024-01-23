@@ -1,4 +1,5 @@
 using Newtonsoft.Json;
+using ReportService.Core.Extensions;
 
 namespace ReportService.Core.Models.MpaWinLoss;
 
@@ -15,10 +16,10 @@ public class GetTransactionParam
         EndTime = req.EndTime.UtcDateTime;
         DateTimeFormat = format;
         
-        MemberTypesJson = JsonConvert.SerializeObject(req.MemberTypes);
-        UserNamesJson = JsonConvert.SerializeObject(req.UserNames);
-        CurrencyIdsJson = JsonConvert.SerializeObject(req.CurrencyIds);
-        AffiliateNamesJson = JsonConvert.SerializeObject(req.AffiliateNames);
+        MemberTypesJson = CommonExtension.SerializeEnumerableEmptyReturnNull(req.MemberTypes);
+        UserNamesJson = CommonExtension.SerializeEnumerableEmptyReturnNull(req.UserNames);
+        CurrencyIdsJson = CommonExtension.SerializeEnumerableEmptyReturnNull(req.CurrencyIds);
+        AffiliateNamesJson = CommonExtension.SerializeEnumerableEmptyReturnNull(req.AffiliateNames);
     }
     
     public string SiteIdsJson { get; set; }

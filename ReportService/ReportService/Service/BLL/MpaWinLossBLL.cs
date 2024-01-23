@@ -39,7 +39,7 @@ public class MpaWinLossBLL
         MpaWinLossRequest request, MpaWinLossGroupByTypeEnum groupByType)
     {
         var result = await GetMpaWinLossGroupByDateResult(request, groupByType);
-        
+
         var dic = result.ExchangedResult
             .GroupBy(x => GetDateString(x.Date, groupByType))
             .ToDictionary(k => k.Key, x =>
@@ -55,6 +55,8 @@ public class MpaWinLossBLL
                         : x.ToDictionary(k => k.CurrencyId.ToString(), v => new MpaWinLossCurrencyDetail(v))
                 };
         });
+        
+        _logger.LogInformation("Data process step1 END");
         
         #region Sort Data
 
@@ -85,9 +87,13 @@ public class MpaWinLossBLL
         #endregion
         
         
+        _logger.LogInformation("Data process step3 END.");
+        
+        _logger.LogInformation(JsonConvert.SerializeObject(dic));
+
         var r = dic.ToApiFormat();
         
-        Console.WriteLine(JsonConvert.SerializeObject(r));
+        _logger.LogInformation(JsonConvert.SerializeObject(r));
 
         return r;
     }
@@ -102,7 +108,7 @@ public class MpaWinLossBLL
             .Concat(transactionResult)
             .Concat(claimBonusResult)
             .ToList();
-
+        
         // 處理時區
         SetDateToOffSet(request.StartTime.Offset, combineData);
         
@@ -533,7 +539,9 @@ public class MpaWinLossBLL
     {
         var format = MapMpaWinLossGroupByTypeEnumFormat(groupByType);
         var data = await GetMapTpBetRecordByDate(request, groupByType);
-        var tpBetRecordRelayResult = data.Filter(request)
+
+        var tpBetRecordRelayResult = data
+            .Filter(request)
             .SetCommissionByNineW(request, format, _mpaWinLossService.Get9WCommission)
             .SetBAdata()
             .ToList();
@@ -551,11 +559,12 @@ public class MpaWinLossBLL
         var format = MapMpaWinLossGroupByTypeEnumFormat(groupByType);
         var data = 
             await _mpaWinLossService.GetTransaction<MpaTransactionRelayDto>(new GetTransactionParam(request, format));
-        var tpBetRecordRelayResult = data
+        
+        var transactionResult = data
             .FilterTestUser(request.IncludeTest)
             .ToList();
-
-        return tpBetRecordRelayResult;
+        
+        return transactionResult;
     }
     
     private async Task<List<MpaClaimBonusDto>> GetClaimBonusRecords(MpaWinLossRequest request, MpaWinLossGroupByTypeEnum groupByType)
@@ -563,11 +572,12 @@ public class MpaWinLossBLL
         var format = MapMpaWinLossGroupByTypeEnumFormat(groupByType);
         var data = 
             await _mpaWinLossService.GetClaimBonus<MpaClaimBonusDto>(new GetTransactionParam(request, format));
-        var tpBetRecordRelayResult = data
+        
+        var claimBonusResult = data
             .FilterTestUser(request.IncludeTest)
             .ToList();
 
-        return tpBetRecordRelayResult;
+        return claimBonusResult;
     }
     
     private async Task<IEnumerable<MpaTpBetRecordDto>> GetMapTpBetRecordByDate(MpaWinLossRequest request, MpaWinLossGroupByTypeEnum groupByType)
@@ -594,7 +604,7 @@ public class MpaWinLossBLL
         {
             data.AddRange(task.Result);
         }
-
+        
         return data;
     }
     
@@ -698,7 +708,7 @@ public class MpaWinLossBLL
     {
         var r = groupBySummary.ToList();
         var ggrSum = r.Sum(x => x.Ggr);
-        var turnOverSum = r.Sum(x => x.Ggr);
+        var turnOverSum = r.Sum(x => x.TurnOver);
         var betCountSum = r.Sum(x => x.BetCount);
         var validTurnOverSum = r.Sum(x => x.ValidTurnOver);
         
@@ -717,6 +727,7 @@ public class MpaWinLossBLL
             BetCount = betCountSum,
             AvgBetAmount = betCountSum != 0 ? turnOverSum / betCountSum : 0.00m,
             Margin = validTurnOverSum != 0 ? ggrSum / validTurnOverSum : 0.00m,
+            UniquePlayers = r.Sum(x => x.UniquePlayers),
             DepositCount = r.Sum(x => x.DepositCount),
             TotalDepositAmount = r.Sum(x => x.TotalDepositAmount),
             WithdrawalCount = r.Sum(x => x.WithdrawalCount),

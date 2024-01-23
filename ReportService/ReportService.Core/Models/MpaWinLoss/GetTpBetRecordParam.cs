@@ -31,12 +31,12 @@ public class GetTpBetRecordParam : GetTransactionParam
         };
 
         SummaryTypesJson = CommonExtension.SerializeEnumerableEmptyReturnNull(summaryTypes);
-        MemberTypesJson = JsonConvert.SerializeObject(req.MemberTypes);
-        UserNamesJson = JsonConvert.SerializeObject(req.UserNames);
-        GameTypesJson = JsonConvert.SerializeObject(req.TpGameTypes);
-        CurrencyIdsJson = JsonConvert.SerializeObject(req.CurrencyIds);
-        CategoryIdsJson = JsonConvert.SerializeObject(req.TpCategorys);
-        AffiliateNamesJson = JsonConvert.SerializeObject(req.AffiliateNames);
+        MemberTypesJson = CommonExtension.SerializeEnumerableEmptyReturnNull(req.MemberTypes);
+        UserNamesJson = CommonExtension.SerializeEnumerableEmptyReturnNull(req.UserNames);
+        GameTypesJson = CommonExtension.SerializeEnumerableEmptyReturnNull(req.TpGameTypes);
+        CurrencyIdsJson = CommonExtension.SerializeEnumerableEmptyReturnNull(req.CurrencyIds);
+        CategoryIdsJson = CommonExtension.SerializeEnumerableEmptyReturnNull(req.TpCategorys);
+        AffiliateNamesJson = CommonExtension.SerializeEnumerableEmptyReturnNull(req.AffiliateNames);
     }
     
     public string? SummaryTypesJson { get; set; }
