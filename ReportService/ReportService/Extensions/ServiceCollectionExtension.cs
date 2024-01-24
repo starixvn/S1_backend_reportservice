@@ -1,6 +1,7 @@
 using Elastic.Apm.StackExchange.Redis;
 using ReportService.Core.Library;
 using ReportService.Core.Models.Enums;
+using ReportService.ExceptionHandling;
 using ReportService.Service.DAL;
 using StackExchange.Redis;
 
@@ -24,7 +25,7 @@ public static class ServiceCollectionExtension
         redisConnection.UseElasticApm();
         services.AddSingleton<IConnectionMultiplexer>(redisConnection);
         
-        /*DAL*/
+        // DAL
         var dalAssemblies = AppDomain.CurrentDomain.GetAssemblies();
 
         foreach (var item in dalAssemblies)
@@ -39,7 +40,7 @@ public static class ServiceCollectionExtension
             });
         }
 
-        /*BLL*/
+        // BLL
         var bllAssemblies = AppDomain.CurrentDomain.GetAssemblies();
 
         foreach (var item in bllAssemblies)
@@ -53,6 +54,12 @@ public static class ServiceCollectionExtension
                 services.AddSingleton(type, type);
             });
         }
+        
+        // Filters
+        services.AddMvc(config =>
+        {
+            config.Filters.Add<ExceptionFilter>();
+        });
         
         return services
             .AddSingleton<ICacheHelper, RedisCacheHelper>();

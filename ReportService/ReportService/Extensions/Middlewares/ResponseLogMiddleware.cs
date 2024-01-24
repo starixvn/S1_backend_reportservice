@@ -19,7 +19,6 @@ public class ResponseLogMiddleware
     public async Task Invoke(HttpContext context)
     {
         var sw = Stopwatch.StartNew();
-        var path = context.Request.Path.Value;
         var bodyStream = context.Response.Body;
 
         var responseBodyStream = new MemoryStream();

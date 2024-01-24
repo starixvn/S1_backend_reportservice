@@ -3,7 +3,7 @@ using ReportService.Core.Models.Interface;
 
 namespace ReportService.Core.Models.MpaWinLoss;
 
-public class MpaWinLossRequest : IOrderBy, IMultiSiteApiRequest
+public class MpaWinLossRequest : IMultiSiteApiRequest
 {
     /// <summary>
     /// 結算起始時間
@@ -15,7 +15,6 @@ public class MpaWinLossRequest : IOrderBy, IMultiSiteApiRequest
     /// </summary>
     public DateTimeOffset EndTime { get; set; }
 
-
     /// <summary>
     /// 所有供應商的所有類型遊戲
     /// </summary>
@@ -25,7 +24,6 @@ public class MpaWinLossRequest : IOrderBy, IMultiSiteApiRequest
     /// 玩家名稱
     /// </summary>
     public IEnumerable<string>? UserNames { get; set; }
-
 
     /// <summary>
     /// 所有幣別
@@ -42,40 +40,13 @@ public class MpaWinLossRequest : IOrderBy, IMultiSiteApiRequest
     /// </summary>
     public bool NoDraw { get; set; }
 
-    // todo: 這個在後台做就好了吧我考慮康康
-    /// <summary>
-    /// 內層顯示原始匯率，外層加總使用 BaseCurrency
-    /// </summary>
-    public bool DisplayGroupBreakdownInOriginalCurrency;
-
-
     public CurrencyEnum BaseCurrencyId { get; set; }
-
-
-    public bool OrderBy { get; set; }
-
-    /// <summary>
-    /// 排序欄位，可為NULL或是空
-    /// </summary>
-    public string OrderByProperty { get; set; }
-
-    public OrderByDirection OrderByDirection { get; set; }
-
+    
     /// <summary>
     /// SettledDate = 1,
     /// CreatedDate = 2
     /// </summary>
     public MpaDateType DateType { get; set; }
-
-    /// <summary>
-    /// 第 x 頁
-    /// </summary>
-    public int PageNumber { get; set; }
-
-    /// <summary>
-    /// 一頁顯示幾筆
-    /// </summary>
-    public int PageSize { get; set; }
 
     /// <summary>
     /// 玩家類型，一般、代理、值播主
@@ -97,4 +68,6 @@ public class MpaWinLossRequest : IOrderBy, IMultiSiteApiRequest
     /// 代理帳號
     /// </summary>
     public IEnumerable<string>? AffiliateNames { get; set; }
+
+    public MpaWinLossGroupByTypeEnum GroupByType { get; set; }
 }
