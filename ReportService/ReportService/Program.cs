@@ -30,7 +30,8 @@ builder.Host.UseSerilog((context, Configuration) =>
 
 builder.Services
     .AddDatabaseConnection(builder.Configuration)
-    .RegisterServices(builder.Configuration);
+    .RegisterServices(builder.Configuration)
+    .AddControllers();
 
 JsonConvert.DefaultSettings = () => new JsonSerializerSettings
 {
