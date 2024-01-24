@@ -403,13 +403,13 @@ public class MpaWinLossBLL
     public async Task<MpaWinLoseResponse<MpaWinLossGroupByResponse>> GetMpaWinLossGroupByPlayerReport(
         MpaWinLossRequest request)
     {
-        var result = await GetMpaWinLossGroupByDateResult(request);
+        var result = await GetMpaWinLossGroupByPlayerResult(request);
         var total = GetMpaGroupSummary(result.ExchangedResult, request.BaseCurrencyId, request.GroupByType);
         
         return new MpaWinLoseResponse<MpaWinLossGroupByResponse>
         {
-            Result = result.Result.Select(x => new MpaWinLossGroupByResponse(x, GetDateString(x.Date, request.GroupByType))),
-            ExchangedResult = result.Result.Select(x => new MpaWinLossGroupByResponse(x, GetDateString(x.Date, request.GroupByType))),
+            Result = result.Result.Select(x => new MpaWinLossGroupByResponse(x, x.TpUserName)),
+            ExchangedResult = result.Result.Select(x => new MpaWinLossGroupByResponse(x, x.TpUserName)),
             Total = new MpaWinLossGroupByResponse(total, "Total")
         };
     }
@@ -439,7 +439,8 @@ public class MpaWinLossBLL
                     TpUserName = r.Key.TpUserName,
                     Date = r.Key.Date
                 };
-            });
+            })
+            .ToList();
 
         var mapRate = await _mpaCommonBll.GetMapRate(request.StartTime, request.EndTime, request.BaseCurrencyId);
         var exchangedResult = preProcessResult
@@ -485,14 +486,15 @@ public class MpaWinLossBLL
 
     #region GroupByAffiliate
 
-    private async Task<IEnumerable<MpaWinLossGroupByAffiliate>> PreProcessMpaWinLossGroupByAffiliateResult(MpaWinLossRequest request)
+    private async Task<MpaWinLossGroupByWrapper<MpaWinLossGroupByAffiliate>> GetMpaWinLossGroupByAffiliateResult(MpaWinLossRequest request)
     {
         var betRecordResult = await GetTpBetRecords(request);
-        var result = betRecordResult
+        var preProcessResult = betRecordResult
+            .Where(x => !string.IsNullOrEmpty(x.AffiliateName))
             .GroupBy(x => new
             {
-                x.UserName,
                 x.TpUserName,
+                x.UserName,
                 x.AffiliateName,
                 x.CurrencyId,
                 x.GameType,
@@ -509,19 +511,58 @@ public class MpaWinLossBLL
                     TpUserName = r.Key.TpUserName,
                     AffiliateAccount = r.Key.AffiliateName
                 };
+            })
+            .ToList();
+        
+        var mapRate = await _mpaCommonBll.GetMapRate(request.StartTime, request.EndTime, request.BaseCurrencyId);
+        var exchangedResult = preProcessResult
+            .Select(r =>
+            {
+                var rate = mapRate[$"{r.Date.DateMapperToRateDate()}{(int)r.CurrencyId}{(int)request.BaseCurrencyId}"];
+                var exchangedResult = r.ExchangeMpaWinLossGroupBySummary(rate);
+                
+                return new MpaWinLossGroupByAffiliate(exchangedResult);
             });
 
-        return result;
+        IEnumerable<MpaWinLossGroupByAffiliate> GroupByResult(IEnumerable<MpaWinLossGroupByAffiliate> source)
+            => source
+                .GroupBy(x => new
+                {
+                    x.CurrencyId,
+                    x.UserName,
+                    x.TpUserName,
+                    x.AffiliateAccount
+                })
+                .Select(r =>
+                {
+                    var groupSummary = GetMpaGroupSummary(r, r.Key.CurrencyId, request.GroupByType);
+
+                    return new MpaWinLossGroupByAffiliate(groupSummary)
+                    {
+                        AffiliateAccount = r.Key.AffiliateAccount,
+                        UserName = r.Key.UserName,
+                        TpUserName = r.Key.TpUserName,
+                        UniquePlayers = r.Where(x => x.BetCount != 0)
+                            .DistinctBy(x => x.TpUserName).Count(),
+                    };
+                });
+        
+        return new MpaWinLossGroupByWrapper<MpaWinLossGroupByAffiliate>
+        {
+            Result = GroupByResult(preProcessResult),
+            ExchangedResult = GroupByResult(exchangedResult),
+            UniquePlayers = betRecordResult.DistinctBy(x => x.CustId).Count()
+        };
     }
     
     #endregion
 
     #region GroupByCurrency
 
-    private async Task<IEnumerable<MpaWinLossGroupByCurrency>> PreProcessMpaWinLossGroupByCurrencyResult(MpaWinLossRequest request)
+    private async Task<MpaWinLossGroupByWrapper<MpaWinLossGroupByCurrency>> GetMpaWinLossGroupByCurrencyResult(MpaWinLossRequest request)
     {
         var betRecordResult = await GetTpBetRecords(request);
-        var result = betRecordResult
+        var preProcessResult = betRecordResult
             .GroupBy(x => new
             {
                 x.CurrencyId,
@@ -538,9 +579,41 @@ public class MpaWinLossBLL
                     Date = r.Key.Date,
                     CustId = r.Key.CustId
                 };
+            }).ToList();
+
+        var mapRate = await _mpaCommonBll.GetMapRate(request.StartTime, request.EndTime, request.BaseCurrencyId);
+        var exchangedResult = preProcessResult
+            .Select(r =>
+            {
+                var rate = mapRate[$"{r.Date.DateMapperToRateDate()}{(int)r.CurrencyId}{(int)request.BaseCurrencyId}"];
+                var exchangedResult = r.ExchangeMpaWinLossGroupBySummary(rate);
+                
+                return new MpaWinLossGroupByCurrency(exchangedResult);
             });
+
+        IEnumerable<MpaWinLossGroupByCurrency> GroupByResult(IEnumerable<MpaWinLossGroupByCurrency> source)
+            => source
+                .GroupBy(x => new
+                {
+                    x.CurrencyId
+                })
+                .Select(r =>
+                {
+                    var groupSummary = GetMpaGroupSummary(r, r.Key.CurrencyId, request.GroupByType);
+
+                    return new MpaWinLossGroupByCurrency(groupSummary)
+                    {
+                        UniquePlayers = r.Where(x => x.BetCount != 0)
+                            .DistinctBy(x => x.CustId).Count(),
+                    };
+                });
         
-        return result;
+        return new MpaWinLossGroupByWrapper<MpaWinLossGroupByCurrency>
+        {
+            Result = GroupByResult(preProcessResult),
+            ExchangedResult = GroupByResult(exchangedResult),
+            UniquePlayers = betRecordResult.DistinctBy(x => x.CustId).Count()
+        };
     }
     
     #endregion
