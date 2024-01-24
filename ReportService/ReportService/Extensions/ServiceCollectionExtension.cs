@@ -1,4 +1,4 @@
-using Elastic.Apm.StackExchange.Redis;
+ï»¿using Elastic.Apm.StackExchange.Redis;
 using ReportService.Core.Library;
 using ReportService.Core.Models.Enums;
 using ReportService.Service.DAL;
@@ -18,12 +18,12 @@ public static class ServiceCollectionExtension
         var reportBackupDB1 = configuration.GetConnectionString($"{serviceType}_ReportBackupDB1");
         var reportBackupDB2 = configuration.GetConnectionString($"{serviceType}_ReportBackupDB2");
 
-        //ÀË¬d¬O§_¦³BackupDB³s½u¦r¦ê
+        //æª¢æŸ¥æ˜¯å¦æœ‰BackupDBé€£ç·šå­—ä¸²
         if (!string.IsNullOrEmpty(reportBackupDB1) && !string.IsNullOrEmpty(reportBackupDB2))
         {
-            // ³]©w¥D­nªºReportDB»PBackupDB1
+            // è¨­å®šä¸»è¦çš„ReportDBèˆ‡BackupDB1
             services.AddSingleton(new MySqlClient(DataBase.Report, logger, reportDBConn, reportBackupDB1));
-            // ³]©wBackup¡A¨Ï¥ÎBackupDB1»PBackupDB2
+            // è¨­å®šBackupï¼Œä½¿ç”¨BackupDB1èˆ‡BackupDB2
             services.AddSingleton(new MySqlClient(DataBase.ReportBackupDB, logger, reportBackupDB1, reportBackupDB2));
         }
         else
