@@ -1,6 +1,6 @@
 using ReportService.Core.Library;
 using ReportService.Core.Models;
-using ReportService.Core.Models.Enums;
+using ReportService.Models;
 using ReportService.Service.DAL;
 
 namespace ReportService.Service.BLL;
@@ -10,19 +10,22 @@ public class MpaCommonBLL
     private readonly MpaCommonService _mpaCommonService;
     private readonly ICacheHelper _redisHelper;
     private readonly ILogger<MpaWinLossBLL> _logger;
+    private readonly IReadOnlyDictionary<int, string> _dicServerInfo;
+    private readonly IReadOnlyDictionary<int, string> _dicCurrencyInfo;
    
     public MpaCommonBLL(IServiceProvider provider)
     {
         _mpaCommonService = provider.GetRequiredService<MpaCommonService>();
         _redisHelper = provider.GetRequiredService<ICacheHelper>();
         _logger = provider.GetRequiredService<ILogger<MpaWinLossBLL>>();
-    
+        _dicServerInfo = provider.GetRequiredService<IEnumerable<ServerInfo>>()
+            .ToDictionary(x => x.SiteId, x => x.SiteName);
+        _dicCurrencyInfo = provider.GetRequiredService<IEnumerable<CurrencyInfo>>()
+            .ToDictionary(x => x.CurrencyId, x => x.IsoCode);
     }
     
-    public async Task<Dictionary<string, decimal>> GetMapRate(DateTimeOffset starTime, DateTimeOffset endTime, CurrencyEnum baseCurrency)
+    public async Task<Dictionary<string, decimal>> GetMapRate(DateTimeOffset starTime, DateTimeOffset endTime, int baseCurrencyId)
     {
-        var baseCurrencyId = (int) baseCurrency;
-        
         return (await GetMpaExchangeRate(starTime, endTime, baseCurrencyId))
             .Where(x => x.TargetCurrencyId == baseCurrencyId)
             .ToDictionary(k =>
@@ -100,4 +103,10 @@ public class MpaCommonBLL
 
         return data.ToDictionary(x => x.CategoryId, v => v.CategoryName);
     }
+
+    public string ToSiteName(int siteId)
+        => _dicServerInfo[siteId];
+    
+    public string ToCurrencyIsoCode(int currencyId)
+        => _dicCurrencyInfo[currencyId];
 }

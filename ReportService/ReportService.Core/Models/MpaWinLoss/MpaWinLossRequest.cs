@@ -28,7 +28,7 @@ public class MpaWinLossRequest : IMultiSiteApiRequest
     /// <summary>
     /// 所有幣別
     /// </summary>
-    public IEnumerable<CurrencyEnum>? CurrencyIds { get; set; }
+    public IEnumerable<int>? CurrencyIds { get; set; }
 
     /// <summary>
     /// 包含免費旋轉 => TicketStatus = FreeBetWin(6)
@@ -40,7 +40,7 @@ public class MpaWinLossRequest : IMultiSiteApiRequest
     /// </summary>
     public bool NoDraw { get; set; }
 
-    public CurrencyEnum BaseCurrencyId { get; set; }
+    public int BaseCurrencyId { get; set; }
     
     /// <summary>
     /// SettledDate = 1,

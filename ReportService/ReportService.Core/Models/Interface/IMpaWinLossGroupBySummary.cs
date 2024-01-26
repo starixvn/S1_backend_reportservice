@@ -1,10 +1,8 @@
-using ReportService.Core.Models.Enums;
-
 namespace ReportService.Core.Models.Interface;
 
 public interface IMpaWinLossGroupBySummary
 {
-    public CurrencyEnum CurrencyId { get; set; }
+    public int CurrencyId { get; set; }
 
     public decimal TurnOver { get; set; }
 
@@ -41,13 +39,13 @@ public interface IMpaWinLossGroupBySummary
     public decimal TotalBonus { get; set; }
 }
 
-public class MpaWinLossGroupBySummary : IMpaWinLossGroupBySummary
+public class MpaWinLossGroupBySummary //: IMpaWinLossGroupBySummary
 {
     public MpaWinLossGroupBySummary()
     {
     }
     
-    public MpaWinLossGroupBySummary(IMpaWinLossGroupBySummary data)
+    public MpaWinLossGroupBySummary(MpaWinLossGroupBySummary data)
     {
         CurrencyId = data.CurrencyId;
         TurnOver = data.TurnOver;
@@ -96,7 +94,7 @@ public class MpaWinLossGroupBySummary : IMpaWinLossGroupBySummary
         };
     }
     
-    public CurrencyEnum CurrencyId { get; set; }
+    public int CurrencyId { get; set; }
 
     public decimal TurnOver { get; set; }
 

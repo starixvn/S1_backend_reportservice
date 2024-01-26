@@ -2,6 +2,8 @@
 using ReportService.Core.Library;
 using ReportService.Core.Models.Enums;
 using ReportService.ExceptionHandling;
+using ReportService.Models;
+using ReportService.Service.BLL;
 using ReportService.Service.DAL;
 using StackExchange.Redis;
 
@@ -72,6 +74,12 @@ public static class ServiceCollectionExtension
             });
         }
         
+        services.AddOptionListByDb<ServerInfo>("ServerInfoList_Get");
+        services.AddOptionListByDb<CurrencyInfo>("Common_Currency_Get");
+        services.AddOptionListByDb<Config>("SiteConfig_Get", new { ConfigGroup = "PaymentService" });
+        services.AddSiteConfig();
+        services.AddSingleton<ConfigBLL>();
+        
         // Filters
         services.AddMvc(config =>
         {
@@ -80,5 +88,37 @@ public static class ServiceCollectionExtension
         
         return services
             .AddSingleton<ICacheHelper, RedisCacheHelper>();
+    }
+    
+    private static IServiceCollection AddOptionListByDb<T>(this IServiceCollection services, string sql, object parameters = null)
+    {
+        var provider = services.BuildServiceProvider();
+        var configService = provider.GetRequiredService<ConfigService>();
+        var option = configService.Query<T>(sql, parameters);
+        services.AddSingleton(typeof(IEnumerable<T>), p => option);
+        
+        return services;
+    }
+    
+    private static IServiceCollection AddSiteConfig(this IServiceCollection services)
+    {
+        var provider = services.BuildServiceProvider();
+        // 準備ServerInfo
+        var serverInfoList = new List<ServerInfo> { new() { SiteId = 0, SiteName = "default" } };
+        serverInfoList.AddRange(provider.GetRequiredService<IEnumerable<ServerInfo>>());
+
+        // 準備Config
+        var siteConfigGroup = provider.GetRequiredService<IEnumerable<Config>>().GroupBy(i => i.SiteId);
+
+        foreach (var serverInfo in serverInfoList)
+        {
+            //設定SiteConfig
+            var siteConfig = siteConfigGroup
+                .FirstOrDefault(i => i.Key == serverInfo.SiteId) ?? siteConfigGroup.First(i => i.Key == 0);
+            var config = siteConfig.ToDictionary(i => i.ConfigKey, i => i.ConfigValue);
+            services.AddSingleton(new SiteConfig(serverInfo, config));
+        }
+
+        return services;
     }
 }

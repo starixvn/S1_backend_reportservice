@@ -1,4 +1,3 @@
-using ReportService.Core.Models.Enums;
 using ReportService.Core.Models.Interface;
 
 namespace ReportService.Core.Models.MpaWinLoss;
@@ -9,7 +8,7 @@ public class MpaWinLossGroupByDate : MpaWinLossGroupBySummary, IFixDateTimeOffse
     {
     }
 
-    public MpaWinLossGroupByDate(IMpaWinLossGroupBySummary data): base(data)
+    public MpaWinLossGroupByDate(MpaWinLossGroupBySummary data): base(data)
     {
     }
     

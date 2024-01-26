@@ -2,6 +2,7 @@ using System.Data;
 using Dapper;
 using ReportService.Core.Models;
 using ReportService.Core.Models.Enums;
+using ReportService.Models;
 
 namespace ReportService.Service.DAL;
 
@@ -35,6 +36,4 @@ public class MpaCommonService
     {
         return _reportDbClient.QueryAsync<TpCategoryDto>("Admin_TPCategory_Get");
     }
-    
-    
 }

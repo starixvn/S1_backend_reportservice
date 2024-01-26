@@ -10,7 +10,7 @@ public class MpaTpBetRecordDto : IFilterTestUser
     public int CategoryId { get; set; }
     public int GameType { get; set; }
     public int SiteId { get; set; }
-    public CurrencyEnum CurrencyId { get; set; }
+    public int CurrencyId { get; set; }
     public int CustId { get; set; }
     public string UserName { get; set; }
     public string TpUserName { get; set; }
