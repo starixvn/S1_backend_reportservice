@@ -94,6 +94,9 @@ public class MpaWinLossBLL
             .Concat(claimBonusResult)
             .ToList();
 
+        // 處理時區
+        SetDateToOffSet(request.StartTime.Offset, combineData);
+        
         var combineResult = combineData
             .GroupBy(x => new
             {
@@ -114,9 +117,6 @@ public class MpaWinLossBLL
                 };
             })
             .ToList();
-
-        // 處理時區
-        SetDateToOffSet(request.StartTime.Offset, combineResult);
 
         var uniquePlayers = betRecords.DistinctBy(x => x.CustId).Count();
 
@@ -522,7 +522,13 @@ public class MpaWinLossBLL
                 var rate = mapRate[$"{r.Date.DateMapperToRateDate()}{r.CurrencyId}{request.BaseCurrencyId}"];
                 var exchangedResult = r.ExchangeMpaWinLossGroupBySummary(rate);
                 
-                return new MpaWinLossGroupByModel(exchangedResult);
+                return new MpaWinLossGroupByModel(exchangedResult)
+                {
+                    Key = r.Key,
+                    ChildKey = r.ChildKey,
+                    Date = r.Date,
+                    CustId = r.CustId
+                };
             });
 
         return exchangedResult;

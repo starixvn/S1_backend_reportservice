@@ -57,7 +57,7 @@ public static class ConfigurationManagerExtension
 
         //Local環境檢查傳入的CommandLine參數，指定第一個參數作為Group，加在ConfigService後面
         var group = args.Any() ? args[0] : string.Empty;
-        for (int i = 0; i < remoteUrls.Length; i++)
+        for (var i = 0; i < remoteUrls.Length; i++)
         {
             remoteUrls[i] += group;
         }
