@@ -16,4 +16,5 @@ public class MpaTransactionRelayDto : IFixDateTimeOffset, IFilterTestUser
     public decimal Amount { get; set; }
     public int RowCount { get; set; }
     public int IsTest { get; set; }
+    public string AffiliateName { get; set; }
 }

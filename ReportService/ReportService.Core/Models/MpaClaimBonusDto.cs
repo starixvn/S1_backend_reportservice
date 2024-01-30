@@ -19,4 +19,5 @@ public class MpaClaimBonusDto : IFixDateTimeOffset, IFilterTestUser
 
     public int IsTest { get; set; }
     public int SiteId { get; set; }
+    public string AffiliateName { get; set; }
 }
