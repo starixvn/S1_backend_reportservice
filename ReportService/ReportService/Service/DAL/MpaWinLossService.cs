@@ -1,5 +1,6 @@
 using System.Data;
 using Dapper;
+using Newtonsoft.Json;
 using ReportService.Core.Models;
 using ReportService.Core.Models.Enums;
 using ReportService.Core.Models.MpaWinLoss;
@@ -19,6 +20,8 @@ public class MpaWinLossService
     
     public Task<IEnumerable<TResult>> GetTpBetRecord<TResult>(GetTpBetRecordParam input)
     {
+        _logger.LogInformation(JsonConvert.SerializeObject(input));
+        
         var p = new DynamicParameters();
         p.Add("_SiteIds", input.SiteIdsJson, dbType: DbType.String);
         p.Add("_StartTime", input.StartTime, dbType: DbType.DateTime);
@@ -37,6 +40,8 @@ public class MpaWinLossService
     
     public Task<IEnumerable<TResult>> GetTransaction<TResult>(GetTransactionParam input)
     {
+        _logger.LogInformation(JsonConvert.SerializeObject(input));
+        
         var p = new DynamicParameters();
         p.Add("_SiteIds", input.SiteIdsJson, dbType: DbType.String);
         p.Add("_StartTime", input.StartTime, dbType: DbType.DateTime);
@@ -52,6 +57,8 @@ public class MpaWinLossService
     
     public Task<IEnumerable<TResult>> GetClaimBonus<TResult>(GetTransactionParam input)
     {
+        _logger.LogInformation(JsonConvert.SerializeObject(input));
+        
         var p = new DynamicParameters();
         p.Add("_SiteIds", input.SiteIdsJson, dbType: DbType.String);
         p.Add("_StartTime", input.StartTime, dbType: DbType.DateTime);
