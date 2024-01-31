@@ -604,12 +604,14 @@ public class MpaWinLossBLL
         var segmentCount = (int)Math.Ceiling((endDate - startDate).TotalDays / interval.TotalDays);
         var data = new List<MpaTpBetRecordDto>();
         var tasks = new List<Task<IEnumerable<MpaTpBetRecordDto>>>();
+        _logger.LogInformation($"GetMapTpBetRecordByDate segmentCount={segmentCount}");
         for (var i = 0; i < segmentCount; i++)
         {
             var segmentStart = startDate.AddDays(i * interval.TotalDays);
             var segmentEnd = segmentStart.AddDays(interval.TotalDays);
             if (segmentEnd > endDate)
                 segmentEnd = endDate;
+            _logger.LogInformation($"segmentStart={segmentStart:yyyy-MM-dd HH:mm:ss}, segmentEn={segmentEnd:yyyy-MM-dd HH:mm:ss}");
             tasks.Add(Task.Run(() => _mpaWinLossService
                 .GetTpBetRecord<MpaTpBetRecordDto>(new GetTpBetRecordParam(request, format, segmentStart, segmentEnd))));
         }
