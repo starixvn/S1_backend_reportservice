@@ -55,34 +55,6 @@ public class MpaCommonBLL
         }
     }
     
-    /*public decimal MapperExchangeRate(IEnumerable<MpaRateDto> source, DateTime date, int currencyId, int baseCurrencyId)
-    {
-        //是否是當天
-        if (date == DateTime.Today)
-        {
-            return source
-                .FirstOrDefault(r => r.RateDate.ToString("yyyy-MM-dd") == date.ToString("yyyy-MM-dd")
-                                     && r.CurrencyId == currencyId
-                                     && r.TargetCurrencyId == baseCurrencyId)!.Rate;
-        }
-
-        //是否是當月
-        if (date.ToString("yyyy-MM") == DateTime.Now.ToString("yyyy-MM"))
-        {
-            return source
-                .Where(r => r.RateDate.ToString("yyyy-MM") == DateTime.Now.ToString("yyyy-MM")
-                            && r.CurrencyId == currencyId
-                            && r.TargetCurrencyId == baseCurrencyId).MaxBy(r => r.RateDate)!.Rate;
-        }
-
-
-        //抓同年同月的最後一筆匯率
-        var lastDay = date.AddMonths(1).AddDays(-date.AddMonths(1).Day).ToString("yyyy-MM-dd");
-        return source.FirstOrDefault(r => r.RateDate.ToString("yyyy-MM-dd") == lastDay
-                                          && r.CurrencyId == currencyId
-                                          && r.TargetCurrencyId == baseCurrencyId)!.Rate;
-    }*/
-    
     public async Task<Dictionary<int, string>> GetTpGameTypeMapper()
     {
         const string redisKey = "MpaTpGameTypeMapper";
