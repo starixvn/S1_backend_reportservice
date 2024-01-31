@@ -58,6 +58,14 @@ JsonConvert.DefaultSettings = () => new JsonSerializerSettings
 var app = builder.Build();
 app.MapControllers();
 app.UseRouting();
+app.UseEndpoints(endpoints =>
+{
+    endpoints.MapGet("/health", async context =>
+    {
+        await context.Response.WriteAsync($"{Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT")}-{DateTime.Now:yyyy/MM/dd HH:mm:ss}");
+    });
+});
 app.UseRequestLogMiddleware();
 app.UseResponseLogMiddleware();
+
 app.Run();
