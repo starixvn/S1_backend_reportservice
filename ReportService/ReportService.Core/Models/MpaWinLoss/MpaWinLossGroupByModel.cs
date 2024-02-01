@@ -1,4 +1,5 @@
-using Newtonsoft.Json;
+
+using System.Text.Json.Serialization;
 using ReportService.Core.Models.Interface;
 
 namespace ReportService.Core.Models.MpaWinLoss;
@@ -21,4 +22,7 @@ public class MpaWinLossGroupByModel : MpaWinLossGroupBySummary, IFixDateTimeOffs
     
     public string Key { get; set; }
     public string ChildKey { get; set; }
+    
+    public string TpUserName { get; set; }
+    public string UserName { get; set; }
 }

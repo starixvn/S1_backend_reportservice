@@ -257,7 +257,8 @@ public class MpaWinLossBLL
                 x.GameType,
                 x.CustId,
                 x.Date,
-                x.TpUserName
+                x.TpUserName,
+                x.UserName
             })
             .Select(r =>
             {
@@ -268,6 +269,8 @@ public class MpaWinLossBLL
                     Date = r.Key.Date,
                     CustId = r.Key.CustId,
                     Key = r.Key.TpUserName,
+                    UserName = r.Key.UserName,
+                    TpUserName = r.Key.TpUserName,
                     ChildKey = _mpaCommonBll.ToCurrencyIsoCode(r.Key.CurrencyId)
                 };
             })
@@ -288,11 +291,16 @@ public class MpaWinLossBLL
             {
                 x.Date,
                 x.CurrencyId,
-                x.TpUserName
+                x.TpUserName,
+                x.UserName,
+                x.CustId
             }).Select(r => new MpaWinLossGroupByModel
             {
                 Date = r.Key.Date,
                 CurrencyId = r.Key.CurrencyId,
+                CustId = r.Key.CustId,
+                UserName = r.Key.UserName,
+                TpUserName = r.Key.TpUserName,
                 Key = r.Key.TpUserName,
                 ChildKey = _mpaCommonBll.ToCurrencyIsoCode(r.Key.CurrencyId),
                 TotalBonus = r.Sum(x => x.BonusAmountClaim)
@@ -308,17 +316,22 @@ public class MpaWinLossBLL
             .GroupBy(x => new
             {
                 x.Date,
+                x.CustId,
                 x.CurrencyId,
                 x.SummaryType,
-                x.TpUserName
+                x.TpUserName,
+                x.UserName
             })
             .Select(r =>
             {
                 var data = new MpaWinLossGroupByModel
                 {
                     Date = r.Key.Date,
+                    CustId = r.Key.CustId,
                     CurrencyId = r.Key.CurrencyId,
                     Key = r.Key.TpUserName,
+                    UserName = r.Key.UserName,
+                    TpUserName = r.Key.TpUserName,
                     ChildKey = _mpaCommonBll.ToCurrencyIsoCode(r.Key.CurrencyId),
                 };
 
@@ -348,6 +361,7 @@ public class MpaWinLossBLL
                 x.CustId,
                 x.Date,
                 x.UserName,
+                x.TpUserName,
                 x.AffiliateName
             })
             .Select(r =>
@@ -359,6 +373,8 @@ public class MpaWinLossBLL
                     Date = r.Key.Date,
                     CustId = r.Key.CustId,
                     Key = r.Key.AffiliateName,
+                    UserName = r.Key.UserName,
+                    TpUserName = r.Key.TpUserName,
                     ChildKey = r.Key.UserName
                 };
             })
@@ -379,13 +395,18 @@ public class MpaWinLossBLL
             {
                 x.Date,
                 x.CurrencyId,
+                x.CustId,
+                x.TpUserName,
                 x.UserName,
                 x.AffiliateName
             }).Select(r => new MpaWinLossGroupByModel
             {
                 Date = r.Key.Date,
+                CustId = r.Key.CustId,
                 CurrencyId = r.Key.CurrencyId,
                 Key = r.Key.AffiliateName,
+                UserName = r.Key.UserName,
+                TpUserName = r.Key.TpUserName,
                 ChildKey = r.Key.UserName,
                 TotalBonus = r.Sum(x => x.BonusAmountClaim)
             });
@@ -402,6 +423,8 @@ public class MpaWinLossBLL
                 x.Date,
                 x.CurrencyId,
                 x.SummaryType,
+                x.CustId,
+                x.TpUserName,
                 x.UserName,
                 x.AffiliateName
             })
@@ -411,6 +434,9 @@ public class MpaWinLossBLL
                 {
                     Date = r.Key.Date,
                     CurrencyId = r.Key.CurrencyId,
+                    CustId = r.Key.CustId,
+                    UserName = r.Key.UserName,
+                    TpUserName = r.Key.TpUserName,
                     Key = r.Key.AffiliateName,
                     ChildKey = r.Key.UserName
                 };
@@ -527,22 +553,36 @@ public class MpaWinLossBLL
                     Key = r.Key,
                     ChildKey = r.ChildKey,
                     Date = r.Date,
-                    CustId = r.CustId
+                    CustId = r.CustId,
+                    TpUserName = r.TpUserName,
+                    UserName = r.UserName
                 };
             });
 
         return exchangedResult;
     }
-    
-    private IEnumerable<MpaWinLossGroupByModel> GroupByResult(IEnumerable<MpaWinLossGroupByModel> source, MpaWinLossGroupByTypeEnum groupByType)
-        => source
-            .GroupBy(x => new
+
+    private readonly IEnumerable<MpaWinLossGroupByTypeEnum> _hasPlayerInfo = new[]
+    {
+        MpaWinLossGroupByTypeEnum.Player,
+        MpaWinLossGroupByTypeEnum.Affiliate
+    };
+
+    private IEnumerable<MpaWinLossGroupByModel> GroupByResult(IEnumerable<MpaWinLossGroupByModel> source,
+        MpaWinLossGroupByTypeEnum groupByType)
+    {
+        var hasPlayerInfo = _hasPlayerInfo.Contains(groupByType);
+        
+        var g = source.GroupBy(x => new
             {
                 x.CurrencyId,
                 x.Key,
                 x.ChildKey
-            })
-            .Select(r =>
+            });
+
+        if (!hasPlayerInfo)
+        {
+            return g.Select(r =>
             {
                 var groupSummary = GetMpaGroupSummary(r, r.Key.CurrencyId, groupByType);
 
@@ -554,6 +594,24 @@ public class MpaWinLossBLL
                         .DistinctBy(x => x.CustId).Count(),
                 };
             });
+        }
+
+        return g.Select(r =>
+        {
+            var groupSummary = GetMpaGroupSummary(r, r.Key.CurrencyId, groupByType);
+            var f = r.First();
+
+            return new MpaWinLossGroupByModel(groupSummary)
+            {
+                Key = r.Key.Key,
+                ChildKey = r.Key.ChildKey,
+                UserName = f.UserName,
+                TpUserName = f.TpUserName,
+                UniquePlayers = r.Where(x => x.BetCount != 0)
+                    .DistinctBy(x => x.CustId).Count(),
+            };
+        });
+    }
     
     private async Task<List<MpaTpBetRecordDto>> GetTpBetRecords(MpaWinLossRequest request)
     {
