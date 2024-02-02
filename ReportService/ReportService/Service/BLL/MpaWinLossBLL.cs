@@ -48,13 +48,16 @@ public class MpaWinLossBLL
     
     public async Task<MpaWinLoseResponse> GetMpaWinLossReport(MpaWinLossRequest request)
     {
-        var result = await GetMpaWinLossGroupByResult(request);
-        var total = GetMpaGroupSummary(result.ExchangedResult, request.BaseCurrencyId, request.GroupByType);
-        
+        var childResult = await GetMpaWinLossGroupByChildResult(request);
+        var result = GetMpaWinLossGroupByResult(childResult.ExchangedResult, request.GroupByType);
+        var total = GetMpaGroupSummary(childResult.ExchangedResult, request.BaseCurrencyId, request.GroupByType);
+     
         return new MpaWinLoseResponse
         {
-            Result = result.Result,
-            ExchangedResult = result.ExchangedResult,
+            Result = result,
+            ChildResult = request.DisplayGroupBreakdownInOriginalCurrency
+                ? childResult.Result
+                : childResult.ExchangedResult,
             Total = new MpaWinLossGroupByModel(total)
             {
                 Key = "Total",
@@ -523,7 +526,7 @@ public class MpaWinLossBLL
     
     #endregion
     
-    private async Task<MpaWinLossGroupByWrapper> GetMpaWinLossGroupByResult(MpaWinLossRequest request)
+    private async Task<MpaWinLossGroupByWrapper> GetMpaWinLossGroupByChildResult(MpaWinLossRequest request)
     {
         var (preProcessResult, uniquePlayers) =
             await _dicPreProcessMapper[request.GroupByType].Invoke(request);
@@ -536,6 +539,28 @@ public class MpaWinLossBLL
             ExchangedResult = GroupByResult(exchangedResult, request.GroupByType),
             UniquePlayers = uniquePlayers
         };
+    }
+
+    private IEnumerable<MpaWinLossGroupByModel> GetMpaWinLossGroupByResult(IEnumerable<MpaWinLossGroupByModel> source,
+        MpaWinLossGroupByTypeEnum groupByType)
+    {
+        if (groupByType == MpaWinLossGroupByTypeEnum.Player)
+            return source;
+        
+        return source.GroupBy(x => new
+        {
+            x.CurrencyId,
+            x.Key
+        }).Select(r =>
+        {
+            var groupSummary = GetMpaGroupSummary(r, r.Key.CurrencyId, groupByType);
+
+            return new MpaWinLossGroupByModel(groupSummary)
+            {
+                Key = r.Key.Key,
+                UniquePlayers = r.Sum(x => x.UniquePlayers)
+            };
+        });
     }
 
     private async Task<IEnumerable<MpaWinLossGroupByModel>> ExchangeRate(IEnumerable<MpaWinLossGroupByModel> source,
