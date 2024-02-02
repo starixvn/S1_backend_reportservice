@@ -653,11 +653,12 @@ public class MpaWinLossBLL
     
     private async Task<IEnumerable<MpaTpBetRecordDto>> GetTpBetRecordsWithCache(MpaWinLossRequest request)
     {
+        var format = MapMpaWinLossGroupByTypeEnumFormat(request.GroupByType);
         var p = new GetTpBetRecordParam(request, string.Empty, request.StartTime, request.EndTime);
 
         if (string.IsNullOrEmpty(p.UserNamesJson) && string.IsNullOrEmpty(p.AffiliateNamesJson))
         {
-            var key = $"{p.StartTime:yyyyMMddHHmmss}{p.EndTime:yyyyMMddHHmmss}{request.GroupByType}" +
+            var key = $"{p.StartTime:yyyyMMddHHmmss}{p.EndTime:yyyyMMddHHmmss}{format}" +
                       $"{request.DateType}{p.SiteIdsJson}{p.CurrencyIdsJson}{p.MemberTypesJson}" +
                       $"{p.CategoryIdsJson}{p.GameTypesJson}";
 
