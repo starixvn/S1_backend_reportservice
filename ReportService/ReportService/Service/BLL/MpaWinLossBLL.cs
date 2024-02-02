@@ -49,7 +49,7 @@ public class MpaWinLossBLL
     public async Task<MpaWinLoseResponse> GetMpaWinLossReport(MpaWinLossRequest request)
     {
         var childResult = await GetMpaWinLossGroupByChildResult(request);
-        var result = GetMpaWinLossGroupByResult(childResult.ExchangedResult, request.GroupByType);
+        var result = GetMpaWinLossGroupByResult(childResult.ExchangedResult, request.GroupByType, request.BaseCurrencyId);
         var total = GetMpaGroupSummary(childResult.ExchangedResult, request.BaseCurrencyId, request.GroupByType);
      
         return new MpaWinLoseResponse
@@ -542,18 +542,17 @@ public class MpaWinLossBLL
     }
 
     private IEnumerable<MpaWinLossGroupByModel> GetMpaWinLossGroupByResult(IEnumerable<MpaWinLossGroupByModel> source,
-        MpaWinLossGroupByTypeEnum groupByType)
+        MpaWinLossGroupByTypeEnum groupByType, int baseCurrencyId)
     {
         if (groupByType == MpaWinLossGroupByTypeEnum.Player)
             return source;
         
         return source.GroupBy(x => new
         {
-            x.CurrencyId,
             x.Key
         }).Select(r =>
         {
-            var groupSummary = GetMpaGroupSummary(r, r.Key.CurrencyId, groupByType);
+            var groupSummary = GetMpaGroupSummary(r, baseCurrencyId, groupByType);
 
             return new MpaWinLossGroupByModel(groupSummary)
             {
