@@ -48,12 +48,14 @@ void OverrideLoggerWriteToLFile(LoggerConfiguration configuration)
 builder.Services
     .AddDatabaseConnection(builder.Configuration)
     .RegisterServices(builder.Configuration)
-    .AddControllers();
-
-JsonConvert.DefaultSettings = () => new JsonSerializerSettings
-{
-    NullValueHandling = NullValueHandling.Ignore
-};
+    .AddControllers()
+    .AddNewtonsoftJson(op =>
+    {
+        JsonConvert.DefaultSettings = () => new JsonSerializerSettings
+        {
+            NullValueHandling = NullValueHandling.Ignore
+        };
+    });
 
 var app = builder.Build();
 app.MapControllers();
