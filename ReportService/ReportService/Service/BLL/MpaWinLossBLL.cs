@@ -640,7 +640,7 @@ public class MpaWinLossBLL
     private async Task<List<MpaTpBetRecordDto>> GetTpBetRecords(MpaWinLossRequest request)
     {
         var format = MapMpaWinLossGroupByTypeEnumFormat(request.GroupByType);
-        var data = await GetMapTpBetRecordByDate(request);
+        var data = await GetTpBetRecordsWithCache(request);
 
         var tpBetRecordRelayResult = data
             .Filter(request)
@@ -649,6 +649,23 @@ public class MpaWinLossBLL
             .ToList();
         
         return tpBetRecordRelayResult;
+    }
+    
+    private async Task<IEnumerable<MpaTpBetRecordDto>> GetTpBetRecordsWithCache(MpaWinLossRequest request)
+    {
+        var p = new GetTpBetRecordParam(request, string.Empty, request.StartTime, request.EndTime);
+
+        if (string.IsNullOrEmpty(p.UserNamesJson) && string.IsNullOrEmpty(p.AffiliateNamesJson))
+        {
+            var key = $"{p.StartTime:yyyyMMddHHmmss}{p.EndTime:yyyyMMddHHmmss}{request.GroupByType}" +
+                      $"{request.DateType}{p.SiteIdsJson}{p.CurrencyIdsJson}{p.MemberTypesJson}" +
+                      $"{p.CategoryIdsJson}{p.GameTypesJson}";
+
+            return await _redisHelper.TryGetOrCreateAsync(key, TimeSpan.FromMinutes(10),
+                () => GetMapTpBetRecordByDate(request));
+        }
+        
+        return await GetMapTpBetRecordByDate(request);
     }
     
     private async Task<List<MpaTransactionRelayDto>> GetTransactionRecords(MpaWinLossRequest request)
