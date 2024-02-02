@@ -1,5 +1,4 @@
-
-using System.Text.Json.Serialization;
+using Newtonsoft.Json;
 using ReportService.Core.Models.Interface;
 
 namespace ReportService.Core.Models.MpaWinLoss;
