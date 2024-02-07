@@ -12,6 +12,7 @@
         <PackageReference Include="Elastic.Apm.StackExchange.Redis" Version="1.22.0" />
         <PackageReference Include="Serilog.Exceptions" Version="8.3.0" />
         <PackageReference Include="StackExchange.Redis" Version="2.6.48" />
+        <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="6.0.7" />
     </ItemGroup>
 
     <ItemGroup>

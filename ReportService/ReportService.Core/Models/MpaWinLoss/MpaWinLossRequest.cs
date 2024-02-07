@@ -70,4 +70,6 @@ public class MpaWinLossRequest : IMultiSiteApiRequest
     public IEnumerable<string>? AffiliateNames { get; set; }
 
     public MpaWinLossGroupByTypeEnum GroupByType { get; set; }
+    
+    public bool DisplayGroupBreakdownInOriginalCurrency;
 }

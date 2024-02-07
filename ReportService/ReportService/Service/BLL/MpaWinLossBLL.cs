@@ -48,25 +48,33 @@ public class MpaWinLossBLL
     
     public async Task<MpaWinLoseResponse> GetMpaWinLossReport(MpaWinLossRequest request)
     {
-        var result = await GetMpaWinLossGroupByResult(request);
-        var total = GetMpaGroupSummary(result.ExchangedResult, request.BaseCurrencyId, request.GroupByType);
-        
+        var childResult = await GetMpaWinLossGroupByChildResult(request);
+        var result = GetMpaWinLossGroupByResult(childResult.ExchangedResult, request.GroupByType, request.BaseCurrencyId);
+        var total = GetMpaGroupSummary(childResult.ExchangedResult, request.BaseCurrencyId, request.GroupByType);
+     
         return new MpaWinLoseResponse
         {
-            Result = result.Result,
-            ExchangedResult = result.ExchangedResult,
+            Result = result,
+            ChildResult = request.DisplayGroupBreakdownInOriginalCurrency
+                ? childResult.Result
+                : childResult.ExchangedResult,
             Total = new MpaWinLossGroupByModel(total)
             {
                 Key = "Total",
-                ChildKey = _mpaCommonBll.ToCurrencyIsoCode(request.BaseCurrencyId)
+                ChildKey = "All"
             }
         };
     }
     
     private async Task<(List<MpaWinLossGroupByModel>, int)> PreProcessMpaWinLossGroupByDateResult(MpaWinLossRequest request)
     {
-        var betRecords = await GetTpBetRecords(request);
-        var betRecordResult = betRecords 
+        var betRecordTask = Task.Run(() => GetTpBetRecords(request));
+        var transactionTask = Task.Run(() => GetTransactionGroupByDateResult(request));
+        var claimBonusTask = Task.Run(() => GetClaimBonusGroupByDateResult(request));
+        
+        await Task.WhenAll(betRecordTask, transactionTask, claimBonusTask);
+        
+        var betRecordResult = betRecordTask.Result 
             .GroupBy(x => new
             {
                 x.Date,
@@ -85,13 +93,10 @@ public class MpaWinLossBLL
                 };
             })
             .ToList();
-        
-        var transactionResult = await GetTransactionGroupByDateResult(request);
-        var claimBonusResult = await GetClaimBonusGroupByDateResult(request);
 
         var combineData = betRecordResult
-            .Concat(transactionResult)
-            .Concat(claimBonusResult)
+            .Concat(transactionTask.Result)
+            .Concat(claimBonusTask.Result)
             .ToList();
 
         // 處理時區
@@ -118,7 +123,7 @@ public class MpaWinLossBLL
             })
             .ToList();
 
-        var uniquePlayers = betRecords.DistinctBy(x => x.CustId).Count();
+        var uniquePlayers = betRecordTask.Result.DistinctBy(x => x.CustId).Count();
 
         return (combineResult, uniquePlayers);
     }
@@ -523,7 +528,7 @@ public class MpaWinLossBLL
     
     #endregion
     
-    private async Task<MpaWinLossGroupByWrapper> GetMpaWinLossGroupByResult(MpaWinLossRequest request)
+    private async Task<MpaWinLossGroupByWrapper> GetMpaWinLossGroupByChildResult(MpaWinLossRequest request)
     {
         var (preProcessResult, uniquePlayers) =
             await _dicPreProcessMapper[request.GroupByType].Invoke(request);
@@ -536,6 +541,28 @@ public class MpaWinLossBLL
             ExchangedResult = GroupByResult(exchangedResult, request.GroupByType),
             UniquePlayers = uniquePlayers
         };
+    }
+
+    private IEnumerable<MpaWinLossGroupByModel> GetMpaWinLossGroupByResult(IEnumerable<MpaWinLossGroupByModel> source,
+        MpaWinLossGroupByTypeEnum groupByType, int baseCurrencyId)
+    {
+        if (groupByType == MpaWinLossGroupByTypeEnum.Player)
+            return source;
+        
+        return source.GroupBy(x => new
+        {
+            x.Key
+        }).Select(r =>
+        {
+            var groupSummary = GetMpaGroupSummary(r, baseCurrencyId, groupByType);
+
+            return new MpaWinLossGroupByModel(groupSummary)
+            {
+                Key = r.Key.Key,
+                ChildKey = "All",
+                UniquePlayers = r.Sum(x => x.UniquePlayers)
+            };
+        });
     }
 
     private async Task<IEnumerable<MpaWinLossGroupByModel>> ExchangeRate(IEnumerable<MpaWinLossGroupByModel> source,
@@ -616,7 +643,7 @@ public class MpaWinLossBLL
     private async Task<List<MpaTpBetRecordDto>> GetTpBetRecords(MpaWinLossRequest request)
     {
         var format = MapMpaWinLossGroupByTypeEnumFormat(request.GroupByType);
-        var data = await GetMapTpBetRecordByDate(request);
+        var data = await GetTpBetRecordsWithCache(request);
 
         var tpBetRecordRelayResult = data
             .Filter(request)
@@ -625,6 +652,24 @@ public class MpaWinLossBLL
             .ToList();
         
         return tpBetRecordRelayResult;
+    }
+    
+    private async Task<IEnumerable<MpaTpBetRecordDto>> GetTpBetRecordsWithCache(MpaWinLossRequest request)
+    {
+        var format = MapMpaWinLossGroupByTypeEnumFormat(request.GroupByType);
+        var p = new GetTpBetRecordParam(request, string.Empty, request.StartTime, request.EndTime);
+
+        if (string.IsNullOrEmpty(p.UserNamesJson) && string.IsNullOrEmpty(p.AffiliateNamesJson))
+        {
+            var key = $"{p.StartTime:yyyyMMddHHmmss}{p.EndTime:yyyyMMddHHmmss}{format}" +
+                      $"{request.DateType}{p.SiteIdsJson}{p.CurrencyIdsJson}{p.MemberTypesJson}" +
+                      $"{p.CategoryIdsJson}{p.GameTypesJson}";
+
+            return await _redisHelper.TryGetOrCreateAsync(key, TimeSpan.FromMinutes(10),
+                () => GetMapTpBetRecordByDate(request));
+        }
+        
+        return await GetMapTpBetRecordByDate(request);
     }
     
     private async Task<List<MpaTransactionRelayDto>> GetTransactionRecords(MpaWinLossRequest request)
