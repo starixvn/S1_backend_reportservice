@@ -61,15 +61,20 @@ public class MpaWinLossBLL
             Total = new MpaWinLossGroupByModel(total)
             {
                 Key = "Total",
-                ChildKey = _mpaCommonBll.ToCurrencyIsoCode(request.BaseCurrencyId)
+                ChildKey = "All"
             }
         };
     }
     
     private async Task<(List<MpaWinLossGroupByModel>, int)> PreProcessMpaWinLossGroupByDateResult(MpaWinLossRequest request)
     {
-        var betRecords = await GetTpBetRecords(request);
-        var betRecordResult = betRecords 
+        var betRecordTask = Task.Run(() => GetTpBetRecords(request));
+        var transactionTask = Task.Run(() => GetTransactionGroupByDateResult(request));
+        var claimBonusTask = Task.Run(() => GetClaimBonusGroupByDateResult(request));
+        
+        await Task.WhenAll(betRecordTask, transactionTask, claimBonusTask);
+        
+        var betRecordResult = betRecordTask.Result 
             .GroupBy(x => new
             {
                 x.Date,
@@ -88,13 +93,10 @@ public class MpaWinLossBLL
                 };
             })
             .ToList();
-        
-        var transactionResult = await GetTransactionGroupByDateResult(request);
-        var claimBonusResult = await GetClaimBonusGroupByDateResult(request);
 
         var combineData = betRecordResult
-            .Concat(transactionResult)
-            .Concat(claimBonusResult)
+            .Concat(transactionTask.Result)
+            .Concat(claimBonusTask.Result)
             .ToList();
 
         // 處理時區
@@ -121,7 +123,7 @@ public class MpaWinLossBLL
             })
             .ToList();
 
-        var uniquePlayers = betRecords.DistinctBy(x => x.CustId).Count();
+        var uniquePlayers = betRecordTask.Result.DistinctBy(x => x.CustId).Count();
 
         return (combineResult, uniquePlayers);
     }
@@ -557,6 +559,7 @@ public class MpaWinLossBLL
             return new MpaWinLossGroupByModel(groupSummary)
             {
                 Key = r.Key.Key,
+                ChildKey = "All",
                 UniquePlayers = r.Sum(x => x.UniquePlayers)
             };
         });
