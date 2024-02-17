@@ -956,7 +956,9 @@ public class MpaWinLossBLL
         MpaWinLossGroupByTypeEnum.Date,
         MpaWinLossGroupByTypeEnum.Month,
         MpaWinLossGroupByTypeEnum.Player,
-        MpaWinLossGroupByTypeEnum.Affiliate
+        MpaWinLossGroupByTypeEnum.Affiliate,
+        MpaWinLossGroupByTypeEnum.Brand,
+        MpaWinLossGroupByTypeEnum.Currency
     };
 
     private MpaWinLossGroupBySummary GetMpaGroupSummary(IEnumerable<MpaWinLossGroupBySummary> groupBySummary,
