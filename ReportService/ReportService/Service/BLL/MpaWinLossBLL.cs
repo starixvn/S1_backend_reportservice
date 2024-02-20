@@ -792,6 +792,7 @@ public class MpaWinLossBLL
         
         var transactionResult = data
             .FilterTestUser(request.IncludeTest)
+            .FilterAffiliate(request)
             .ToList();
         
         return transactionResult;
@@ -805,6 +806,7 @@ public class MpaWinLossBLL
         
         var claimBonusResult = data
             .FilterTestUser(request.IncludeTest)
+            .FilterAffiliate(request)
             .ToList();
 
         return claimBonusResult;
