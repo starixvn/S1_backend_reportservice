@@ -35,7 +35,7 @@ public class MpaWinLossService
         p.Add("_CategoryIds", input.CategoryIdsJson, dbType: DbType.String);
         p.Add("_AffiliateNames", input.AffiliateNamesJson, dbType: DbType.String);
         
-        return _reportDbClient.QueryAsync<TResult>("Service_TpBetRecordRelayGroupByDate_Get", p);
+        return _reportDbClient.QueryAsync<TResult>("Service_TpBetRecordRelayGroupByDate_Get", p, 60);
     }
     
     public Task<IEnumerable<TResult>> GetTransaction<TResult>(GetTransactionParam input)
