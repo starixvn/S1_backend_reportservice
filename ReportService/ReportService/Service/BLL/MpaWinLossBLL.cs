@@ -818,13 +818,13 @@ public class MpaWinLossBLL
         var format = MapMpaWinLossGroupByTypeEnumFormat(request.GroupByType);
         var startDate = request.StartTime;
         var endDate = request.EndTime;
-        var interval = TimeSpan.FromDays(10);
+        var interval = TimeSpan.FromDays(11);
         var segmentCount = (int)Math.Ceiling((endDate - startDate).TotalDays / interval.TotalDays);
         var data = new List<MpaTpBetRecordDto>();
         var tasks = new List<Task<IEnumerable<MpaTpBetRecordDto>>>();
         var sw = Stopwatch.StartNew();
         
-        _logger.LogInformation($"GetMapTpBetRecordByDate segmentCount={segmentCount}");
+        _logger.LogInformation($"GetMapTpBetRecordByDate SegmentCount={segmentCount}");
         
         for (var i = 0; i < segmentCount; i++)
         {
@@ -840,10 +840,10 @@ public class MpaWinLossBLL
         }
 
         await Task.WhenAll(tasks)
-            .ContinueWith(f =>
+            .ContinueWith(_ =>
             {
                 _logger.LogInformation(
-                    $"GetMapTpBetRecordByDate Start={request.StartTime:yyyy-MM-dd HH:mm:sszzz}, End={request.EndTime:yyyy-MM-dd HH:mm:sszzz} {sw.Elapsed:c}");
+                    $"GetMapTpBetRecordByDate Start={request.StartTime:yyyy-MM-ddTHH:mm:sszzz}, End={request.EndTime:yyyy-MM-ddTHH:mm:sszzz}, Elapsed={sw.Elapsed:c}");
             });
         
         foreach (var task in tasks)
