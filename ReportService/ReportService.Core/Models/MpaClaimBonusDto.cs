@@ -3,7 +3,7 @@ using ReportService.Core.Models.Interface;
 
 namespace ReportService.Core.Models;
 
-public class MpaClaimBonusDto : IFixDateTimeOffset, IFilterTestUser
+public class MpaClaimBonusDto : IFixDateTimeOffset, IFilterTestUser, IFilterAffiliate
 {
     public DateTime Date { get; set; }
 

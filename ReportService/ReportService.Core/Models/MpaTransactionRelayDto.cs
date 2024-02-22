@@ -3,7 +3,7 @@ using ReportService.Core.Models.Interface;
 
 namespace ReportService.Core.Models;
 
-public class MpaTransactionRelayDto : IFixDateTimeOffset, IFilterTestUser
+public class MpaTransactionRelayDto : IFixDateTimeOffset, IFilterTestUser, IFilterAffiliate
 {
     public DateTime Date { get; set; }
     public int SiteId { get; set; }

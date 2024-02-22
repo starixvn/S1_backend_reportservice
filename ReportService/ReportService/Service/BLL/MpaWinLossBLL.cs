@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using ReportService.Core.Extensions;
 using ReportService.Core.Library;
 using ReportService.Core.Models;
@@ -792,6 +793,7 @@ public class MpaWinLossBLL
         
         var transactionResult = data
             .FilterTestUser(request.IncludeTest)
+            .FilterAffiliate(request)
             .ToList();
         
         return transactionResult;
@@ -805,6 +807,7 @@ public class MpaWinLossBLL
         
         var claimBonusResult = data
             .FilterTestUser(request.IncludeTest)
+            .FilterAffiliate(request)
             .ToList();
 
         return claimBonusResult;
@@ -815,23 +818,34 @@ public class MpaWinLossBLL
         var format = MapMpaWinLossGroupByTypeEnumFormat(request.GroupByType);
         var startDate = request.StartTime;
         var endDate = request.EndTime;
-        var interval = TimeSpan.FromDays(16);
+        var interval = TimeSpan.FromDays(10);
         var segmentCount = (int)Math.Ceiling((endDate - startDate).TotalDays / interval.TotalDays);
         var data = new List<MpaTpBetRecordDto>();
         var tasks = new List<Task<IEnumerable<MpaTpBetRecordDto>>>();
+        var sw = Stopwatch.StartNew();
+        
         _logger.LogInformation($"GetMapTpBetRecordByDate segmentCount={segmentCount}");
+        
         for (var i = 0; i < segmentCount; i++)
         {
             var segmentStart = startDate.AddDays(i * interval.TotalDays);
             var segmentEnd = segmentStart.AddDays(interval.TotalDays);
             if (segmentEnd > endDate)
                 segmentEnd = endDate;
-            _logger.LogInformation($"segmentStart={segmentStart:yyyy-MM-dd HH:mm:ss}, segmentEn={segmentEnd:yyyy-MM-dd HH:mm:ss}");
+            
+            _logger.LogInformation($"SegmentStart={segmentStart:yyyy-MM-dd HH:mm:ss}, SegmentEnd={segmentEnd:yyyy-MM-dd HH:mm:ss}");
+            
             tasks.Add(Task.Run(() => _mpaWinLossService
                 .GetTpBetRecord<MpaTpBetRecordDto>(new GetTpBetRecordParam(request, format, segmentStart, segmentEnd))));
         }
 
-        await Task.WhenAll(tasks);
+        await Task.WhenAll(tasks)
+            .ContinueWith(f =>
+            {
+                _logger.LogInformation(
+                    $"GetMapTpBetRecordByDate Start={request.StartTime:yyyy-MM-dd HH:mm:sszzz}, End={request.EndTime:yyyy-MM-dd HH:mm:sszzz} {sw.Elapsed:c}");
+            });
+        
         foreach (var task in tasks)
         {
             data.AddRange(task.Result);
