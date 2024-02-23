@@ -19,7 +19,7 @@ public class MpaWinLossReportController : ControllerBase
     [HttpPost]
     public async Task<ApiResult<MpaWinLoseResponse>> GetAsync(MpaWinLossRequest request)
     {
-        var data = await _mpaWinLossBll.GetMpaWinLossReport(request);
+        var data = await _mpaWinLossBll.GetMpaWinLossReportWithCache(request);
 
         return new ApiResult<MpaWinLoseResponse>(ErrorCodeEnum.Success, data);
     }
