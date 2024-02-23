@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using Newtonsoft.Json;
 using ReportService.Core.Extensions;
 using ReportService.Core.Library;
 using ReportService.Core.Models;
@@ -37,17 +38,8 @@ public class MpaWinLossBLL
         };
     
     }
-
-    #region GroupByDate & Month
-
-    private static string GetDateString(DateTime date, MpaWinLossGroupByTypeEnum groupByType)
-        => groupByType switch
-        {
-            MpaWinLossGroupByTypeEnum.Month => date.ToString("yyyy-MM"),
-            _ => date.ToString("yyyy-MM-dd")
-        };
     
-    public async Task<MpaWinLoseResponse> GetMpaWinLossReport(MpaWinLossRequest request)
+    private async Task<MpaWinLoseResponse> GetMpaWinLossReport(MpaWinLossRequest request)
     {
         var childResult = await GetMpaWinLossGroupByChildResult(request);
         var result = GetMpaWinLossGroupByResult(childResult.ExchangedResult, request.GroupByType, request.BaseCurrencyId);
@@ -66,6 +58,30 @@ public class MpaWinLossBLL
             }
         };
     }
+    
+    private readonly IEnumerable<MpaWinLossGroupByTypeEnum> _useLongerCache = new[]
+    {
+        MpaWinLossGroupByTypeEnum.Player,
+        MpaWinLossGroupByTypeEnum.Affiliate
+    };
+    
+    public async Task<MpaWinLoseResponse> GetMpaWinLossReportWithCache(MpaWinLossRequest request)
+    {
+        var key = JsonConvert.SerializeObject(request);
+        var min = _useLongerCache.Contains(request.GroupByType) ? 20 : 5; // Player類有分頁，分頁是在後台做所以給長點時間
+        
+        return await _redisHelper.TryGetOrCreateAsync(key, TimeSpan.FromMinutes(min),
+                () => GetMpaWinLossReport(request));
+    }
+    
+    #region GroupByDate & Month
+
+    private static string GetDateString(DateTime date, MpaWinLossGroupByTypeEnum groupByType)
+        => groupByType switch
+        {
+            MpaWinLossGroupByTypeEnum.Month => date.ToString("yyyy-MM"),
+            _ => date.ToString("yyyy-MM-dd")
+        };
     
     private async Task<(List<MpaWinLossGroupByModel>, int)> PreProcessMpaWinLossGroupByDateResult(MpaWinLossRequest request)
     {
