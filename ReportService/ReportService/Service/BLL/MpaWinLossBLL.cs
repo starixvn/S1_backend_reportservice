@@ -115,7 +115,7 @@ public class MpaWinLossBLL
             .Concat(claimBonusTask.Result);
 
         // 處理時區
-        SetDateToOffSet(request.StartTime.Offset, combineData);
+        combineData = SetDateToOffSet(request.StartTime.Offset, combineData);
         
         var combineResult = combineData
             .GroupBy(x => new
@@ -860,12 +860,13 @@ public class MpaWinLossBLL
         return data;
     }
     
-    private static void SetDateToOffSet<T>(TimeSpan offset, IEnumerable<T> betRecordResult) where T : IFixDateTimeOffset
+    private static IEnumerable<T> SetDateToOffSet<T>(TimeSpan offset, IEnumerable<T> betRecordResult) where T : IFixDateTimeOffset
     {
-        foreach (var item in betRecordResult)
-        {
-            item.Date = item.Date.ToOffSetReturnDate(offset);
-        }
+        var list = betRecordResult.ToList();
+
+        list.ForEach(item => { item.Date = item.Date.ToOffSetReturnDate(offset); });
+
+        return list;
     }
     
     private static string MapMpaWinLossGroupByTypeEnumFormat(MpaWinLossGroupByTypeEnum groupByType)
