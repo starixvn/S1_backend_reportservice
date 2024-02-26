@@ -59,16 +59,16 @@ public class MpaWinLossBLL
         };
     }
     
+    private readonly IEnumerable<MpaWinLossGroupByTypeEnum> _useLongerCache = new[]
+    {
+        MpaWinLossGroupByTypeEnum.Player,
+        MpaWinLossGroupByTypeEnum.Affiliate
+    };
+    
     public async Task<MpaWinLoseResponse> GetMpaWinLossReportWithCache(MpaWinLossRequest request)
     {
-        var useLongerCache = new[]
-        {
-            MpaWinLossGroupByTypeEnum.Player,
-            MpaWinLossGroupByTypeEnum.Affiliate
-        };
-        
         var key = JsonConvert.SerializeObject(request);
-        var min = useLongerCache.Contains(request.GroupByType) ? 20 : 5; // Player類有分頁，分頁是在後台做所以給長點時間
+        var min = _useLongerCache.Contains(request.GroupByType) ? 20 : 5; // Player類有分頁，分頁是在後台做所以給長點時間
         
         return await _redisHelper.TryGetOrCreateAsync(key, TimeSpan.FromMinutes(min),
                 () => GetMpaWinLossReport(request));
@@ -659,17 +659,24 @@ public class MpaWinLossBLL
     
     private async Task<MpaWinLossGroupByWrapper> GetMpaWinLossGroupByChildResult(MpaWinLossRequest request)
     {
-        var (preProcessResult, uniquePlayers) =
-            await _dicPreProcessMapper[request.GroupByType].Invoke(request);
-
-        var exchangedResult = await ExchangeRate(preProcessResult, request);
-
-        return new MpaWinLossGroupByWrapper
+        try
         {
-            Result = GroupByResult(preProcessResult, request.GroupByType),
-            ExchangedResult = GroupByResult(exchangedResult, request.GroupByType),
-            UniquePlayers = uniquePlayers
-        };
+            var (preProcessResult, uniquePlayers) =
+                await _dicPreProcessMapper[request.GroupByType].Invoke(request);
+
+            var exchangedResult = await ExchangeRate(preProcessResult, request);
+
+            return new MpaWinLossGroupByWrapper
+            {
+                Result = GroupByResult(preProcessResult, request.GroupByType),
+                ExchangedResult = GroupByResult(exchangedResult, request.GroupByType),
+                UniquePlayers = uniquePlayers
+            };
+        }
+        finally
+        {
+            GC.Collect();
+        }
     }
 
     private IEnumerable<MpaWinLossGroupByModel> GetMpaWinLossGroupByResult(IEnumerable<MpaWinLossGroupByModel> source,
@@ -718,15 +725,16 @@ public class MpaWinLossBLL
         return exchangedResult;
     }
 
+    private readonly IEnumerable<MpaWinLossGroupByTypeEnum> _hasPlayerInfo = new[]
+    {
+        MpaWinLossGroupByTypeEnum.Player,
+        MpaWinLossGroupByTypeEnum.Affiliate
+    };
 
     private IEnumerable<MpaWinLossGroupByModel> GroupByResult(IEnumerable<MpaWinLossGroupByModel> source,
         MpaWinLossGroupByTypeEnum groupByType)
-    { 
-        var hasPlayerInfo = new[]
-        {
-            MpaWinLossGroupByTypeEnum.Player,
-            MpaWinLossGroupByTypeEnum.Affiliate
-        }.Contains(groupByType);
+    {
+        var hasPlayerInfo = _hasPlayerInfo.Contains(groupByType);
         
         var g = source.GroupBy(x => new
             {
@@ -980,17 +988,17 @@ public class MpaWinLossBLL
         };
     }
     
-    // private readonly IEnumerable<MpaWinLossGroupByTypeEnum> _summaryTransaction = new[]
-    // {
-    //     MpaWinLossGroupByTypeEnum.Date,
-    //     MpaWinLossGroupByTypeEnum.Month,
-    //     MpaWinLossGroupByTypeEnum.Player,
-    //     MpaWinLossGroupByTypeEnum.Affiliate,
-    //     MpaWinLossGroupByTypeEnum.Brand,
-    //     MpaWinLossGroupByTypeEnum.Currency
-    // };
+    private readonly IEnumerable<MpaWinLossGroupByTypeEnum> _summaryTransaction = new[]
+    {
+        MpaWinLossGroupByTypeEnum.Date,
+        MpaWinLossGroupByTypeEnum.Month,
+        MpaWinLossGroupByTypeEnum.Player,
+        MpaWinLossGroupByTypeEnum.Affiliate,
+        MpaWinLossGroupByTypeEnum.Brand,
+        MpaWinLossGroupByTypeEnum.Currency
+    };
 
-    private static MpaWinLossGroupBySummary GetMpaGroupSummary(IEnumerable<MpaWinLossGroupBySummary> groupBySummary,
+    private MpaWinLossGroupBySummary GetMpaGroupSummary(IEnumerable<MpaWinLossGroupBySummary> groupBySummary,
         int currencyId,
         MpaWinLossGroupByTypeEnum groupByType)
     {
@@ -1015,22 +1023,17 @@ public class MpaWinLossBLL
             BaCommission = r.Sum(x => x.BaCommission),
             BetCount = betCountSum,
             AvgBetAmount = betCountSum != 0 ? turnOverSum / betCountSum : 0.00m,
-            Margin = validTurnOverSum != 0 ? ggrSum / validTurnOverSum : 0.00m,
-            DepositCount = r.Sum(x => x.DepositCount),
-            TotalDepositAmount = r.Sum(x => x.TotalDepositAmount),
-            WithdrawalCount = r.Sum(x => x.WithdrawalCount),
-            TotalWithdrawalAmount = r.Sum(x => x.TotalWithdrawalAmount),
-            TotalBonus = r.Sum(x => x.TotalBonus)
+            Margin = validTurnOverSum != 0 ? ggrSum / validTurnOverSum : 0.00m
         };
 
-        // if (_summaryTransaction.Contains(groupByType))
-        // {
-        //     result.DepositCount = r.Sum(x => x.DepositCount);
-        //     result.TotalDepositAmount = r.Sum(x => x.TotalDepositAmount);
-        //     result.WithdrawalCount = r.Sum(x => x.WithdrawalCount);
-        //     result.TotalWithdrawalAmount = r.Sum(x => x.TotalWithdrawalAmount);
-        //     result.TotalBonus = r.Sum(x => x.TotalBonus);
-        // }
+        if (_summaryTransaction.Contains(groupByType))
+        {
+            result.DepositCount = r.Sum(x => x.DepositCount);
+            result.TotalDepositAmount = r.Sum(x => x.TotalDepositAmount);
+            result.WithdrawalCount = r.Sum(x => x.WithdrawalCount);
+            result.TotalWithdrawalAmount = r.Sum(x => x.TotalWithdrawalAmount);
+            result.TotalBonus = r.Sum(x => x.TotalBonus);
+        }
         
         return result;
     }
