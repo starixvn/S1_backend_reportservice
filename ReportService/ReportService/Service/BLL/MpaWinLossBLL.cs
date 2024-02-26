@@ -659,17 +659,24 @@ public class MpaWinLossBLL
     
     private async Task<MpaWinLossGroupByWrapper> GetMpaWinLossGroupByChildResult(MpaWinLossRequest request)
     {
-        var (preProcessResult, uniquePlayers) =
-            await _dicPreProcessMapper[request.GroupByType].Invoke(request);
-
-        var exchangedResult = await ExchangeRate(preProcessResult, request);
-
-        return new MpaWinLossGroupByWrapper
+        try
         {
-            Result = GroupByResult(preProcessResult, request.GroupByType),
-            ExchangedResult = GroupByResult(exchangedResult, request.GroupByType),
-            UniquePlayers = uniquePlayers
-        };
+            var (preProcessResult, uniquePlayers) =
+                await _dicPreProcessMapper[request.GroupByType].Invoke(request);
+
+            var exchangedResult = await ExchangeRate(preProcessResult, request);
+
+            return new MpaWinLossGroupByWrapper
+            {
+                Result = GroupByResult(preProcessResult, request.GroupByType),
+                ExchangedResult = GroupByResult(exchangedResult, request.GroupByType),
+                UniquePlayers = uniquePlayers
+            };
+        }
+        finally
+        {
+            GC.Collect();
+        }
     }
 
     private IEnumerable<MpaWinLossGroupByModel> GetMpaWinLossGroupByResult(IEnumerable<MpaWinLossGroupByModel> source,
