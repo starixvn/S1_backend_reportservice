@@ -112,11 +112,13 @@ public class MpaWinLossBLL
 
         var combineData = betRecordResult
             .Concat(transactionTask.Result)
-            .Concat(claimBonusTask.Result)
-            .ToList();
+            .Concat(claimBonusTask.Result);
 
         // 處理時區
-        SetDateToOffSet(request.StartTime.Offset, combineData);
+        foreach (var item in combineData)
+        {
+            item.Date.ToOffSetReturnDate(request.StartTime.Offset);
+        }
         
         var combineResult = combineData
             .GroupBy(x => new
@@ -651,24 +653,17 @@ public class MpaWinLossBLL
     
     private async Task<MpaWinLossGroupByWrapper> GetMpaWinLossGroupByChildResult(MpaWinLossRequest request)
     {
-        try
-        {
-            var (preProcessResult, uniquePlayers) =
-                await _dicPreProcessMapper[request.GroupByType].Invoke(request);
+        var (preProcessResult, uniquePlayers) =
+            await _dicPreProcessMapper[request.GroupByType].Invoke(request);
 
-            var exchangedResult = await ExchangeRate(preProcessResult, request);
+        var exchangedResult = await ExchangeRate(preProcessResult, request);
 
-            return new MpaWinLossGroupByWrapper
-            {
-                Result = GroupByResult(preProcessResult, request.GroupByType),
-                ExchangedResult = GroupByResult(exchangedResult, request.GroupByType),
-                UniquePlayers = uniquePlayers
-            };
-        }
-        finally
+        return new MpaWinLossGroupByWrapper
         {
-            GC.Collect();
-        }
+            Result = GroupByResult(preProcessResult, request.GroupByType),
+            ExchangedResult = GroupByResult(exchangedResult, request.GroupByType),
+            UniquePlayers = uniquePlayers
+        };
     }
 
     private IEnumerable<MpaWinLossGroupByModel> GetMpaWinLossGroupByResult(IEnumerable<MpaWinLossGroupByModel> source,
@@ -864,12 +859,6 @@ public class MpaWinLossBLL
         }
         
         return data;
-    }
-    
-    private static void SetDateToOffSet<T>(TimeSpan offset, List<T> betRecordResult) where T : IFixDateTimeOffset
-    {
-        betRecordResult.ForEach(item
-            => { item.Date = item.Date.ToOffSetReturnDate(offset); });
     }
     
     private static string MapMpaWinLossGroupByTypeEnumFormat(MpaWinLossGroupByTypeEnum groupByType)
