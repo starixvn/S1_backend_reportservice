@@ -5,8 +5,8 @@ namespace ReportService.Core.Extensions;
 
 public static class CommonExtension
 {
-    public static string? SerializeEnumerableEmptyReturnNull<T>(IEnumerable<T>? obj)
-        => obj != null && obj.Any() ? JsonConvert.SerializeObject(obj) : null;
+    public static string SerializeEnumerableEmpty<T>(IEnumerable<T>? obj)
+        => obj != null ? JsonConvert.SerializeObject(obj) : "[]";
     
     public static Dictionary<TKey, TValue> SortApiData<TKey, TValue>(Dictionary<TKey, TValue> exportData, string sortField, OrderByDirection sortOrder)
         where TKey : notnull
