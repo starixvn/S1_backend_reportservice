@@ -16,18 +16,18 @@ public class GetTransactionParam
         EndTime = req.EndTime.UtcDateTime;
         DateTimeFormat = format;
         
-        MemberTypesJson = CommonExtension.SerializeEnumerableEmptyReturnNull(req.MemberTypes);
-        UserNamesJson = CommonExtension.SerializeEnumerableEmptyReturnNull(req.UserNames);
-        CurrencyIdsJson = CommonExtension.SerializeEnumerableEmptyReturnNull(req.CurrencyIds);
-        AffiliateNamesJson = CommonExtension.SerializeEnumerableEmptyReturnNull(req.AffiliateNames);
+        MemberTypesJson = CommonExtension.SerializeEnumerableEmpty(req.MemberTypes);
+        UserNamesJson = CommonExtension.SerializeEnumerableEmpty(req.UserNames);
+        CurrencyIdsJson = CommonExtension.SerializeEnumerableEmpty(req.CurrencyIds);
+        AffiliateNamesJson = CommonExtension.SerializeEnumerableEmpty(req.AffiliateNames);
     }
     
     public string SiteIdsJson { get; set; }
     public DateTime StartTime { get; set; }
     public DateTime EndTime { get; set; }
     public string DateTimeFormat { get; set; }
-    public string? MemberTypesJson { get; set; }
-    public string? UserNamesJson { get; set; }
-    public string? CurrencyIdsJson { get; set; }
-    public string? AffiliateNamesJson { get; set; }
+    public string MemberTypesJson { get; set; }
+    public string UserNamesJson { get; set; }
+    public string CurrencyIdsJson { get; set; }
+    public string AffiliateNamesJson { get; set; }
 }
