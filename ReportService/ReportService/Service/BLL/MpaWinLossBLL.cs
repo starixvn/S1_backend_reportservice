@@ -743,6 +743,7 @@ public class MpaWinLossBLL
             {
                 Key = r.Key.Key,
                 ChildKey = r.Key.ChildKey,
+                CustId = f.CustId,
                 UserName = f.UserName,
                 TpUserName = f.TpUserName,
                 UniquePlayers = r.Where(x => x.BetCount != 0)
