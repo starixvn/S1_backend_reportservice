@@ -45,17 +45,16 @@ public class MpaWinLossBLL
             request.BaseCurrencyId);
         var total = GetMpaGroupSummary(childResult.ExchangedResult, request.BaseCurrencyId, request.GroupByType);
 
+        total.Key = "total";
+        total.ChildKey = "All";
+        
         return new MpaWinLoseResponse
         {
             Result = result,
             ChildResult = request.DisplayGroupBreakdownInOriginalCurrency
                 ? childResult.Result
                 : childResult.ExchangedResult,
-            Total = new MpaWinLossGroupByModel(total)
-            {
-                Key = "Total",
-                ChildKey = "All"
-            }
+            Total = total
         };
     }
     
@@ -70,7 +69,7 @@ public class MpaWinLossBLL
     
     #region GroupByDate & Month
 
-    private string GetDateString(DateTime date, MpaWinLossGroupByTypeEnum groupByType)
+    private static string GetDateString(DateTime date, MpaWinLossGroupByTypeEnum groupByType)
         => groupByType switch
         {
             MpaWinLossGroupByTypeEnum.Month => date.ToString("yyyy-MM"),
@@ -97,16 +96,16 @@ public class MpaWinLossBLL
             {
                 var groupBySummary = GetSummary(r, r.Key.GameType, r.Key.CurrencyId);
 
-                return new MpaWinLossGroupByModel(groupBySummary)
-                {
-                    CustId = r.Key.CustId,
-                    Date = r.Key.Date
-                };
+                groupBySummary.CustId = r.Key.CustId;
+                groupBySummary.Date = r.Key.Date;
+                
+                return groupBySummary;
             });
 
         var combineData = betRecordResult
             .Concat(transactionTask.Result)
-            .Concat(claimBonusTask.Result);
+            .Concat(claimBonusTask.Result)
+            .ToList();
 
         // 處理時區
         foreach (var item in combineData)
@@ -125,13 +124,12 @@ public class MpaWinLossBLL
             {
                 var groupSummary = GetMpaGroupSummary(r, r.Key.CurrencyId, request.GroupByType);
 
-                return new MpaWinLossGroupByModel(groupSummary)
-                {
-                    Date = r.Key.Date,
-                    CustId = r.Key.CustId,
-                    Key = GetDateString(r.Key.Date, request.GroupByType),
-                    ChildKey = _mpaCommonBll.ToCurrencyIsoCode(r.Key.CurrencyId)
-                };
+                groupSummary.Date = r.Key.Date;
+                groupSummary.CustId = r.Key.CustId;
+                groupSummary.Key = GetDateString(r.Key.Date, request.GroupByType);
+                groupSummary.ChildKey = _mpaCommonBll.ToCurrencyIsoCode(r.Key.CurrencyId);
+                
+                return groupSummary;
             });
 
         var uniquePlayers = betRecordTask.Result.DistinctBy(x => x.CustId).Count();
@@ -203,12 +201,11 @@ public class MpaWinLossBLL
             {
                 var groupBySummary = GetSummary(r, r.Key.GameType, r.Key.CurrencyId);
 
-                return new MpaWinLossGroupByModel(groupBySummary)
-                {
-                    Date = r.Key.Date,
-                    Key = tpGameTypeMap[r.Key.GameType],
-                    ChildKey = _mpaCommonBll.ToCurrencyIsoCode(r.Key.CurrencyId)
-                };
+                groupBySummary.Date = r.Key.Date;
+                groupBySummary.Key = tpGameTypeMap[r.Key.GameType];
+                groupBySummary.ChildKey = _mpaCommonBll.ToCurrencyIsoCode(r.Key.CurrencyId);
+
+                return groupBySummary;
             });
 
         var uniquePlayers = betRecordResult.DistinctBy(x => x.CustId).Count();
@@ -237,12 +234,11 @@ public class MpaWinLossBLL
             {
                 var groupBySummary = GetSummary(r, r.Key.GameType, r.Key.CurrencyId);
 
-                return new MpaWinLossGroupByModel(groupBySummary)
-                {
-                    Date = r.Key.Date,
-                    Key = tpCategoryMap[r.Key.CategoryId],
-                    ChildKey = _mpaCommonBll.ToCurrencyIsoCode(r.Key.CurrencyId)
-                };
+                groupBySummary.Date = r.Key.Date;
+                groupBySummary.Key = tpCategoryMap[r.Key.CategoryId];
+                groupBySummary.ChildKey = _mpaCommonBll.ToCurrencyIsoCode(r.Key.CurrencyId);
+                
+                return groupBySummary;
             });
 
         var uniquePlayers = betRecordResult.DistinctBy(x => x.CustId).Count();
@@ -276,15 +272,14 @@ public class MpaWinLossBLL
             {
                 var groupBySummary = GetSummary(r, r.Key.GameType, r.Key.CurrencyId);
 
-                return new MpaWinLossGroupByModel(groupBySummary)
-                {
-                    Date = r.Key.Date,
-                    CustId = r.Key.CustId,
-                    Key = r.Key.TpUserName,
-                    UserName = r.Key.UserName,
-                    TpUserName = r.Key.TpUserName,
-                    ChildKey = _mpaCommonBll.ToCurrencyIsoCode(r.Key.CurrencyId)
-                };
+                groupBySummary.Date = r.Key.Date;
+                groupBySummary.CustId = r.Key.CustId;
+                groupBySummary.Key = r.Key.TpUserName;
+                groupBySummary.UserName = r.Key.UserName;
+                groupBySummary.TpUserName = r.Key.TpUserName;
+                groupBySummary.ChildKey = _mpaCommonBll.ToCurrencyIsoCode(r.Key.CurrencyId);
+                
+                return groupBySummary;
             })
             .Concat(transactionTask.Result)
             .Concat(claimBonusTask.Result);
@@ -381,15 +376,14 @@ public class MpaWinLossBLL
             {
                 var groupBySummary = GetSummary(r, r.Key.GameType, r.Key.CurrencyId);
 
-                return new MpaWinLossGroupByModel(groupBySummary)
-                {
-                    Date = r.Key.Date,
-                    CustId = r.Key.CustId,
-                    Key = r.Key.AffiliateName,
-                    UserName = r.Key.UserName,
-                    TpUserName = r.Key.TpUserName,
-                    ChildKey = r.Key.UserName
-                };
+                groupBySummary.Date = r.Key.Date;
+                groupBySummary.CustId = r.Key.CustId;
+                groupBySummary.Key = r.Key.AffiliateName;
+                groupBySummary.UserName = r.Key.UserName;
+                groupBySummary.TpUserName = r.Key.TpUserName;
+                groupBySummary.ChildKey = r.Key.UserName;
+
+                return groupBySummary;
             })
             .Concat(transactionTask.Result)
             .Concat(claimBonusTask.Result);
@@ -485,12 +479,11 @@ public class MpaWinLossBLL
                 var groupBySummary = GetSummary(r, r.Key.GameType, r.Key.CurrencyId);
                 var currency = _mpaCommonBll.ToCurrencyIsoCode(r.Key.CurrencyId);
 
-                return new MpaWinLossGroupByModel(groupBySummary)
-                {
-                    Date = r.Key.Date,
-                    Key = currency,
-                    ChildKey = currency
-                };
+                groupBySummary.Date = r.Key.Date;
+                groupBySummary.Key = currency;
+                groupBySummary.ChildKey = currency;
+                
+                return groupBySummary;
             })
             .Concat(transactionTask.Result)
             .Concat(claimBonusTask.Result);
@@ -577,12 +570,11 @@ public class MpaWinLossBLL
             {
                 var groupBySummary = GetSummary(r, r.Key.GameType, r.Key.CurrencyId);
 
-                return new MpaWinLossGroupByModel(groupBySummary)
-                {
-                    Date = r.Key.Date,
-                    Key = _mpaCommonBll.ToSiteName(r.Key.SiteId),
-                    ChildKey = _mpaCommonBll.ToCurrencyIsoCode(r.Key.CurrencyId)
-                };
+                groupBySummary.Date = r.Key.Date;
+                groupBySummary.Key = _mpaCommonBll.ToSiteName(r.Key.SiteId);
+                groupBySummary.ChildKey = _mpaCommonBll.ToCurrencyIsoCode(r.Key.CurrencyId);
+
+                return groupBySummary;
             })
             .Concat(transactionTask.Result)
             .Concat(claimBonusTask.Result);
@@ -673,12 +665,11 @@ public class MpaWinLossBLL
         {
             var groupSummary = GetMpaGroupSummary(r, baseCurrencyId, groupByType);
 
-            return new MpaWinLossGroupByModel(groupSummary)
-            {
-                Key = r.Key.Key,
-                ChildKey = "All",
-                UniquePlayers = r.Sum(x => x.UniquePlayers)
-            };
+            groupSummary.Key = r.Key.Key;
+            groupSummary.ChildKey = "All";
+            groupSummary.UniquePlayers = r.Sum(x => x.UniquePlayers);
+
+            return groupSummary;
         });
     }
 
@@ -690,17 +681,9 @@ public class MpaWinLossBLL
             .Select(r =>
             {
                 var rate = mapRate[$"{r.Date.DateMapperToRateDate()}{r.CurrencyId}{request.BaseCurrencyId}"];
-                var exchangedResult = r.ExchangeMpaWinLossGroupBySummary(rate);
-                
-                return new MpaWinLossGroupByModel(exchangedResult)
-                {
-                    Key = r.Key,
-                    ChildKey = r.ChildKey,
-                    Date = r.Date,
-                    CustId = r.CustId,
-                    TpUserName = r.TpUserName,
-                    UserName = r.UserName
-                };
+                r.ExchangeMpaWinLossGroupBySummary(rate);
+
+                return r;
             });
 
         return exchangedResult;
@@ -724,13 +707,12 @@ public class MpaWinLossBLL
             {
                 var groupSummary = GetMpaGroupSummary(r, r.Key.CurrencyId, groupByType);
 
-                return new MpaWinLossGroupByModel(groupSummary)
-                {
-                    Key = r.Key.Key,
-                    ChildKey = r.Key.ChildKey,
-                    UniquePlayers = r.Where(x => x.BetCount != 0)
-                        .DistinctBy(x => x.CustId).Count(),
-                };
+                groupSummary.Key = r.Key.Key;
+                groupSummary.ChildKey = r.Key.ChildKey;
+                groupSummary.UniquePlayers = r.Where(x => x.BetCount != 0)
+                    .DistinctBy(x => x.CustId).Count();
+                
+                return groupSummary;
             });
         }
 
@@ -739,16 +721,15 @@ public class MpaWinLossBLL
             var groupSummary = GetMpaGroupSummary(r, r.Key.CurrencyId, groupByType);
             var f = r.First();
 
-            return new MpaWinLossGroupByModel(groupSummary)
-            {
-                Key = r.Key.Key,
-                ChildKey = r.Key.ChildKey,
-                CustId = f.CustId,
-                UserName = f.UserName,
-                TpUserName = f.TpUserName,
-                UniquePlayers = r.Where(x => x.BetCount != 0)
-                    .DistinctBy(x => x.CustId).Count(),
-            };
+            groupSummary.Key = r.Key.Key;
+            groupSummary.ChildKey = r.Key.ChildKey;
+            groupSummary.CustId = f.CustId;
+            groupSummary.UserName = f.UserName;
+            groupSummary.TpUserName = f.TpUserName;
+            groupSummary.UniquePlayers = r.Where(x => x.BetCount != 0)
+                .DistinctBy(x => x.CustId).Count();
+            
+            return groupSummary;
         });
     }
     
@@ -906,7 +887,7 @@ public class MpaWinLossBLL
         return winLossSummary * -1 + (progressiveWinSummary - progressiveBetSummary);
     }
 
-    private static void SummaryByTransactionSummaryType(MpaWinLossGroupBySummary data,
+    private static void SummaryByTransactionSummaryType(MpaWinLossGroupByModel data,
         IEnumerable<MpaTransactionRelayDto> records, TransactionRelaySummaryTypeEnum summaryType)
     {
         var r = records.ToList();
@@ -924,7 +905,7 @@ public class MpaWinLossBLL
         }
     }
 
-    private static MpaWinLossGroupBySummary GetSummary(IEnumerable<MpaTpBetRecordDto> records, int gameType, int currencyId)
+    private static MpaWinLossGroupByModel GetSummary(IEnumerable<MpaTpBetRecordDto> records, int gameType, int currencyId)
     {
         var r = records.ToList();
         var totalStakeSummary = r.Sum(x => x.StakeSummary);
@@ -939,7 +920,7 @@ public class MpaWinLossBLL
         var ggr = CalculateGgr(gameType, totalWinLossSummaryWithoutBa, totalProgressiveWinSummary,
             totalProgressiveBetSummary, r) + totalBaCommission;
         
-        return new MpaWinLossGroupBySummary
+        return new MpaWinLossGroupByModel
         {
             CurrencyId = currencyId,
             TurnOver = totalStakeSummary,
@@ -955,7 +936,7 @@ public class MpaWinLossBLL
         };
     }
     
-    private MpaWinLossGroupBySummary GetMpaGroupSummary(IEnumerable<MpaWinLossGroupBySummary> groupBySummary,
+    private MpaWinLossGroupByModel GetMpaGroupSummary(IEnumerable<MpaWinLossGroupByModel> groupBySummary,
         int currencyId,
         MpaWinLossGroupByTypeEnum groupByType)
     {
@@ -965,7 +946,7 @@ public class MpaWinLossBLL
         var betCountSum = r.Sum(x => x.BetCount);
         var validTurnOverSum = r.Sum(x => x.ValidTurnOver);
 
-        var result = new MpaWinLossGroupBySummary
+        var result = new MpaWinLossGroupByModel
         {
             CurrencyId = currencyId,
             TurnOver = turnOverSum,
