@@ -25,8 +25,38 @@ builder.Host.UseSerilog((context, Configuration) =>
                 || excludesMessage.Any(item => c.MessageTemplate.ToString().Contains(item))))
         .Enrich.WithExceptionDetails();
 
+    
     OverrideLoggerWriteToLFile(Configuration);
 });
+
+
+builder.Services
+    .AddDatabaseConnection(builder.Configuration)
+    .RegisterServices(builder.Configuration)
+    .AddControllers()
+    .AddNewtonsoftJson(op =>
+    {
+        JsonConvert.DefaultSettings = () => new JsonSerializerSettings
+        {
+            NullValueHandling = NullValueHandling.Ignore
+        };
+    });
+
+var app = builder.Build();
+app.MapControllers();
+app.UseRouting();
+app.UseRequestLogMiddleware();
+app.UseResponseLogMiddleware();
+app.UseEndpoints(endpoints =>
+{
+    endpoints.MapGet("/health", async context =>
+    {
+        await context.Response.WriteAsync($"{Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT")}-{DateTime.Now:yyyy/MM/dd HH:mm:ss}");
+    });
+});
+
+app.Run();
+return;
 
 void OverrideLoggerWriteToLFile(LoggerConfiguration configuration)
 {
@@ -44,30 +74,3 @@ void OverrideLoggerWriteToLFile(LoggerConfiguration configuration)
             fileSizeLimitBytes: 10485760,
             rollOnFileSizeLimit: true);
 }
-
-builder.Services
-    .AddDatabaseConnection(builder.Configuration)
-    .RegisterServices(builder.Configuration)
-    .AddControllers()
-    .AddNewtonsoftJson(op =>
-    {
-        JsonConvert.DefaultSettings = () => new JsonSerializerSettings
-        {
-            NullValueHandling = NullValueHandling.Ignore
-        };
-    });
-
-var app = builder.Build();
-app.MapControllers();
-app.UseRouting();
-app.UseEndpoints(endpoints =>
-{
-    endpoints.MapGet("/health", async context =>
-    {
-        await context.Response.WriteAsync($"{Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT")}-{DateTime.Now:yyyy/MM/dd HH:mm:ss}");
-    });
-});
-app.UseRequestLogMiddleware();
-app.UseResponseLogMiddleware();
-
-app.Run();
