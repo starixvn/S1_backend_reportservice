@@ -2,6 +2,10 @@ namespace ReportService.Core.Models.Enums;
 
 public enum DataBase
 {
-    Report,
-    ReportBackupDB,
+    Main, //ConnectionString
+    Report, //ConnectionStringReport
+    Wager,  //ConnectionStringWager
+    Log,    //ConnectionStringLog
+    IP,    //ConnectionStringIPTable
+    ReportBackupDB
 }

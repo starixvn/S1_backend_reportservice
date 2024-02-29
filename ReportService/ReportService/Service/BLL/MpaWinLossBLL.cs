@@ -4,7 +4,6 @@ using ReportService.Core.Extensions;
 using ReportService.Core.Library;
 using ReportService.Core.Models;
 using ReportService.Core.Models.Enums;
-using ReportService.Core.Models.Interface;
 using ReportService.Core.Models.MpaWinLoss;
 using ReportService.Service.DAL;
 
@@ -42,9 +41,10 @@ public class MpaWinLossBLL
     private async Task<MpaWinLoseResponse> GetMpaWinLossReport(MpaWinLossRequest request)
     {
         var childResult = await GetMpaWinLossGroupByChildResult(request);
-        var result = GetMpaWinLossGroupByResult(childResult.ExchangedResult, request.GroupByType, request.BaseCurrencyId);
+        var result = GetMpaWinLossGroupByResult(childResult.ExchangedResult, request.GroupByType,
+            request.BaseCurrencyId);
         var total = GetMpaGroupSummary(childResult.ExchangedResult, request.BaseCurrencyId, request.GroupByType);
-     
+
         return new MpaWinLoseResponse
         {
             Result = result,
@@ -59,24 +59,18 @@ public class MpaWinLossBLL
         };
     }
     
-    private readonly IEnumerable<MpaWinLossGroupByTypeEnum> _useLongerCache = new[]
-    {
-        MpaWinLossGroupByTypeEnum.Player,
-        MpaWinLossGroupByTypeEnum.Affiliate
-    };
-    
     public async Task<MpaWinLoseResponse> GetMpaWinLossReportWithCache(MpaWinLossRequest request)
     {
         var key = JsonConvert.SerializeObject(request);
-        var min = _useLongerCache.Contains(request.GroupByType) ? 20 : 5; // Player類有分頁，分頁是在後台做所以給長點時間
-        
+        var min = MpaWinLossDefinition.UseLongerCache.Contains(request.GroupByType) ? 20 : 5; // Player類有分頁，分頁是在後台做所以給長點時間
+
         return await _redisHelper.TryGetOrCreateAsync(key, TimeSpan.FromMinutes(min),
                 () => GetMpaWinLossReport(request));
     }
     
     #region GroupByDate & Month
 
-    private static string GetDateString(DateTime date, MpaWinLossGroupByTypeEnum groupByType)
+    private string GetDateString(DateTime date, MpaWinLossGroupByTypeEnum groupByType)
         => groupByType switch
         {
             MpaWinLossGroupByTypeEnum.Month => date.ToString("yyyy-MM"),
@@ -712,16 +706,10 @@ public class MpaWinLossBLL
         return exchangedResult;
     }
 
-    private readonly IEnumerable<MpaWinLossGroupByTypeEnum> _hasPlayerInfo = new[]
-    {
-        MpaWinLossGroupByTypeEnum.Player,
-        MpaWinLossGroupByTypeEnum.Affiliate
-    };
-
     private IEnumerable<MpaWinLossGroupByModel> GroupByResult(IEnumerable<MpaWinLossGroupByModel> source,
         MpaWinLossGroupByTypeEnum groupByType)
     {
-        var hasPlayerInfo = _hasPlayerInfo.Contains(groupByType);
+        var hasPlayerInfo = MpaWinLossDefinition.HasPlayerInfo.Contains(groupByType);
         
         var g = source.GroupBy(x => new
             {
@@ -790,7 +778,7 @@ public class MpaWinLossBLL
             return await _redisHelper.TryGetOrCreateAsync(key, TimeSpan.FromMinutes(10),
                 () => GetMapTpBetRecordByDate(request));
         }
-        
+
         return await GetMapTpBetRecordByDate(request);
     }
     
@@ -966,21 +954,10 @@ public class MpaWinLossBLL
         };
     }
     
-    private readonly IEnumerable<MpaWinLossGroupByTypeEnum> _summaryTransaction = new[]
-    {
-        MpaWinLossGroupByTypeEnum.Date,
-        MpaWinLossGroupByTypeEnum.Month,
-        MpaWinLossGroupByTypeEnum.Player,
-        MpaWinLossGroupByTypeEnum.Affiliate,
-        MpaWinLossGroupByTypeEnum.Brand,
-        MpaWinLossGroupByTypeEnum.Currency
-    };
-
     private MpaWinLossGroupBySummary GetMpaGroupSummary(IEnumerable<MpaWinLossGroupBySummary> groupBySummary,
         int currencyId,
         MpaWinLossGroupByTypeEnum groupByType)
     {
-        
         var r = groupBySummary.ToList();
         var ggrSum = r.Sum(x => x.Ggr);
         var turnOverSum = r.Sum(x => x.TurnOver);
@@ -1004,7 +981,7 @@ public class MpaWinLossBLL
             Margin = validTurnOverSum != 0 ? ggrSum / validTurnOverSum : 0.00m
         };
 
-        if (_summaryTransaction.Contains(groupByType))
+        if (MpaWinLossDefinition.SummaryTransaction.Contains(groupByType))
         {
             result.DepositCount = r.Sum(x => x.DepositCount);
             result.TotalDepositAmount = r.Sum(x => x.TotalDepositAmount);

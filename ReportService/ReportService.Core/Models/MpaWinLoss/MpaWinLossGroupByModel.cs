@@ -16,7 +16,6 @@ public class MpaWinLossGroupByModel : MpaWinLossGroupBySummary, IFixDateTimeOffs
     [JsonIgnore]
     public DateTime Date { get; set; }
 
-    [JsonIgnore]
     public int CustId { get; set; }
     
     public string Key { get; set; }

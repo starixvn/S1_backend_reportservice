@@ -19,9 +19,5 @@
     <ItemGroup>
         <ProjectReference Include="..\ReportService.Core\ReportService.Core.csproj" />
     </ItemGroup>
-
-    <ItemGroup>
-      <Folder Include="Service" />
-    </ItemGroup>
     
 </Project>
