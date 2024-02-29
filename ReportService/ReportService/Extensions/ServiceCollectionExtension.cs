@@ -3,6 +3,7 @@ using ReportService.Core.Library;
 using ReportService.Core.Models.Enums;
 using ReportService.ExceptionHandling;
 using ReportService.Models;
+using ReportService.Service;
 using ReportService.Service.BLL;
 using ReportService.Service.DAL;
 using StackExchange.Redis;
@@ -98,8 +99,8 @@ public static class ServiceCollectionExtension
         });
         
         return services
-            .AddSingleton<ICacheHelper, RedisCacheHelper>();
-            //.AddHostedService<GarbageCollectCheckWorker>();
+            .AddSingleton<ICacheHelper, RedisCacheHelper>()
+            .AddHostedService<GarbageCollectCheckWorker>();
     }
     
     private static IServiceCollection AddOptionListByDb<T>(this IServiceCollection services, string sql, object parameters = null)
