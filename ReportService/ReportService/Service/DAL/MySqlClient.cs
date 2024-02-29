@@ -3,7 +3,6 @@ using System.Diagnostics;
 using Dapper;
 using ReportService.Core.Models.Enums;
 using MySql.Data.MySqlClient;
-using ReportService.Models;
 using Serilog.Context;
 
 namespace ReportService.Service.DAL
@@ -14,56 +13,36 @@ namespace ReportService.Service.DAL
 
         private readonly string _connectionString;
 
-        private readonly IEnumerable<string> _backupConnectionStringList;
+        private readonly string? _backupConnectionString;
 
         private readonly ILogger<MySqlClient> _logger;
 
-        public MySqlClient(IServiceProvider provider, DataBase dataBase, string connectionString)
+        public MySqlClient(DataBase dataBase, ILogger<MySqlClient> logger, string connectionString, string? backupConnectionString = null)
         {
             DataBase = dataBase;
-            _logger = provider.GetRequiredService<ILogger<MySqlClient>>();
+            _logger = logger;
             _connectionString = connectionString;
-            _backupConnectionStringList = null;
-        }
-        
-        public MySqlClient(IServiceProvider provider, DataBase dataBase, string connectionString, IEnumerable<string> backupConnectionStringList)
-        {
-            DataBase = dataBase;
-            _logger = provider.GetRequiredService<ILogger<MySqlClient>>();
-            _connectionString = connectionString;
-            _backupConnectionStringList = backupConnectionStringList;
+            _backupConnectionString = backupConnectionString;
         }
 
         private string HealthCheck()
-        {            
-            if (_backupConnectionStringList == null)
+        {
+            if (_backupConnectionString == null)
             {
                 return _connectionString;
             }
 
-            foreach (var backupConn in _backupConnectionStringList)
+            try
             {
-                try
-                {
-                    using var connection = new MySqlConnection(backupConn);
-                    var dbSlaveStatus = connection.QueryFirstOrDefault<DBSlaveStatus>("Service_HealthCheck_V2", commandType: CommandType.StoredProcedure);
-
-                    // 拿不到Status或延遲太久都換下一個連線
-                    if (dbSlaveStatus == null || dbSlaveStatus.Seconds_Behind_Master > 180)
-                    {
-                        continue;
-                    }
-
-                    return backupConn;
-                }
-                catch (Exception e)
-                {
-                    _logger.LogError(e, $"{ReplaceDBString(backupConn)} HealthCheck Exception");
-                }           
+                using var connection = new MySqlConnection(_connectionString);
+                var check = connection.QueryFirst<bool>("Service_HealthCheck", commandType: CommandType.StoredProcedure);
+                return check ? _connectionString : _backupConnectionString;
             }
-
-            // 前面連線檢查都有問題，用最後一個連線
-            return _backupConnectionStringList.Last();
+            catch (Exception e)
+            {
+                _logger.LogError(e, "HealthCheck Exception");
+                return _backupConnectionString;
+            }
         }
 
         public IEnumerable<T> Query<T>(string name, object? parameters = null, int? commandTimeout = null)
@@ -114,11 +93,6 @@ namespace ReportService.Service.DAL
             LogContext.PushProperty("elapsed", sw.Elapsed.TotalMilliseconds);
             _logger.LogInformation($"{name} {sw.Elapsed:c}");
             return result;
-        }
-        
-        private static string ReplaceDBString(string conn)
-        {
-            return conn.Substring(0, 28);
         }
     }
 }
