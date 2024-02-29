@@ -99,6 +99,7 @@ public static class ServiceCollectionExtension
         
         return services
             .AddSingleton<ICacheHelper, RedisCacheHelper>();
+            //.AddHostedService<GarbageCollectCheckWorker>();
     }
     
     private static IServiceCollection AddOptionListByDb<T>(this IServiceCollection services, string sql, object parameters = null)
