@@ -15,7 +15,7 @@ public class GarbageCollectCheckWorker : BackgroundService
         _logger = provider.GetRequiredService<ILogger<GarbageCollectCheckWorker>>();
         // 單位換算：1GB = 1024 * 1024 * 1024 bytes
         threshold = 2L * 1024 * 1024 * 1024;
-        timeSpan = TimeSpan.FromSeconds(30);
+        timeSpan = TimeSpan.FromMinutes(1);
     }
 
     protected override Task ExecuteAsync(CancellationToken stoppingToken)
