@@ -111,7 +111,7 @@ public class MpaWinLossBLL
         // 處理時區
         foreach (var item in combineData)
         {
-            item.Date.ToOffSetReturnDate(request.StartTime.Offset);
+            item.Date = item.Date.ToOffSetReturnDate(request.StartTime.Offset);
         }
         
         var combineResult = combineData
