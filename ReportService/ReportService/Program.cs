@@ -28,23 +28,6 @@ builder.Host.UseSerilog((context, Configuration) =>
     OverrideLoggerWriteToLFile(Configuration);
 });
 
-void OverrideLoggerWriteToLFile(LoggerConfiguration configuration)
-{
-    const string cashSiteBrand = "Nova";
-
-    var brand = Environment.GetEnvironmentVariable("Brand") ?? string.Empty;
-    if (brand != cashSiteBrand) return;
-
-    var logFilePath = $"/report/report-{DateTime.Now:yyyyMMddHHmmssfff}.log";
-    configuration
-        .WriteTo.File(new JsonFormatter(),
-            logFilePath,
-            rollingInterval: RollingInterval.Day,
-            retainedFileCountLimit: 60,
-            fileSizeLimitBytes: 10485760,
-            rollOnFileSizeLimit: true);
-}
-
 builder.Services
     .AddDatabaseConnection(builder.Configuration)
     .RegisterServices(builder.Configuration)
@@ -69,5 +52,30 @@ app.UseEndpoints(endpoints =>
 });
 app.UseRequestLogMiddleware();
 app.UseResponseLogMiddleware();
+app.UseEndpoints(endpoints =>
+{
+    endpoints.MapGet("/health", async context =>
+    {
+        await context.Response.WriteAsync($"{Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT")}-{DateTime.Now:yyyy/MM/dd HH:mm:ss}");
+    });
+});
 
 app.Run();
+return;
+
+void OverrideLoggerWriteToLFile(LoggerConfiguration configuration)
+{
+    const string cashSiteBrand = "Nova";
+
+    var brand = Environment.GetEnvironmentVariable("Brand") ?? string.Empty;
+    if (brand != cashSiteBrand) return;
+
+    var logFilePath = $"/report/report-{DateTime.Now:yyyyMMddHHmmssfff}.log";
+    configuration
+        .WriteTo.File(new JsonFormatter(),
+            logFilePath,
+            rollingInterval: RollingInterval.Day,
+            retainedFileCountLimit: 60,
+            fileSizeLimitBytes: 10485760,
+            rollOnFileSizeLimit: true);
+}

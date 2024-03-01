@@ -30,16 +30,16 @@ public class GetTpBetRecordParam : GetTransactionParam
             _ => Array.Empty<int>()
         };
 
-        SummaryTypesJson = CommonExtension.SerializeEnumerableEmptyReturnNull(summaryTypes);
-        MemberTypesJson = CommonExtension.SerializeEnumerableEmptyReturnNull(req.MemberTypes);
-        UserNamesJson = CommonExtension.SerializeEnumerableEmptyReturnNull(req.UserNames);
-        GameTypesJson = CommonExtension.SerializeEnumerableEmptyReturnNull(req.TpGameTypes);
-        CurrencyIdsJson = CommonExtension.SerializeEnumerableEmptyReturnNull(req.CurrencyIds);
-        CategoryIdsJson = CommonExtension.SerializeEnumerableEmptyReturnNull(req.TpCategorys);
-        AffiliateNamesJson = CommonExtension.SerializeEnumerableEmptyReturnNull(req.AffiliateNames);
+        SummaryTypesJson = CommonExtension.SerializeEnumerableEmpty(summaryTypes);
+        MemberTypesJson = CommonExtension.SerializeEnumerableEmpty(req.MemberTypes);
+        UserNamesJson = CommonExtension.SerializeEnumerableEmpty(req.UserNames);
+        GameTypesJson = CommonExtension.SerializeEnumerableEmpty(req.TpGameTypes);
+        CurrencyIdsJson = CommonExtension.SerializeEnumerableEmpty(req.CurrencyIds);
+        CategoryIdsJson = CommonExtension.SerializeEnumerableEmpty(req.TpCategorys);
+        AffiliateNamesJson = CommonExtension.SerializeEnumerableEmpty(req.AffiliateNames);
     }
     
-    public string? SummaryTypesJson { get; set; }
-    public string? GameTypesJson { get; set; }
-    public string? CategoryIdsJson { get; set; }
+    public string SummaryTypesJson { get; set; }
+    public string GameTypesJson { get; set; }
+    public string CategoryIdsJson { get; set; }
 }

@@ -26,14 +26,18 @@ public static class MpaWinLossExtension
             data = data.Where(x => !exceptTicketStatus.Contains(x.TicketStatus));
         }
         
-        // filter test user
-        data = FilterTestUser(data, request.IncludeTest);
-        
-        return data;
+        return data
+            .FilterAffiliate(request)
+            .FilterTestUser(request.IncludeTest);
     }
 
     public static IEnumerable<T> FilterTestUser<T>(this IEnumerable<T> data, bool includeTest) where T : IFilterTestUser
         => includeTest ? data : data.Where(x => x.IsTest == 0);
+
+    public static IEnumerable<T> FilterAffiliate<T>(this IEnumerable<T> data, MpaWinLossRequest request)
+        where T : IFilterAffiliate
+        => request.GroupByType == MpaWinLossGroupByTypeEnum.Affiliate
+           && (!request.AffiliateNames?.Any() ?? true) ? data.Where(x => !string.IsNullOrEmpty(x.AffiliateName)) : data;
     
     // BA用戶是指saba後台設定的特殊用戶，這些用戶的輸贏直接歸沙巴，沙巴會給平台傭金
     public static IEnumerable<MpaTpBetRecordDto> SetBAdata(this IEnumerable<MpaTpBetRecordDto> data)
