@@ -14,7 +14,7 @@ public class GarbageCollectCheckWorker : BackgroundService
     {
         _logger = provider.GetRequiredService<ILogger<GarbageCollectCheckWorker>>();
         // 單位換算：1GB = 1024 * 1024 * 1024 bytes
-        threshold = 2L * 1024 * 1024 * 1024;
+        threshold = 1L * 1024 * 1024 * 1024;
         timeSpan = TimeSpan.FromMinutes(10);
     }
 
@@ -32,7 +32,7 @@ public class GarbageCollectCheckWorker : BackgroundService
             var currentMemory = GC.GetTotalMemory(false);
             _logger.LogInformation($"GarbageCollectCheck: Current Total Memory: {currentMemory / 1024 / 1024 } MB");
             
-            // 如果當前記憶體使用量超過 2GB，執行垃圾回收
+            // 如果當前記憶體使用量超過，執行垃圾回收
             if (currentMemory > threshold)
             {
                 _logger.LogInformation("GarbageCollectCheck: Memory usage exceeded 2GB. Performing full garbage collection...");
