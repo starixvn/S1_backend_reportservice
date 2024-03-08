@@ -31,11 +31,11 @@ public static class MpaWinLossExtension
             .FilterTestUser(request.IncludeTest);
     }
 
-    public static IEnumerable<T> FilterTestUser<T>(this IEnumerable<T> data, bool includeTest) where T : IFilterTestUser
+    public static IEnumerable<T> FilterTestUser<T>(this IEnumerable<T> data, bool includeTest) where T : IFilterMpaWinLoss
         => includeTest ? data : data.Where(x => x.IsTest == 0);
 
     public static IEnumerable<T> FilterAffiliate<T>(this IEnumerable<T> data, MpaWinLossRequest request)
-        where T : IFilterAffiliate
+        where T : IFilterMpaWinLoss
         => request.GroupByType == MpaWinLossGroupByTypeEnum.Affiliate
            && (!request.AffiliateNames?.Any() ?? true) ? data.Where(x => !string.IsNullOrEmpty(x.AffiliateName)) : data;
     
