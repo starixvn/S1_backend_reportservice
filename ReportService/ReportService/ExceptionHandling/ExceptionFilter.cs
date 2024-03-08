@@ -35,11 +35,11 @@ public class ExceptionFilter : IExceptionFilter
             code = HttpStatusCode.OK;
 
             var reportException = context.Exception as ReportException;
-            var message = reportException.Message;
+            var message = reportException?.Message;
 
             result = JsonConvert.SerializeObject(new
             {
-                reportException.ErrorCode,
+                reportException?.ErrorCode,
                 Message = message
             });
             _logger.LogError(exception, message);
