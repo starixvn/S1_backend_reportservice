@@ -2,7 +2,7 @@ using ReportService.Core.Models.Interface;
 
 namespace ReportService.Core.Models;
 
-public class MpaTpBetRecordDto : IFilterTestUser, IFilterAffiliate
+public class MpaTpBetRecordDto : IFilterMpaWinLoss
 {
     public DateTime Date { get; set; }
     public int TpId { get; set; }

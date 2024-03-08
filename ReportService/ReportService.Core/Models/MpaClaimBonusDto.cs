@@ -1,9 +1,8 @@
-using ReportService.Core.Models.Enums;
 using ReportService.Core.Models.Interface;
 
 namespace ReportService.Core.Models;
 
-public class MpaClaimBonusDto : IFixDateTimeOffset, IFilterTestUser, IFilterAffiliate
+public class MpaClaimBonusDto : IFilterMpaWinLoss
 {
     public DateTime Date { get; set; }
 
