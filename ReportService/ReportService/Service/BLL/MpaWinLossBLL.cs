@@ -47,6 +47,7 @@ public class MpaWinLossBLL
 
         total.Key = "total";
         total.ChildKey = "All";
+        total.UniquePlayers = childResult.UniquePlayers;
         
         return new MpaWinLoseResponse
         {
@@ -98,6 +99,7 @@ public class MpaWinLossBLL
 
                 groupBySummary.CustId = r.Key.CustId;
                 groupBySummary.Date = r.Key.Date;
+                groupBySummary.UniquePlayers = r.DistinctBy(x => x.CustId).Count();
                 
                 return groupBySummary;
             });
@@ -204,6 +206,7 @@ public class MpaWinLossBLL
                 groupBySummary.Date = r.Key.Date;
                 groupBySummary.Key = tpGameTypeMap[r.Key.GameType];
                 groupBySummary.ChildKey = _mpaCommonBll.ToCurrencyIsoCode(r.Key.CurrencyId);
+                groupBySummary.UniquePlayers = r.DistinctBy(x => x.CustId).Count();
 
                 return groupBySummary;
             });
@@ -237,6 +240,7 @@ public class MpaWinLossBLL
                 groupBySummary.Date = r.Key.Date;
                 groupBySummary.Key = tpCategoryMap[r.Key.CategoryId];
                 groupBySummary.ChildKey = _mpaCommonBll.ToCurrencyIsoCode(r.Key.CurrencyId);
+                groupBySummary.UniquePlayers = r.DistinctBy(x => x.CustId).Count();
                 
                 return groupBySummary;
             });
@@ -278,6 +282,7 @@ public class MpaWinLossBLL
                 groupBySummary.UserName = r.Key.UserName;
                 groupBySummary.TpUserName = r.Key.TpUserName;
                 groupBySummary.ChildKey = _mpaCommonBll.ToCurrencyIsoCode(r.Key.CurrencyId);
+                groupBySummary.UniquePlayers = 1;
                 
                 return groupBySummary;
             })
@@ -382,6 +387,7 @@ public class MpaWinLossBLL
                 groupBySummary.UserName = r.Key.UserName;
                 groupBySummary.TpUserName = r.Key.TpUserName;
                 groupBySummary.ChildKey = r.Key.UserName;
+                groupBySummary.UniquePlayers = 1;
 
                 return groupBySummary;
             })
@@ -482,6 +488,7 @@ public class MpaWinLossBLL
                 groupBySummary.Date = r.Key.Date;
                 groupBySummary.Key = currency;
                 groupBySummary.ChildKey = currency;
+                groupBySummary.UniquePlayers = r.DistinctBy(x => x.CustId).Count();
                 
                 return groupBySummary;
             })
@@ -573,6 +580,7 @@ public class MpaWinLossBLL
                 groupBySummary.Date = r.Key.Date;
                 groupBySummary.Key = _mpaCommonBll.ToSiteName(r.Key.SiteId);
                 groupBySummary.ChildKey = _mpaCommonBll.ToCurrencyIsoCode(r.Key.CurrencyId);
+                groupBySummary.UniquePlayers = r.DistinctBy(x => x.CustId).Count();
 
                 return groupBySummary;
             })
@@ -667,7 +675,6 @@ public class MpaWinLossBLL
 
             groupSummary.Key = r.Key.Key;
             groupSummary.ChildKey = "All";
-            groupSummary.UniquePlayers = r.Sum(x => x.UniquePlayers);
 
             return groupSummary;
         });
@@ -709,8 +716,6 @@ public class MpaWinLossBLL
 
                 groupSummary.Key = r.Key.Key;
                 groupSummary.ChildKey = r.Key.ChildKey;
-                groupSummary.UniquePlayers = r.Where(x => x.BetCount != 0)
-                    .DistinctBy(x => x.CustId).Count();
                 
                 return groupSummary;
             });
@@ -726,8 +731,7 @@ public class MpaWinLossBLL
             groupSummary.CustId = f.CustId;
             groupSummary.UserName = f.UserName;
             groupSummary.TpUserName = f.TpUserName;
-            groupSummary.UniquePlayers = r.Where(x => x.BetCount != 0)
-                .DistinctBy(x => x.CustId).Count();
+            groupSummary.UniquePlayers = 1;
             
             return groupSummary;
         });
@@ -960,7 +964,8 @@ public class MpaWinLossBLL
             BaCommission = r.Sum(x => x.BaCommission),
             BetCount = betCountSum,
             AvgBetAmount = betCountSum != 0 ? turnOverSum / betCountSum : 0.00m,
-            Margin = validTurnOverSum != 0 ? ggrSum / validTurnOverSum : 0.00m
+            Margin = validTurnOverSum != 0 ? ggrSum / validTurnOverSum : 0.00m,
+            UniquePlayers = r.Sum(x => x.UniquePlayers)
         };
 
         if (MpaWinLossDefinition.SummaryTransaction.Contains(groupByType))
