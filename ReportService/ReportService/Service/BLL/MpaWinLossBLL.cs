@@ -675,7 +675,6 @@ public class MpaWinLossBLL
 
             groupSummary.Key = r.Key.Key;
             groupSummary.ChildKey = "All";
-            groupSummary.UniquePlayers = r.Sum(x => x.UniquePlayers);
 
             return groupSummary;
         });
@@ -717,8 +716,6 @@ public class MpaWinLossBLL
 
                 groupSummary.Key = r.Key.Key;
                 groupSummary.ChildKey = r.Key.ChildKey;
-                groupSummary.UniquePlayers = r.Where(x => x.BetCount != 0)
-                    .DistinctBy(x => x.CustId).Count();
                 
                 return groupSummary;
             });
@@ -734,8 +731,7 @@ public class MpaWinLossBLL
             groupSummary.CustId = f.CustId;
             groupSummary.UserName = f.UserName;
             groupSummary.TpUserName = f.TpUserName;
-            groupSummary.UniquePlayers = r.Where(x => x.BetCount != 0)
-                .DistinctBy(x => x.CustId).Count();
+            groupSummary.UniquePlayers = 1;
             
             return groupSummary;
         });
