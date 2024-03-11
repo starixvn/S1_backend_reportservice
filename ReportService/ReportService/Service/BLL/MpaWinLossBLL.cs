@@ -960,7 +960,8 @@ public class MpaWinLossBLL
             BaCommission = r.Sum(x => x.BaCommission),
             BetCount = betCountSum,
             AvgBetAmount = betCountSum != 0 ? turnOverSum / betCountSum : 0.00m,
-            Margin = validTurnOverSum != 0 ? ggrSum / validTurnOverSum : 0.00m
+            Margin = validTurnOverSum != 0 ? ggrSum / validTurnOverSum : 0.00m,
+            UniquePlayers = r.Sum(x => x.UniquePlayers)
         };
 
         if (MpaWinLossDefinition.SummaryTransaction.Contains(groupByType))
