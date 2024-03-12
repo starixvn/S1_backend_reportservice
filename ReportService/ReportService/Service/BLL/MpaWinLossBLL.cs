@@ -99,7 +99,6 @@ public class MpaWinLossBLL
 
                 groupBySummary.CustId = r.Key.CustId;
                 groupBySummary.Date = r.Key.Date;
-                groupBySummary.UniquePlayers = r.DistinctBy(x => x.CustId).Count();
                 
                 return groupBySummary;
             });
@@ -197,7 +196,8 @@ public class MpaWinLossBLL
             {
                 x.CurrencyId,
                 x.GameType,
-                x.Date
+                x.Date,
+                x.CustId
             })
             .Select(r =>
             {
@@ -206,7 +206,7 @@ public class MpaWinLossBLL
                 groupBySummary.Date = r.Key.Date;
                 groupBySummary.Key = tpGameTypeMap[r.Key.GameType];
                 groupBySummary.ChildKey = _mpaCommonBll.ToCurrencyIsoCode(r.Key.CurrencyId);
-                groupBySummary.UniquePlayers = r.DistinctBy(x => x.CustId).Count();
+                groupBySummary.CustId = r.Key.CustId;
 
                 return groupBySummary;
             });
@@ -231,7 +231,8 @@ public class MpaWinLossBLL
                 x.CurrencyId,
                 x.GameType,
                 x.Date,
-                x.CategoryId
+                x.CategoryId,
+                x.CustId
             })
             .Select(r =>
             {
@@ -240,7 +241,7 @@ public class MpaWinLossBLL
                 groupBySummary.Date = r.Key.Date;
                 groupBySummary.Key = tpCategoryMap[r.Key.CategoryId];
                 groupBySummary.ChildKey = _mpaCommonBll.ToCurrencyIsoCode(r.Key.CurrencyId);
-                groupBySummary.UniquePlayers = r.DistinctBy(x => x.CustId).Count();
+                groupBySummary.CustId = r.Key.CustId;
                 
                 return groupBySummary;
             });
@@ -282,7 +283,6 @@ public class MpaWinLossBLL
                 groupBySummary.UserName = r.Key.UserName;
                 groupBySummary.TpUserName = r.Key.TpUserName;
                 groupBySummary.ChildKey = _mpaCommonBll.ToCurrencyIsoCode(r.Key.CurrencyId);
-                groupBySummary.UniquePlayers = 1;
                 
                 return groupBySummary;
             })
@@ -387,7 +387,6 @@ public class MpaWinLossBLL
                 groupBySummary.UserName = r.Key.UserName;
                 groupBySummary.TpUserName = r.Key.TpUserName;
                 groupBySummary.ChildKey = r.Key.UserName;
-                groupBySummary.UniquePlayers = 1;
 
                 return groupBySummary;
             })
@@ -478,7 +477,8 @@ public class MpaWinLossBLL
             {
                 x.CurrencyId,
                 x.GameType,
-                x.Date
+                x.Date,
+                x.CustId
             })
             .Select(r =>
             {
@@ -488,7 +488,7 @@ public class MpaWinLossBLL
                 groupBySummary.Date = r.Key.Date;
                 groupBySummary.Key = currency;
                 groupBySummary.ChildKey = currency;
-                groupBySummary.UniquePlayers = r.DistinctBy(x => x.CustId).Count();
+                groupBySummary.CustId = r.Key.CustId;
                 
                 return groupBySummary;
             })
@@ -571,7 +571,8 @@ public class MpaWinLossBLL
                 x.CurrencyId,
                 x.GameType,
                 x.Date,
-                x.SiteId
+                x.SiteId,
+                x.CustId
             })
             .Select(r =>
             {
@@ -580,7 +581,7 @@ public class MpaWinLossBLL
                 groupBySummary.Date = r.Key.Date;
                 groupBySummary.Key = _mpaCommonBll.ToSiteName(r.Key.SiteId);
                 groupBySummary.ChildKey = _mpaCommonBll.ToCurrencyIsoCode(r.Key.CurrencyId);
-                groupBySummary.UniquePlayers = r.DistinctBy(x => x.CustId).Count();
+                groupBySummary.CustId = r.Key.CustId;
 
                 return groupBySummary;
             })
@@ -716,6 +717,8 @@ public class MpaWinLossBLL
 
                 groupSummary.Key = r.Key.Key;
                 groupSummary.ChildKey = r.Key.ChildKey;
+                groupSummary.UniquePlayers = r.Where(x => x.BetCount != 0)
+                    .DistinctBy(x => x.CustId).Count();
                 
                 return groupSummary;
             });
