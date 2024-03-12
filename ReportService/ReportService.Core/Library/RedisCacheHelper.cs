@@ -35,6 +35,8 @@ public class RedisCacheHelper : ICacheHelper
                 }
                 return result;
             }
+            
+            _logger.LogInformation("Get data from redis, key=" + key);
 
             var json = db.StringGet(key);
             return json.HasValue ? JsonConvert.DeserializeObject<TItem>(json) : factory();
@@ -62,6 +64,8 @@ public class RedisCacheHelper : ICacheHelper
                 }
                 return result;
             }
+            
+            _logger.LogInformation("Get data from redis, key=" + key);
 
             var json = db.StringGet(key);
             return json.HasValue ? JsonConvert.DeserializeObject<TItem>(json) : await factory();
