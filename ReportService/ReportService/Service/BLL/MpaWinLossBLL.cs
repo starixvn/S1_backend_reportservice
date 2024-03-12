@@ -648,9 +648,8 @@ public class MpaWinLossBLL
     
     private async Task<MpaWinLossGroupByWrapper> GetMpaWinLossGroupByChildResult(MpaWinLossRequest request)
     {
-        var (preProcessResult, uniquePlayers) =
-            await _dicPreProcessMapper[request.GroupByType].Invoke(request);
-
+        var (preProcessResult, uniquePlayers) = await GetMpaWinLossPreProcessResultWithCache(request);
+        
         var exchangedResult = await ExchangeRate(preProcessResult, request);
 
         return new MpaWinLossGroupByWrapper
@@ -659,6 +658,23 @@ public class MpaWinLossBLL
             ExchangedResult = GroupByResult(exchangedResult, request.GroupByType),
             UniquePlayers = uniquePlayers
         };
+    }
+    
+    private async Task<(IEnumerable<MpaWinLossGroupByModel>, int)> GetMpaWinLossPreProcessResultWithCache(MpaWinLossRequest request)
+    {
+        var p = new GetTpBetRecordParam(request, string.Empty, request.StartTime, request.EndTime);
+
+        if (string.IsNullOrEmpty(p.UserNamesJson) && string.IsNullOrEmpty(p.AffiliateNamesJson))
+        {
+            var key = $"{p.StartTime:yyyyMMddHHmmss}{p.EndTime:yyyyMMddHHmmss}{request.GroupByType}" +
+                      $"{request.DateType}{p.SiteIdsJson}{p.CurrencyIdsJson}{p.MemberTypesJson}" +
+                      $"{p.CategoryIdsJson}{p.GameTypesJson}{request.NoDraw}{request.IncludeTest}{request.IncludeFreeSpins}";
+
+            return await _redisHelper.TryGetOrCreateAsync(key, TimeSpan.FromMinutes(5),
+                    () => _dicPreProcessMapper[request.GroupByType].Invoke(request));
+        }
+
+        return await _dicPreProcessMapper[request.GroupByType].Invoke(request);
     }
 
     private IEnumerable<MpaWinLossGroupByModel> GetMpaWinLossGroupByResult(IEnumerable<MpaWinLossGroupByModel> source,
