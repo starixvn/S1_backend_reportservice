@@ -64,6 +64,8 @@ public class MpaWinLossBLL
         var key = JsonConvert.SerializeObject(request);
         var min = MpaWinLossDefinition.UseLongerCache.Contains(request.GroupByType) ? 20 : 5; // Player類有分頁，分頁是在後台做所以給長點時間
 
+        _logger.LogInformation("Get data from redis, key=" + key);
+        
         return await _redisHelper.TryGetOrCreateAsync(key, TimeSpan.FromMinutes(min),
                 () => GetMpaWinLossReport(request));
     }
@@ -670,6 +672,8 @@ public class MpaWinLossBLL
                       $"{request.DateType}{p.SiteIdsJson}{p.CurrencyIdsJson}{p.MemberTypesJson}" +
                       $"{p.CategoryIdsJson}{p.GameTypesJson}{request.NoDraw}{request.IncludeTest}{request.IncludeFreeSpins}";
 
+            _logger.LogInformation("Get pre-process data from redis, key=" + key);
+            
             return await _redisHelper.TryGetOrCreateAsync(key, TimeSpan.FromMinutes(5),
                     () => _dicPreProcessMapper[request.GroupByType].Invoke(request));
         }
@@ -779,6 +783,8 @@ public class MpaWinLossBLL
             var key = $"{p.StartTime:yyyyMMddHHmmss}{p.EndTime:yyyyMMddHHmmss}{format}" +
                       $"{request.DateType}{p.SiteIdsJson}{p.CurrencyIdsJson}{p.MemberTypesJson}" +
                       $"{p.CategoryIdsJson}{p.GameTypesJson}";
+            
+            _logger.LogInformation("Get TpBetRecords from redis, key=" + key);
 
             return await _redisHelper.TryGetOrCreateAsync(key, TimeSpan.FromMinutes(10),
                 () => GetMapTpBetRecordByDate(request));
