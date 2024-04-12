@@ -23,6 +23,8 @@ public struct MpaWinLossDefinition
     public static readonly IEnumerable<MpaWinLossGroupByTypeEnum> HasPlayerInfo = new[]
     {
         MpaWinLossGroupByTypeEnum.Player,
-        MpaWinLossGroupByTypeEnum.Affiliate
+        MpaWinLossGroupByTypeEnum.Affiliate,
+        MpaWinLossGroupByTypeEnum.DateDownload,
+        MpaWinLossGroupByTypeEnum.MonthDownload
     };
 }

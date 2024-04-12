@@ -24,11 +24,9 @@ builder.Host.UseSerilog((context, Configuration) =>
                 excludesApiEndpoints.Any(item => p.Value.ToString().Contains(item))
                 || excludesMessage.Any(item => c.MessageTemplate.ToString().Contains(item))))
         .Enrich.WithExceptionDetails();
-
     
     OverrideLoggerWriteToLFile(Configuration);
 });
-
 
 builder.Services
     .AddDatabaseConnection(builder.Configuration)

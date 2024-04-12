@@ -9,7 +9,9 @@ public enum MpaWinLossGroupByTypeEnum
     Player = 5,
     TpCategory = 6,
     Brand = 7,
-    Affiliate = 8
+    Affiliate = 8,
+    DateDownload = 9,
+    MonthDownload = 10
 }
 
 public enum MpaGgrCustomizeGameTypeEnum
