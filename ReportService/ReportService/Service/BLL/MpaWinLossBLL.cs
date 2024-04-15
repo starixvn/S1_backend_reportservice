@@ -93,6 +93,17 @@ public class MpaWinLossBLL
             _ => date.ToString("yyyy-MM-dd")
         };
 
+    private static DateTime GetStringDate(string dateStr, DateTime date, MpaWinLossGroupByTypeEnum groupByType)
+    {
+        if (groupByType is MpaWinLossGroupByTypeEnum.MonthDownload)
+        {
+            DateTime dateTime = DateTime.ParseExact(dateStr, "yyyy-MM", null);
+            return new DateTime(dateTime.Year, dateTime.Month, 1);
+        }
+        return date;
+    }
+
+
     private async Task<(IEnumerable<MpaWinLossGroupByModel>, int)> PreProcessMpaWinLossGroupByDateResult(MpaWinLossRequest request)
     {
         var betRecordTask = Task.Run(() => GetTpBetRecords(request));
@@ -227,6 +238,7 @@ public class MpaWinLossBLL
 
                 groupBySummary.Key = GetDateString(r.Key.Date, request.GroupByType);
                 groupBySummary.ChildKey = _mpaCommonBll.ToCurrencyIsoCode(r.Key.CurrencyId);
+                groupBySummary.Date = GetStringDate(GetDateString(r.Key.Date, request.GroupByType), r.Key.Date, request.GroupByType);
                 groupBySummary.CustId = r.Key.CustId;
                 groupBySummary.Brand = _mpaCommonBll.ToSiteName(r.Key.SiteId);
                 groupBySummary.TpCategory = tpCategoryMap[r.Key.CategoryId];
@@ -248,6 +260,7 @@ public class MpaWinLossBLL
         var combineResult = combineData
                .GroupBy(x => new
                {
+                   x.Key,
                    x.Date,
                    x.Brand,
                    x.CurrencyId,
@@ -261,9 +274,9 @@ public class MpaWinLossBLL
                {
                    var groupSummary = GetMpaGroupSummary(r, r.Key.CurrencyId, request.GroupByType);
 
-                   groupSummary.Key = GetDateString(r.Key.Date, request.GroupByType);
-                   groupSummary.ChildKey = _mpaCommonBll.ToCurrencyIsoCode(r.Key.CurrencyId);
+                   groupSummary.Key = r.Key.Key;
                    groupSummary.Date = r.Key.Date;
+                   groupSummary.ChildKey = _mpaCommonBll.ToCurrencyIsoCode(r.Key.CurrencyId);
                    groupSummary.CustId = r.Key.CustId;
                    groupSummary.Brand = r.Key.Brand;
                    groupSummary.TpCategory = r.Key.TpCategory;
