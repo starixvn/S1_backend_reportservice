@@ -89,6 +89,7 @@ public class MpaWinLossBLL
         => groupByType switch
         {
             MpaWinLossGroupByTypeEnum.Month => date.ToString("yyyy-MM"),
+            MpaWinLossGroupByTypeEnum.MonthDownload => date.ToString("yyyy-MM"),
             _ => date.ToString("yyyy-MM-dd")
         };
 
@@ -259,6 +260,8 @@ public class MpaWinLossBLL
                {
                    var groupSummary = GetMpaGroupSummary(r, r.Key.CurrencyId, request.GroupByType);
 
+                   groupSummary.Key = GetDateString(r.Key.Date, request.GroupByType);
+                   groupSummary.ChildKey = _mpaCommonBll.ToCurrencyIsoCode(r.Key.CurrencyId);
                    groupSummary.Date = r.Key.Date;
                    groupSummary.CustId = r.Key.CustId;
                    groupSummary.Brand = r.Key.Brand;
@@ -266,7 +269,6 @@ public class MpaWinLossBLL
                    groupSummary.UserName = r.Key.UserName;
                    groupSummary.TpUserName = r.Key.TpUserName;
                    groupSummary.TpGameType = r.Key.TpGameType;
-                   groupSummary.IsoCode = _mpaCommonBll.ToCurrencyIsoCode(r.Key.CurrencyId);
                    groupSummary.UniquePlayers = 1;
                    return groupSummary;
                });
