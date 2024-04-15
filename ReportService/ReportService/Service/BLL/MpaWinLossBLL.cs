@@ -59,6 +59,7 @@ public class MpaWinLossBLL
                 Result = request.DisplayGroupBreakdownInOriginalCurrency
                 ? childResult.Result
                 : childResult.ExchangedResult,
+                ChildResult = new List<MpaWinLossGroupByModel>(),
                 Total = total
             };
         }
