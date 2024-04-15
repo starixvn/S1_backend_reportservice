@@ -218,20 +218,49 @@ public class MpaWinLossBLL
                 groupBySummary.UserName = r.Key.UserName;
                 groupBySummary.TpUserName = r.Key.TpUserName;
                 groupBySummary.TpGameType = tpGameTypeMap[r.Key.GameType];
-                groupBySummary.IsoCode = _mpaCommonBll.ToCurrencyIsoCode(r.Key.CurrencyId);
 
                 return groupBySummary;
             });
 
+        var combineData = betRecordResult.ToList();
+
         // 處理時區
-        foreach (var item in betRecordResult)
+        foreach (var item in combineData)
         {
             item.Date = item.Date.ToOffSetReturnDate(request.StartTime.Offset);
         }
 
+        var combineResult = combineData
+               .GroupBy(x => new
+               {
+                   x.Date,
+                   x.Brand,
+                   x.CurrencyId,
+                   x.CustId,
+                   x.TpGameType, // GGR計算需用gameType分組
+                   x.TpCategory,
+                   x.TpUserName,
+                   x.UserName
+               })
+               .Select(r =>
+               {
+                   var groupSummary = GetMpaGroupSummary(r, r.Key.CurrencyId, request.GroupByType);
+
+                   groupSummary.Date = r.Key.Date;
+                   groupSummary.CustId = r.Key.CustId;
+                   groupSummary.Brand = r.Key.Brand;
+                   groupSummary.TpCategory = r.Key.TpCategory;
+                   groupSummary.UserName = r.Key.UserName;
+                   groupSummary.TpUserName = r.Key.TpUserName;
+                   groupSummary.TpGameType = r.Key.TpGameType;
+                   groupSummary.IsoCode = _mpaCommonBll.ToCurrencyIsoCode(r.Key.CurrencyId);
+                   groupSummary.UniquePlayers = 1;
+                   return groupSummary;
+               });
+
         var uniquePlayers = betRecordTask.Result.DistinctBy(x => x.CustId).Count();
 
-        return (betRecordResult, uniquePlayers);
+        return (combineResult, uniquePlayers);
     }
 
     #endregion
