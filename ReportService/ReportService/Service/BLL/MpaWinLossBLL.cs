@@ -225,8 +225,9 @@ public class MpaWinLossBLL
             {
                 var groupBySummary = GetSummary(r, r.Key.GameType, r.Key.CurrencyId);
 
+                groupBySummary.Key = GetDateString(r.Key.Date, request.GroupByType);
+                groupBySummary.ChildKey = _mpaCommonBll.ToCurrencyIsoCode(r.Key.CurrencyId);
                 groupBySummary.CustId = r.Key.CustId;
-                groupBySummary.Date = r.Key.Date;
                 groupBySummary.Brand = _mpaCommonBll.ToSiteName(r.Key.SiteId);
                 groupBySummary.TpCategory = tpCategoryMap[r.Key.CategoryId];
                 groupBySummary.UserName = r.Key.UserName;
@@ -838,7 +839,6 @@ public class MpaWinLossBLL
             groupSummary.TpGameType = f.TpGameType;
             groupSummary.TpCategory = f.TpCategory;
             groupSummary.Brand = f.Brand;
-            groupSummary.IsoCode = f.IsoCode;
             groupSummary.UniquePlayers = 1;
 
             return groupSummary;
