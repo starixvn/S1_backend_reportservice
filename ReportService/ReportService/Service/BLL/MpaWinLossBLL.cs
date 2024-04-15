@@ -51,6 +51,18 @@ public class MpaWinLossBLL
         total.ChildKey = "All";
         total.UniquePlayers = childResult.UniquePlayers;
 
+        if (request.GroupByType is MpaWinLossGroupByTypeEnum.DateDownload
+            || request.GroupByType is MpaWinLossGroupByTypeEnum.MonthDownload)
+        {
+            return new MpaWinLoseResponse
+            {
+                Result = request.DisplayGroupBreakdownInOriginalCurrency
+                ? childResult.Result
+                : childResult.ExchangedResult,
+                Total = total
+            };
+        }
+
         return new MpaWinLoseResponse
         {
             Result = result,
