@@ -816,42 +816,7 @@ public class MpaWinLossBLL
     private async Task<IEnumerable<MpaTpBetRecordDto>> GetMapTpBetRecordByDate(MpaWinLossRequest request)
     {
         var format = MapMpaWinLossGroupByTypeEnumFormat(request.GroupByType);
-        var startDate = request.StartTime;
-        var endDate = request.EndTime;
-        var interval = TimeSpan.FromDays(11);
-        var segmentCount = (int)Math.Ceiling((endDate - startDate).TotalDays / interval.TotalDays);
-        var data = new List<MpaTpBetRecordDto>();
-        var tasks = new List<Task<IEnumerable<MpaTpBetRecordDto>>>();
-        var sw = Stopwatch.StartNew();
-        
-        _logger.LogInformation($"GetMapTpBetRecordByDate SegmentCount={segmentCount}");
-        
-        for (var i = 0; i < segmentCount; i++)
-        {
-            var segmentStart = startDate.AddDays(i * interval.TotalDays);
-            var segmentEnd = segmentStart.AddDays(interval.TotalDays);
-            if (segmentEnd > endDate)
-                segmentEnd = endDate;
-            
-            _logger.LogInformation($"SegmentStart={segmentStart:yyyy-MM-dd HH:mm:ss}, SegmentEnd={segmentEnd:yyyy-MM-dd HH:mm:ss}");
-            
-            tasks.Add(Task.Run(() => _mpaWinLossService
-                .GetTpBetRecord<MpaTpBetRecordDto>(new GetTpBetRecordParam(request, format, segmentStart, segmentEnd))));
-        }
-
-        await Task.WhenAll(tasks)
-            .ContinueWith(_ =>
-            {
-                _logger.LogInformation(
-                    $"GetMapTpBetRecordByDate Start={request.StartTime:yyyy-MM-ddTHH:mm:sszzz}, End={request.EndTime:yyyy-MM-ddTHH:mm:sszzz}, Elapsed={sw.Elapsed:c}");
-            });
-        
-        foreach (var task in tasks)
-        {
-            data.AddRange(task.Result);
-        }
-        
-        return data;
+        return await _mpaWinLossService.GetTpBetRecord<MpaTpBetRecordDto>(new GetTpBetRecordParam(request, format, request.StartTime, request.EndTime)); ;
     }
     
     private static string MapMpaWinLossGroupByTypeEnumFormat(MpaWinLossGroupByTypeEnum groupByType)
