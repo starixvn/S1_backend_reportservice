@@ -41,10 +41,8 @@ public class MpaWinLossBLL
     private async Task<MpaWinLoseResponse> GetMpaWinLossReport(MpaWinLossRequest request)
     {
         var childResult = await GetMpaWinLossGroupByChildResult(request);
-        _logger.LogInformation($"childResult Log={JsonConvert.SerializeObject(childResult)}");
         var result = GetMpaWinLossGroupByResult(childResult.ExchangedResult, request.GroupByType,
             request.BaseCurrencyId);
-        _logger.LogInformation($"result Log={JsonConvert.SerializeObject(result)}");
         var total = GetMpaGroupSummary(childResult.ExchangedResult, request.BaseCurrencyId, request.GroupByType);
         total.Key = "total";
         total.ChildKey = "All";
@@ -213,7 +211,6 @@ public class MpaWinLossBLL
             });
 
         var uniquePlayers = betRecordResult.DistinctBy(x => x.CustId).Count();
-        _logger.LogInformation($"Log={JsonConvert.SerializeObject(betRecordResult)}");
         return (preProcessResult, uniquePlayers);
     }
 
@@ -652,7 +649,6 @@ public class MpaWinLossBLL
         var (preProcessResult, uniquePlayers) = await _dicPreProcessMapper[request.GroupByType].Invoke(request);
 
         var exchangedResult = await ExchangeRate(preProcessResult, request);
-        _logger.LogInformation($"exchangedResult Log={JsonConvert.SerializeObject(exchangedResult)}");
         return new MpaWinLossGroupByWrapper
         {
             Result = GroupByResult(preProcessResult, request.GroupByType),
