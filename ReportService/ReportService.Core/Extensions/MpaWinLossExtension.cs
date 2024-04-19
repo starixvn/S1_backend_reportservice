@@ -82,7 +82,7 @@ public static class MpaWinLossExtension
                         // 用commission抓第一筆符合9w/date/custId的資料，塞入傭金金額
                         var matchRecord = data.FirstOrDefault(r =>
                             r.TpId == (int)MpaCommissionCustomizeTpIdEnum.NineW
-                            && r.Date == Convert.ToDateTime(item.Date.AddMinutes(-item.Date.Minute))
+                            && r.Date == item.Date
                             && r.CustId == item.CustId);
                         if (matchRecord != null)
                         {
