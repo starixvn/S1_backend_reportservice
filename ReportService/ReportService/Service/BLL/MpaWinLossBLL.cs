@@ -758,21 +758,12 @@ public class MpaWinLossBLL
         var format = MapMpaWinLossGroupByTypeEnumFormat(request.GroupByType);
         var data = await GetTpBetRecordsWithCache(request);
 
-        var test = data
-   .Filter(request);
-        _logger.LogInformation($"test data={JsonConvert.SerializeObject(test)}");
-        var nm = _mpaWinLossService.Get9WCommission(request.StartTime, request.EndTime, format, request.DateType);
-        _logger.LogInformation($"nm data={JsonConvert.SerializeObject(nm)}");
-        var testresult = test.SetCommissionByNineW(request, format, _mpaWinLossService.Get9WCommission);
+        var tpBetRecordRelayResult = data
+            .Filter(request)
+            .SetCommissionByNineW(request, format, _mpaWinLossService.Get9WCommission)
+            .SetBAdata();
 
-        testresult = testresult.SetBAdata();
-        return testresult;
-        //var tpBetRecordRelayResult = data
-        //    .Filter(request)
-        //    .SetCommissionByNineW(request, format, _mpaWinLossService.Get9WCommission)
-        //    .SetBAdata();
-
-        //return tpBetRecordRelayResult;
+        return tpBetRecordRelayResult;
     }
 
     private async Task<IEnumerable<MpaTpBetRecordDto>> GetTpBetRecordsWithCache(MpaWinLossRequest request)
