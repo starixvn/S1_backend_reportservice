@@ -2,8 +2,6 @@ using ReportService.Core.Models;
 using ReportService.Core.Models.Enums;
 using ReportService.Core.Models.Interface;
 using ReportService.Core.Models.MpaWinLoss;
-using System;
-using System.Linq;
 
 namespace ReportService.Core.Extensions;
 
@@ -27,7 +25,7 @@ public static class MpaWinLossExtension
         {
             data = data.Where(x => !exceptTicketStatus.Contains(x.TicketStatus));
         }
-
+        
         return data
             .FilterAffiliate(request)
             .FilterTestUser(request.IncludeTest);
@@ -40,13 +38,13 @@ public static class MpaWinLossExtension
         where T : IFilterMpaWinLoss
         => request.GroupByType == MpaWinLossGroupByTypeEnum.Affiliate
            && (!request.AffiliateNames?.Any() ?? true) ? data.Where(x => !string.IsNullOrEmpty(x.AffiliateName)) : data;
-
+    
     // BA用戶是指saba後台設定的特殊用戶，這些用戶的輸贏直接歸沙巴，沙巴會給平台傭金
     public static IEnumerable<MpaTpBetRecordDto> SetBAdata(this IEnumerable<MpaTpBetRecordDto> data)
     {
         // BA只計算SBSW Sport
         foreach (var item in data.Where(x =>
-                     x.GameType == (int)MpaCommissionCustomizeGameTypeEnum.SBSW_Sports
+                     x.GameType == (int) MpaCommissionCustomizeGameTypeEnum.SBSW_Sports
                      && (x.SummaryType is (int)TpBetRecordSummaryTypeEnum.BA_SettledTime or (int)TpBetRecordSummaryTypeEnum.BA_TransTime)))
         {
             // 把BA資料區隔出來，避免影響一般資料計算
@@ -60,8 +58,8 @@ public static class MpaWinLossExtension
             item.ValidBetSummary = 0;
             item.RevenueSummary = 0;
             item.WinLossSummary = 0;
-            item.ProgressiveBetSummary = 0;
-            item.ProgressiveWinSummary = 0;
+            item.ProgressiveBetSummary= 0;
+            item.ProgressiveWinSummary= 0;
         }
         return data;
     }
@@ -78,33 +76,35 @@ public static class MpaWinLossExtension
         {
             // If filtered by Settled Time: Commission = - TpReport9W.commission
             case MpaDateType.SettledDate:
+            {
+                foreach (var item in commission)
                 {
-                    foreach (var item in commission)
-                    {
-                        // 用commission抓第一筆符合9w/date/custId的資料，塞入傭金金額
-                        var matchRecord = data.FirstOrDefault(r =>
-                            r.TpId == (int)MpaCommissionCustomizeTpIdEnum.NineW
-                        && new DateTime(r.Date.Year, r.Date.Month, r.Date.Day, r.Date.Hour, 0, 0) == new DateTime(item.Date.Year, item.Date.Month, item.Date.Day, item.Date.Hour, 0, 0)
+                    // 用commission抓第一筆符合9w/date/custId的資料，塞入傭金金額
+                    var matchRecord = data.FirstOrDefault(r =>
+                        r.TpId == (int)MpaCommissionCustomizeTpIdEnum.NineW
+                        && (r.Date.Date == item.Date.Date && r.Date.Hour == item.Date.Hour)
                         && r.CustId == item.CustId);
-                        if (matchRecord != null)
-                        {
-                            matchRecord.RevenueSummary = item.Commission;
-                        }
+
+                    if (matchRecord != null)
+                    {
+                        matchRecord.RevenueSummary = item.Commission;
                     }
-                    return data;
                 }
+
+                return data;
+            }
             // If filtered by Created Time: Commission = 0
             case MpaDateType.CreatedDate:
+            {
+                foreach (var d in data.Where(x =>
+                             x.TpId == (int)MpaCommissionCustomizeTpIdEnum.NineW))
                 {
-                    foreach (var d in data.Where(x =>
-                                 x.TpId == (int)MpaCommissionCustomizeTpIdEnum.NineW))
-                    {
-                        d.RevenueSummary = 0;
-                    }
-
-                    return data;
+                    d.RevenueSummary = 0;
                 }
 
+                return data;
+            }
+            
             default:
                 return data;
         }
