@@ -103,7 +103,6 @@ public class MpaWinLossBLL
         return date;
     }
 
-
     private async Task<(IEnumerable<MpaWinLossGroupByModel>, int)> PreProcessMpaWinLossGroupByDateResult(MpaWinLossRequest request)
     {
         var betRecordTask = Task.Run(() => GetTpBetRecords(request));
@@ -963,7 +962,7 @@ public class MpaWinLossBLL
             case MpaWinLossGroupByTypeEnum.Date:
             case MpaWinLossGroupByTypeEnum.Month:
             case MpaWinLossGroupByTypeEnum.Brand:
-                return "%m/%d/%Y %H:%i";
+                return "%m/%d/%Y %H:00";
 
             case MpaWinLossGroupByTypeEnum.GameType:
             case MpaWinLossGroupByTypeEnum.TpCategory:
