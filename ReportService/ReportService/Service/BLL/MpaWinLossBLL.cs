@@ -867,7 +867,7 @@ public class MpaWinLossBLL
             case MpaWinLossGroupByTypeEnum.Date:
             case MpaWinLossGroupByTypeEnum.Month:
             case MpaWinLossGroupByTypeEnum.Brand:
-                return "%m/%d/%Y %H:%i";
+                return "%m/%d/%Y %H:00";
 
             case MpaWinLossGroupByTypeEnum.GameType:
             case MpaWinLossGroupByTypeEnum.TpCategory:
