@@ -236,9 +236,8 @@ public class MpaWinLossBLL
             {
                 var groupBySummary = GetSummary(r, r.Key.GameType, r.Key.CurrencyId);
 
-                groupBySummary.Key = GetDateString(r.Key.Date, request.GroupByType);
                 groupBySummary.ChildKey = _mpaCommonBll.ToCurrencyIsoCode(r.Key.CurrencyId);
-                groupBySummary.Date = GetStringDate(GetDateString(r.Key.Date, request.GroupByType), r.Key.Date, request.GroupByType);
+                groupBySummary.Date = r.Key.Date;
                 groupBySummary.CustId = r.Key.CustId;
                 groupBySummary.Brand = _mpaCommonBll.ToSiteName(r.Key.SiteId);
                 groupBySummary.TpCategory = tpCategoryMap[r.Key.CategoryId];
@@ -260,8 +259,7 @@ public class MpaWinLossBLL
         var combineResult = combineData
                .GroupBy(x => new
                {
-                   x.Key,
-                   x.Date,
+                   Date = GetStringDate(GetDateString(x.Date, request.GroupByType), x.Date, request.GroupByType),
                    x.Brand,
                    x.CurrencyId,
                    x.CustId,
@@ -274,7 +272,7 @@ public class MpaWinLossBLL
                {
                    var groupSummary = GetMpaGroupSummary(r, r.Key.CurrencyId, request.GroupByType);
 
-                   groupSummary.Key = r.Key.Key;
+                   groupSummary.Key = GetDateString(r.Key.Date, request.GroupByType);
                    groupSummary.Date = r.Key.Date;
                    groupSummary.ChildKey = _mpaCommonBll.ToCurrencyIsoCode(r.Key.CurrencyId);
                    groupSummary.CustId = r.Key.CustId;
@@ -963,6 +961,8 @@ public class MpaWinLossBLL
             case MpaWinLossGroupByTypeEnum.Date:
             case MpaWinLossGroupByTypeEnum.Month:
             case MpaWinLossGroupByTypeEnum.Brand:
+            case MpaWinLossGroupByTypeEnum.DateDownload:
+            case MpaWinLossGroupByTypeEnum.MonthDownload:
                 return "%m/%d/%Y %H:%i";
 
             case MpaWinLossGroupByTypeEnum.GameType:
@@ -970,8 +970,6 @@ public class MpaWinLossBLL
             case MpaWinLossGroupByTypeEnum.Player:
             case MpaWinLossGroupByTypeEnum.Currency:
             case MpaWinLossGroupByTypeEnum.Affiliate:
-            case MpaWinLossGroupByTypeEnum.DateDownload:
-            case MpaWinLossGroupByTypeEnum.MonthDownload:
                 return "%Y-%m-%d";
             default:
                 return string.Empty;
