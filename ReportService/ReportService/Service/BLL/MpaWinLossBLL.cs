@@ -994,8 +994,6 @@ public class MpaWinLossBLL
         int currencyId,
         MpaWinLossGroupByTypeEnum groupByType)
     {
-        var sw = Stopwatch.StartNew(); //add test
-        sw.Start();  //add test
 
         var r = groupBySummary.ToList();
         var ggrSum = r.Sum(x => x.Ggr);
@@ -1029,9 +1027,6 @@ public class MpaWinLossBLL
             result.TotalWithdrawalAmount = r.Sum(x => x.TotalWithdrawalAmount);
             result.TotalBonus = r.Sum(x => x.TotalBonus);
         }
-
-        sw.Stop();  //add test
-        _logger.LogInformation($"{MethodExtension.GetCurrentMethod()} Elapsed={sw.Elapsed:c}");  //add test
 
         return result;
     }
