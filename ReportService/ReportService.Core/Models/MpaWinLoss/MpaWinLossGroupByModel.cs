@@ -16,7 +16,7 @@ public class MpaWinLossGroupByModel
         Commission *= rate;
         BaCommission *= rate;
         AvgBetAmount *= rate;
-        Margin *= rate;
+        //Margin *= rate;
         TotalDepositAmount *= rate;
         TotalWithdrawalAmount *= rate;
         TotalBonus *= rate;
