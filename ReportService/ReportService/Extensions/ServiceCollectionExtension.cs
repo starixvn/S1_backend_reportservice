@@ -1,5 +1,4 @@
-﻿using Elastic.Apm.StackExchange.Redis;
-using ReportService.Core.Library;
+﻿using ReportService.Core.Library;
 using ReportService.Core.Models.Enums;
 using ReportService.ExceptionHandling;
 using ReportService.Models;
@@ -40,7 +39,6 @@ public static class ServiceCollectionExtension
     public static IServiceCollection RegisterServices(this IServiceCollection services, IConfiguration configuration)
     {
         var redisConnection = ConnectionMultiplexer.Connect(configuration.GetValue<string>("RedisConnection"));
-        redisConnection.UseElasticApm();
         services.AddSingleton<IConnectionMultiplexer>(redisConnection);
         
         // DAL
