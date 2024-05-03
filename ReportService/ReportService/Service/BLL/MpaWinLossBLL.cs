@@ -153,7 +153,7 @@ public class MpaWinLossBLL
                 x.CustId
             });
 
-        Parallel.ForEach(combineDataGroups, new ParallelOptions() { MaxDegreeOfParallelism = 4 }, group =>
+        Parallel.ForEach(combineDataGroups, new ParallelOptions() { MaxDegreeOfParallelism = 8 }, group =>
         {
             var groupSummary = GetMpaGroupSummary(group, group.Key.CurrencyId, request.GroupByType);
 
@@ -778,7 +778,7 @@ public class MpaWinLossBLL
 
         var result = new ConcurrentBag<MpaWinLossGroupByModel>();
 
-        Parallel.ForEach(groupedData, group =>
+        Parallel.ForEach(groupedData, new ParallelOptions() { MaxDegreeOfParallelism = 8 }, group =>
         {
             var groupSummary = GetMpaGroupSummary(group, baseCurrencyId, groupByType);
 
@@ -830,7 +830,7 @@ public class MpaWinLossBLL
 
         var exchangedResult = new ConcurrentBag<MpaWinLossGroupByModel>();
 
-        Parallel.ForEach(source, r =>
+        Parallel.ForEach(source, new ParallelOptions() { MaxDegreeOfParallelism = 8 }, r =>
         {
             var rate = mapRate[$"{r.Date.DateMapperToRateDate()}{r.CurrencyId}{request.BaseCurrencyId}"];
             r.ExchangeMpaWinLossGroupBySummary(rate);
