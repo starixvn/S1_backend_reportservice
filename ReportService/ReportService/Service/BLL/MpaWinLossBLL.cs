@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Diagnostics;
 using Newtonsoft.Json;
 using ReportService.Core.Extensions;
@@ -747,31 +748,45 @@ public class MpaWinLossBLL
 
         #region test Process
 
-        var result = new List<MpaWinLossGroupByModel>();
+        //var result = new List<MpaWinLossGroupByModel>();
 
-        var grouped = new Dictionary<string, List<MpaWinLossGroupByModel>>();
+        //var grouped = new Dictionary<string, List<MpaWinLossGroupByModel>>();
 
-        foreach (var item in source)
+        //foreach (var item in source)
+        //{
+        //    var key = item.Key;
+
+        //    if (!grouped.ContainsKey(key))
+        //    {
+        //        grouped[key] = new List<MpaWinLossGroupByModel>();
+        //    }
+
+        //    grouped[key].Add(item);
+        //}
+
+        //foreach (var group in grouped)
+        //{
+        //    var groupSummary = GetMpaGroupSummary(group.Value, baseCurrencyId, groupByType);
+
+        //    groupSummary.Key = group.Key;
+        //    groupSummary.ChildKey = "All";
+
+        //    result.Add(groupSummary);
+        //}
+
+        var groupedData = source.GroupBy(x => new { x.Key });
+
+        var result = new ConcurrentBag<MpaWinLossGroupByModel>();
+
+        Parallel.ForEach(groupedData, group =>
         {
-            var key = item.Key;
+            var groupSummary = GetMpaGroupSummary(group, baseCurrencyId, groupByType);
 
-            if (!grouped.ContainsKey(key))
-            {
-                grouped[key] = new List<MpaWinLossGroupByModel>();
-            }
-
-            grouped[key].Add(item);
-        }
-
-        foreach (var group in grouped)
-        {
-            var groupSummary = GetMpaGroupSummary(group.Value, baseCurrencyId, groupByType);
-
-            groupSummary.Key = group.Key;
+            groupSummary.Key = group.Key.Key;
             groupSummary.ChildKey = "All";
 
             result.Add(groupSummary);
-        }
+        });
 
         #endregion
 
@@ -804,14 +819,23 @@ public class MpaWinLossBLL
 
         #region Test Process
 
-        var exchangedResult = new List<MpaWinLossGroupByModel>();
+        //var exchangedResult = new List<MpaWinLossGroupByModel>();
 
-        foreach (var s in source)
+        //foreach (var s in source)
+        //{
+        //    var rate = mapRate[$"{s.Date.DateMapperToRateDate()}{s.CurrencyId}{request.BaseCurrencyId}"];
+        //    s.ExchangeMpaWinLossGroupBySummary(rate);
+        //    exchangedResult.Add(s);
+        //}
+
+        var exchangedResult = new ConcurrentBag<MpaWinLossGroupByModel>();
+
+        Parallel.ForEach(source, r =>
         {
-            var rate = mapRate[$"{s.Date.DateMapperToRateDate()}{s.CurrencyId}{request.BaseCurrencyId}"];
-            s.ExchangeMpaWinLossGroupBySummary(rate);
-            exchangedResult.Add(s);
-        }
+            var rate = mapRate[$"{r.Date.DateMapperToRateDate()}{r.CurrencyId}{request.BaseCurrencyId}"];
+            r.ExchangeMpaWinLossGroupBySummary(rate);
+            exchangedResult.Add(r);
+        });
 
         #endregion
 
