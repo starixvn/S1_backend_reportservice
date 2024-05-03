@@ -5,7 +5,6 @@ using ReportService.Core.Library;
 using ReportService.Core.Models;
 using ReportService.Core.Models.Enums;
 using ReportService.Core.Models.MpaWinLoss;
-using ReportService.Extensions;
 using ReportService.Service.DAL;
 
 namespace ReportService.Service.BLL;
@@ -118,30 +117,62 @@ public class MpaWinLossBLL
             item.Date = item.Date.ToOffSetReturnDate(request.StartTime.Offset);
         }
 
-        var combineResult = combineData
+        #region Original Process
+
+        //var combineResult = combineData
+        //    .GroupBy(x => new
+        //    {
+        //        x.Date,
+        //        x.CurrencyId,
+        //        x.CustId
+        //    })
+        //    .Select(r =>
+        //    {
+        //        var groupSummary = GetMpaGroupSummary(r, r.Key.CurrencyId, request.GroupByType);
+
+        //        groupSummary.Date = r.Key.Date;
+        //        groupSummary.CustId = r.Key.CustId;
+        //        groupSummary.Key = GetDateString(r.Key.Date, request.GroupByType);
+        //        groupSummary.ChildKey = _mpaCommonBll.ToCurrencyIsoCode(r.Key.CurrencyId);
+
+        //        return groupSummary;
+        //    });
+
+        #endregion
+
+        #region Parallel Process
+
+        var combineResult = new List<MpaWinLossGroupByModel>();
+
+        var combineDataGroups = combineData
             .GroupBy(x => new
             {
                 x.Date,
                 x.CurrencyId,
                 x.CustId
-            })
-            .Select(r =>
-            {
-                var groupSummary = GetMpaGroupSummary(r, r.Key.CurrencyId, request.GroupByType);
-
-                groupSummary.Date = r.Key.Date;
-                groupSummary.CustId = r.Key.CustId;
-                groupSummary.Key = GetDateString(r.Key.Date, request.GroupByType);
-                groupSummary.ChildKey = _mpaCommonBll.ToCurrencyIsoCode(r.Key.CurrencyId);
-
-                return groupSummary;
             });
+
+        Parallel.ForEach(combineDataGroups, new ParallelOptions() { MaxDegreeOfParallelism = 4 }, group =>
+        {
+            var groupSummary = GetMpaGroupSummary(group, group.Key.CurrencyId, request.GroupByType);
+
+            groupSummary.Date = group.Key.Date;
+            groupSummary.CustId = group.Key.CustId;
+            groupSummary.Key = GetDateString(group.Key.Date, request.GroupByType);
+            groupSummary.ChildKey = _mpaCommonBll.ToCurrencyIsoCode(group.Key.CurrencyId);
+
+            lock (combineResult)
+            {
+                combineResult.Add(groupSummary);
+            }
+        });
+
+        #endregion
 
         var uniquePlayers = betRecordTask.Result.DistinctBy(x => x.CustId).Count();
 
         sw.Stop();  //add test
-        _logger.LogInformation($"{MethodExtension.GetCurrentMethod()} Elapsed={sw.Elapsed:c}");  //add test
-
+        _logger.LogInformation($"PreProcessMpaWinLossGroupByDateResult Elapsed={sw.Elapsed:c}");  //add test
         return (combineResult, uniquePlayers);
     }
 
@@ -164,7 +195,7 @@ public class MpaWinLossBLL
             });
 
         sw.Stop();  //add test
-        _logger.LogInformation($"{MethodExtension.GetCurrentMethod()} Elapsed={sw.Elapsed:c}");  //add test
+        _logger.LogInformation($"GetClaimBonusGroupByDateResult Elapsed={sw.Elapsed:c}");  //add test
 
         return result;
     }
@@ -196,7 +227,7 @@ public class MpaWinLossBLL
             });
 
         sw.Stop();  //add test
-        _logger.LogInformation($"{MethodExtension.GetCurrentMethod()} Elapsed={sw.Elapsed:c}");  //add test
+        _logger.LogInformation($"GetTransactionGroupByDateResult Elapsed={sw.Elapsed:c}");  //add test
 
         return result;
     }
@@ -678,6 +709,14 @@ public class MpaWinLossBLL
             ExchangedResult = GroupByResult(exchangedResult, request.GroupByType),
             UniquePlayers = uniquePlayers
         };
+
+        //return new MpaWinLossGroupByWrapper
+        //{
+        //    Result = GroupByResult(preProcessResult, request.GroupByType),
+        //    ExchangedResult = GroupByResult(exchangedResult, request.GroupByType),
+        //    UniquePlayers = uniquePlayers
+        //};
+
     }
 
     private IEnumerable<MpaWinLossGroupByModel> GetMpaWinLossGroupByResult(IEnumerable<MpaWinLossGroupByModel> source,
@@ -689,21 +728,55 @@ public class MpaWinLossBLL
         if (groupByType == MpaWinLossGroupByTypeEnum.Player)
             return source;
 
-        var result = source.GroupBy(x => new
-        {
-            x.Key
-        }).Select(r =>
-        {
-            var groupSummary = GetMpaGroupSummary(r, baseCurrencyId, groupByType);
+        #region  Original Process
 
-            groupSummary.Key = r.Key.Key;
+        //var result = source.GroupBy(x => new
+        //{
+        //    x.Key
+        //}).Select(r =>
+        //{
+        //    var groupSummary = GetMpaGroupSummary(r, baseCurrencyId, groupByType);
+
+        //    groupSummary.Key = r.Key.Key;
+        //    groupSummary.ChildKey = "All";
+
+        //    return groupSummary;
+        //});
+
+        #endregion
+
+        #region test Process
+
+        var result = new List<MpaWinLossGroupByModel>();
+
+        var grouped = new Dictionary<string, List<MpaWinLossGroupByModel>>();
+
+        foreach (var item in source)
+        {
+            var key = item.Key;
+
+            if (!grouped.ContainsKey(key))
+            {
+                grouped[key] = new List<MpaWinLossGroupByModel>();
+            }
+
+            grouped[key].Add(item);
+        }
+
+        foreach (var group in grouped)
+        {
+            var groupSummary = GetMpaGroupSummary(group.Value, baseCurrencyId, groupByType);
+
+            groupSummary.Key = group.Key;
             groupSummary.ChildKey = "All";
 
-            return groupSummary;
-        });
+            result.Add(groupSummary);
+        }
+
+        #endregion
 
         sw.Stop();  //add test
-        _logger.LogInformation($"{MethodExtension.GetCurrentMethod()} Elapsed={sw.Elapsed:c}");  //add test
+        _logger.LogInformation($"GetMpaWinLossGroupByResult Elapsed={sw.Elapsed:c}");  //add test
 
         return result;
     }
@@ -715,17 +788,35 @@ public class MpaWinLossBLL
         sw.Start();  //add test
 
         var mapRate = await _mpaCommonBll.GetMapRate(request.StartTime, request.EndTime, request.BaseCurrencyId);
-        var exchangedResult = source
-            .Select(r =>
-            {
-                var rate = mapRate[$"{r.Date.DateMapperToRateDate()}{r.CurrencyId}{request.BaseCurrencyId}"];
-                r.ExchangeMpaWinLossGroupBySummary(rate);
 
-                return r;
-            });
+        #region Original Process
+
+        //var exchangedResult = source
+        //    .Select(r =>
+        //    {
+        //        var rate = mapRate[$"{r.Date.DateMapperToRateDate()}{r.CurrencyId}{request.BaseCurrencyId}"];
+        //        r.ExchangeMpaWinLossGroupBySummary(rate);
+
+        //        return r;
+        //    });
+
+        #endregion
+
+        #region Test Process
+
+        var exchangedResult = new List<MpaWinLossGroupByModel>();
+
+        foreach (var s in source)
+        {
+            var rate = mapRate[$"{s.Date.DateMapperToRateDate()}{s.CurrencyId}{request.BaseCurrencyId}"];
+            s.ExchangeMpaWinLossGroupBySummary(rate);
+            exchangedResult.Add(s);
+        }
+
+        #endregion
 
         sw.Stop();  //add test
-        _logger.LogInformation($"{MethodExtension.GetCurrentMethod()} Elapsed={sw.Elapsed:c}");  //add test
+        _logger.LogInformation($"ExchangeRate Elapsed={sw.Elapsed:c}");  //add test
 
         return exchangedResult;
     }
@@ -747,17 +838,38 @@ public class MpaWinLossBLL
 
         if (!hasPlayerInfo)
         {
-            return g.Select(r =>
+            var resultList = new List<MpaWinLossGroupByModel>();
+
+            var grouped = new Dictionary<(int CurrencyId, string Key, string ChildKey), List<MpaWinLossGroupByModel>>();
+
+            foreach (var item in source)
             {
-                var groupSummary = GetMpaGroupSummary(r, r.Key.CurrencyId, groupByType);
+                var key = (item.CurrencyId, item.Key, item.ChildKey);
 
-                groupSummary.Key = r.Key.Key;
-                groupSummary.ChildKey = r.Key.ChildKey;
-                groupSummary.UniquePlayers = r.Where(x => x.BetCount != 0)
-                    .DistinctBy(x => x.CustId).Count();
+                if (!grouped.ContainsKey(key))
+                {
+                    grouped[key] = new List<MpaWinLossGroupByModel>();
+                }
 
-                return groupSummary;
-            });
+                grouped[key].Add(item);
+            }
+
+            foreach (var group in grouped)
+            {
+                var groupSummary = GetMpaGroupSummary(group.Value, group.Key.CurrencyId, groupByType);
+
+                groupSummary.Key = group.Key.Key;
+                groupSummary.ChildKey = group.Key.ChildKey;
+                groupSummary.UniquePlayers = group.Value.Where(x => x.BetCount != 0)
+                    .Select(x => x.CustId)
+                    .Distinct()
+                    .Count();
+
+                resultList.Add(groupSummary);
+            }
+            sw.Stop();  //add test
+            _logger.LogInformation($"GroupByResult Elapsed={sw.Elapsed:c}");  //add test
+            return resultList;
         }
 
         var result = g.Select(r =>
@@ -776,7 +888,7 @@ public class MpaWinLossBLL
         });
 
         sw.Stop();  //add test
-        _logger.LogInformation($"{MethodExtension.GetCurrentMethod()} Elapsed={sw.Elapsed:c}");  //add test
+        _logger.LogInformation($"GroupByResult Elapsed={sw.Elapsed:c}");  //add test
 
         return result;
     }
@@ -795,7 +907,7 @@ public class MpaWinLossBLL
             .SetBAdata();
 
         sw.Stop();  //add test
-        _logger.LogInformation($"{MethodExtension.GetCurrentMethod()}Elapsed={sw.Elapsed:c}");  //add test
+        _logger.LogInformation($"GetTpBetRecords Elapsed={sw.Elapsed:c}");  //add test
 
         return tpBetRecordRelayResult;
     }
@@ -994,7 +1106,6 @@ public class MpaWinLossBLL
         int currencyId,
         MpaWinLossGroupByTypeEnum groupByType)
     {
-
         var r = groupBySummary.ToList();
         var ggrSum = r.Sum(x => x.Ggr);
         var turnOverSum = r.Sum(x => x.TurnOver);
