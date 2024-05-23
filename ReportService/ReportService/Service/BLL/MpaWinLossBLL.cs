@@ -5,6 +5,7 @@ using ReportService.Core.Library;
 using ReportService.Core.Models;
 using ReportService.Core.Models.Enums;
 using ReportService.Core.Models.MpaWinLoss;
+using ReportService.Extensions;
 using ReportService.Service.DAL;
 
 namespace ReportService.Service.BLL;
@@ -103,9 +104,11 @@ public class MpaWinLossBLL
         return date;
     }
 
-
     private async Task<(IEnumerable<MpaWinLossGroupByModel>, int)> PreProcessMpaWinLossGroupByDateResult(MpaWinLossRequest request)
     {
+        var sw = Stopwatch.StartNew(); //add test
+        sw.Start();  //add test
+
         var betRecordTask = Task.Run(() => GetTpBetRecords(request));
         var transactionTask = Task.Run(() => GetTransactionGroupByDateResult(request));
         var claimBonusTask = Task.Run(() => GetClaimBonusGroupByDateResult(request));
@@ -162,11 +165,17 @@ public class MpaWinLossBLL
 
         var uniquePlayers = betRecordTask.Result.DistinctBy(x => x.CustId).Count();
 
+        sw.Stop();  //add test
+        _logger.LogInformation($"{MethodExtension.GetCurrentMethod()} Elapsed={sw.Elapsed:c}");  //add test
+
         return (combineResult, uniquePlayers);
     }
 
     private async Task<IEnumerable<MpaWinLossGroupByModel>> GetClaimBonusGroupByDateResult(MpaWinLossRequest request)
     {
+        var sw = Stopwatch.StartNew(); //add test
+        sw.Start();  //add test
+
         var bonusRecords = await GetClaimBonusRecords(request);
         var result = bonusRecords
             .GroupBy(x => new
@@ -179,6 +188,9 @@ public class MpaWinLossBLL
                 CurrencyId = r.Key.CurrencyId,
                 TotalBonus = r.Sum(x => x.BonusAmountClaim)
             });
+
+        sw.Stop();  //add test
+        _logger.LogInformation($"{MethodExtension.GetCurrentMethod()} Elapsed={sw.Elapsed:c}");  //add test
 
         return result;
     }
@@ -794,6 +806,9 @@ public class MpaWinLossBLL
     private async Task<IEnumerable<MpaWinLossGroupByModel>> ExchangeRate(IEnumerable<MpaWinLossGroupByModel> source,
         MpaWinLossRequest request)
     {
+        var sw = Stopwatch.StartNew(); //add test
+        sw.Start();  //add test
+
         var mapRate = await _mpaCommonBll.GetMapRate(request.StartTime, request.EndTime, request.BaseCurrencyId);
         var exchangedResult = source
             .Select(r =>
@@ -804,12 +819,18 @@ public class MpaWinLossBLL
                 return r;
             });
 
+        sw.Stop();  //add test
+        _logger.LogInformation($"{MethodExtension.GetCurrentMethod()} Elapsed={sw.Elapsed:c}");  //add test
+
         return exchangedResult;
     }
 
     private IEnumerable<MpaWinLossGroupByModel> GroupByResult(IEnumerable<MpaWinLossGroupByModel> source,
         MpaWinLossGroupByTypeEnum groupByType)
     {
+        var sw = Stopwatch.StartNew(); //add test
+        sw.Start();  //add test
+
         var hasPlayerInfo = MpaWinLossDefinition.HasPlayerInfo.Contains(groupByType);
 
         var g = source.GroupBy(x => new
@@ -818,6 +839,7 @@ public class MpaWinLossBLL
             x.Key,
             x.ChildKey
         });
+
 
         if (groupByType == MpaWinLossGroupByTypeEnum.DateDownload || groupByType == MpaWinLossGroupByTypeEnum.MonthDownload)
             return source;
@@ -837,7 +859,7 @@ public class MpaWinLossBLL
             });
         }
 
-        return g.Select(r =>
+        var result = g.Select(r =>
         {
             var groupSummary = GetMpaGroupSummary(r, r.Key.CurrencyId, groupByType);
             var f = r.First();
@@ -854,10 +876,18 @@ public class MpaWinLossBLL
 
             return groupSummary;
         });
+
+        sw.Stop();  //add test
+        _logger.LogInformation($"{MethodExtension.GetCurrentMethod()} Elapsed={sw.Elapsed:c}");  //add test
+
+        return result;
     }
 
     private async Task<IEnumerable<MpaTpBetRecordDto>> GetTpBetRecords(MpaWinLossRequest request)
     {
+        var sw = Stopwatch.StartNew();  //add test
+        sw.Start();  //add test
+
         var format = MapMpaWinLossGroupByTypeEnumFormat(request.GroupByType);
         var data = await GetTpBetRecordsWithCache(request);
 
@@ -963,7 +993,7 @@ public class MpaWinLossBLL
             case MpaWinLossGroupByTypeEnum.Brand:
             case MpaWinLossGroupByTypeEnum.DateDownload:
             case MpaWinLossGroupByTypeEnum.MonthDownload:
-                return "%m/%d/%Y %H:%i";
+                return "%m/%d/%Y %H:00";
 
             case MpaWinLossGroupByTypeEnum.GameType:
             case MpaWinLossGroupByTypeEnum.TpCategory:
@@ -1065,6 +1095,7 @@ public class MpaWinLossBLL
         int currencyId,
         MpaWinLossGroupByTypeEnum groupByType)
     {
+
         var r = groupBySummary.ToList();
         var ggrSum = r.Sum(x => x.Ggr);
         var turnOverSum = r.Sum(x => x.TurnOver);
