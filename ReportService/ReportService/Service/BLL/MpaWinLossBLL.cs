@@ -33,7 +33,9 @@ public class MpaWinLossBLL
             {MpaWinLossGroupByTypeEnum.Affiliate, PreProcessMpaWinLossGroupByAffiliate},
             {MpaWinLossGroupByTypeEnum.Player, PreProcessMpaWinLossGroupByPlayer},
             {MpaWinLossGroupByTypeEnum.Date, PreProcessMpaWinLossGroupByDateResult},
-            {MpaWinLossGroupByTypeEnum.Month, PreProcessMpaWinLossGroupByDateResult}
+            {MpaWinLossGroupByTypeEnum.Month, PreProcessMpaWinLossGroupByDateResult},
+            {MpaWinLossGroupByTypeEnum.DateDownload, PreProcessMpaWinLossGroupByDateDownloadResult},
+            {MpaWinLossGroupByTypeEnum.MonthDownload, PreProcessMpaWinLossGroupByDateDownloadResult}
         };
 
     }
@@ -47,6 +49,19 @@ public class MpaWinLossBLL
         total.Key = "total";
         total.ChildKey = "All";
         total.UniquePlayers = childResult.UniquePlayers;
+
+        if (request.GroupByType is MpaWinLossGroupByTypeEnum.DateDownload
+            || request.GroupByType is MpaWinLossGroupByTypeEnum.MonthDownload)
+        {
+            return new MpaWinLoseResponse
+            {
+                Result = request.DisplayGroupBreakdownInOriginalCurrency
+                ? childResult.Result
+                : childResult.ExchangedResult,
+                ChildResult = new List<MpaWinLossGroupByModel>(),
+                Total = total
+            };
+        }
 
         return new MpaWinLoseResponse
         {
@@ -73,8 +88,19 @@ public class MpaWinLossBLL
         => groupByType switch
         {
             MpaWinLossGroupByTypeEnum.Month => date.ToString("yyyy-MM"),
+            MpaWinLossGroupByTypeEnum.MonthDownload => date.ToString("yyyy-MM"),
             _ => date.ToString("yyyy-MM-dd")
         };
+
+    private static DateTime GetStringDate(string dateStr, DateTime date, MpaWinLossGroupByTypeEnum groupByType)
+    {
+        if (groupByType is MpaWinLossGroupByTypeEnum.MonthDownload)
+        {
+            DateTime dateTime = DateTime.ParseExact(dateStr, "yyyy-MM", null);
+            return new DateTime(dateTime.Year, dateTime.Month, 1);
+        }
+        return date;
+    }
 
     private async Task<(IEnumerable<MpaWinLossGroupByModel>, int)> PreProcessMpaWinLossGroupByDateResult(MpaWinLossRequest request)
     {
@@ -114,23 +140,23 @@ public class MpaWinLossBLL
         }
 
         var combineResult = combineData
-            .GroupBy(x => new
-            {
-                x.Date,
-                x.CurrencyId,
-                x.CustId
-            })
-            .Select(r =>
-            {
-                var groupSummary = GetMpaGroupSummary(r, r.Key.CurrencyId, request.GroupByType);
+               .GroupBy(x => new
+               {
+                   x.Date,
+                   x.CurrencyId,
+                   x.CustId
+               })
+               .Select(r =>
+               {
+                   var groupSummary = GetMpaGroupSummary(r, r.Key.CurrencyId, request.GroupByType);
 
-                groupSummary.Date = r.Key.Date;
-                groupSummary.CustId = r.Key.CustId;
-                groupSummary.Key = GetDateString(r.Key.Date, request.GroupByType);
-                groupSummary.ChildKey = _mpaCommonBll.ToCurrencyIsoCode(r.Key.CurrencyId);
+                   groupSummary.Date = r.Key.Date;
+                   groupSummary.CustId = r.Key.CustId;
+                   groupSummary.Key = GetDateString(r.Key.Date, request.GroupByType);
+                   groupSummary.ChildKey = _mpaCommonBll.ToCurrencyIsoCode(r.Key.CurrencyId);
 
-                return groupSummary;
-            });
+                   return groupSummary;
+               });
 
         var uniquePlayers = betRecordTask.Result.DistinctBy(x => x.CustId).Count();
 
@@ -179,6 +205,87 @@ public class MpaWinLossBLL
             });
 
         return result;
+    }
+
+    #endregion
+
+    #region GroupByDate & Month
+
+    private async Task<(IEnumerable<MpaWinLossGroupByModel>, int)> PreProcessMpaWinLossGroupByDateDownloadResult(MpaWinLossRequest request)
+    {
+        var betRecordTask = Task.Run(() => GetTpBetRecords(request));
+        var tpCategoryMap = await _mpaCommonBll.GetTpCategoryMapper();
+        var tpGameTypeMap = await _mpaCommonBll.GetTpGameTypeMapper();
+        await Task.WhenAll(betRecordTask);
+
+        var betRecordResult = betRecordTask.Result
+            .GroupBy(x => new
+            {
+                x.Date,
+                x.SiteId,
+                x.CurrencyId,
+                x.CustId,
+                x.GameType, // GGR計算需用gameType分組
+                x.CategoryId,
+                x.TpUserName,
+                x.UserName
+            })
+            .Select(r =>
+            {
+                var groupBySummary = GetSummary(r, r.Key.GameType, r.Key.CurrencyId);
+
+                groupBySummary.ChildKey = _mpaCommonBll.ToCurrencyIsoCode(r.Key.CurrencyId);
+                groupBySummary.Date = r.Key.Date;
+                groupBySummary.CustId = r.Key.CustId;
+                groupBySummary.Brand = _mpaCommonBll.ToSiteName(r.Key.SiteId);
+                groupBySummary.TpCategory = tpCategoryMap[r.Key.CategoryId];
+                groupBySummary.UserName = r.Key.UserName;
+                groupBySummary.TpUserName = r.Key.TpUserName;
+                groupBySummary.TpGameType = tpGameTypeMap[r.Key.GameType];
+
+                return groupBySummary;
+            });
+
+        var combineData = betRecordResult.ToList();
+
+        // 處理時區
+        foreach (var item in combineData)
+        {
+            item.Date = item.Date.ToOffSetReturnDate(request.StartTime.Offset);
+        }
+
+        var combineResult = combineData
+               .GroupBy(x => new
+               {
+                   Date = GetStringDate(GetDateString(x.Date, request.GroupByType), x.Date, request.GroupByType),
+                   x.Brand,
+                   x.CurrencyId,
+                   x.CustId,
+                   x.TpGameType, // GGR計算需用gameType分組
+                   x.TpCategory,
+                   x.TpUserName,
+                   x.UserName
+               })
+               .Select(r =>
+               {
+                   var groupSummary = GetMpaGroupSummary(r, r.Key.CurrencyId, request.GroupByType);
+
+                   groupSummary.Key = GetDateString(r.Key.Date, request.GroupByType);
+                   groupSummary.Date = r.Key.Date;
+                   groupSummary.ChildKey = _mpaCommonBll.ToCurrencyIsoCode(r.Key.CurrencyId);
+                   groupSummary.CustId = r.Key.CustId;
+                   groupSummary.Brand = r.Key.Brand;
+                   groupSummary.TpCategory = r.Key.TpCategory;
+                   groupSummary.UserName = r.Key.UserName;
+                   groupSummary.TpUserName = r.Key.TpUserName;
+                   groupSummary.TpGameType = r.Key.TpGameType;
+                   groupSummary.UniquePlayers = 1;
+                   return groupSummary;
+               });
+
+        var uniquePlayers = betRecordTask.Result.DistinctBy(x => x.CustId).Count();
+
+        return (combineResult, uniquePlayers);
     }
 
     #endregion
@@ -677,7 +784,9 @@ public class MpaWinLossBLL
     private IEnumerable<MpaWinLossGroupByModel> GetMpaWinLossGroupByResult(IEnumerable<MpaWinLossGroupByModel> source,
         MpaWinLossGroupByTypeEnum groupByType, int baseCurrencyId)
     {
-        if (groupByType == MpaWinLossGroupByTypeEnum.Player)
+        if (groupByType == MpaWinLossGroupByTypeEnum.Player
+            || groupByType == MpaWinLossGroupByTypeEnum.DateDownload
+            || groupByType == MpaWinLossGroupByTypeEnum.MonthDownload)
             return source;
 
         return source.GroupBy(x => new
@@ -722,6 +831,10 @@ public class MpaWinLossBLL
             x.ChildKey
         });
 
+
+        if (groupByType == MpaWinLossGroupByTypeEnum.DateDownload || groupByType == MpaWinLossGroupByTypeEnum.MonthDownload)
+            return source;
+
         if (!hasPlayerInfo)
         {
             return g.Select(r =>
@@ -747,6 +860,9 @@ public class MpaWinLossBLL
             groupSummary.CustId = f.CustId;
             groupSummary.UserName = f.UserName;
             groupSummary.TpUserName = f.TpUserName;
+            groupSummary.TpGameType = f.TpGameType;
+            groupSummary.TpCategory = f.TpCategory;
+            groupSummary.Brand = f.Brand;
             groupSummary.UniquePlayers = 1;
 
             return groupSummary;
@@ -858,6 +974,8 @@ public class MpaWinLossBLL
             case MpaWinLossGroupByTypeEnum.Date:
             case MpaWinLossGroupByTypeEnum.Month:
             case MpaWinLossGroupByTypeEnum.Brand:
+            case MpaWinLossGroupByTypeEnum.DateDownload:
+            case MpaWinLossGroupByTypeEnum.MonthDownload:
                 return "%m/%d/%Y %H:00";
 
             case MpaWinLossGroupByTypeEnum.GameType:

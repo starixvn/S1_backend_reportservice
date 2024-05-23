@@ -16,7 +16,7 @@ public class MpaWinLossGroupByModel
         Commission *= rate;
         BaCommission *= rate;
         AvgBetAmount *= rate;
-        Margin *= rate;
+        //Margin *= rate;
         TotalDepositAmount *= rate;
         TotalWithdrawalAmount *= rate;
         TotalBonus *= rate;
@@ -24,7 +24,7 @@ public class MpaWinLossGroupByModel
 
     [JsonIgnore]
     public DateTime Date { get; set; }
-    
+
     public int CurrencyId { get; set; }
 
     public decimal TurnOver { get; set; }
@@ -62,10 +62,15 @@ public class MpaWinLossGroupByModel
     public decimal TotalBonus { get; set; }
 
     public int CustId { get; set; }
-    
+
     public string Key { get; set; }
     public string ChildKey { get; set; }
-    
+
     public string TpUserName { get; set; }
     public string UserName { get; set; }
+
+    public string TpGameType { get; set; }
+    public string TpCategory { get; set; }
+
+    public string Brand { get; set; }
 }

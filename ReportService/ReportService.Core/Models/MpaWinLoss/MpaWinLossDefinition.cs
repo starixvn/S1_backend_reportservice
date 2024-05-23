@@ -13,16 +13,20 @@ public struct MpaWinLossDefinition
         MpaWinLossGroupByTypeEnum.Brand,
         MpaWinLossGroupByTypeEnum.Currency
     };
-    
+
     public static readonly IEnumerable<MpaWinLossGroupByTypeEnum> UseLongerCache = new[]
     {
         MpaWinLossGroupByTypeEnum.Player,
-        MpaWinLossGroupByTypeEnum.Affiliate
+        MpaWinLossGroupByTypeEnum.Affiliate,
+        //MpaWinLossGroupByTypeEnum.DateDownload,
+        //MpaWinLossGroupByTypeEnum.MonthDownload
     };
-    
+
     public static readonly IEnumerable<MpaWinLossGroupByTypeEnum> HasPlayerInfo = new[]
     {
         MpaWinLossGroupByTypeEnum.Player,
-        MpaWinLossGroupByTypeEnum.Affiliate
+        MpaWinLossGroupByTypeEnum.Affiliate,
+        MpaWinLossGroupByTypeEnum.DateDownload,
+        MpaWinLossGroupByTypeEnum.MonthDownload
     };
 }
