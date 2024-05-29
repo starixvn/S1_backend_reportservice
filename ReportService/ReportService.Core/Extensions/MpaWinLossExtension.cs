@@ -7,7 +7,43 @@ namespace ReportService.Core.Extensions;
 
 public static class MpaWinLossExtension
 {
+    /// <summary>
+    /// 一般版本使用
+    /// </summary>
+    /// <param name="data"></param>
+    /// <param name="request"></param>
+    /// <returns></returns>
     public static IEnumerable<MpaTpBetRecordDto> Filter(this IEnumerable<MpaTpBetRecordDto> data, MpaWinLossRequest request)
+    {
+        var exceptTicketStatus = new List<int>();
+
+        if (!request.NoDraw)
+        {
+            exceptTicketStatus.Add((int)TicketStatusEnum.Draw);
+        }
+
+        if (!request.IncludeFreeSpins)
+        {
+            exceptTicketStatus.Add((int)TicketStatusEnum.FreeBetWin);
+        }
+
+        if (exceptTicketStatus.Any())
+        {
+            data = data.Where(x => !exceptTicketStatus.Contains(x.TicketStatus));
+        }
+
+        return data
+            .FilterAffiliate(request)
+            .FilterTestUser(request.IncludeTest);
+    }
+
+    /// <summary>
+    /// 優化版本使用
+    /// </summary>
+    /// <param name="data"></param>
+    /// <param name="request"></param>
+    /// <returns></returns>
+    public static IEnumerable<MpaWinlossRecordDto> Filter(this IEnumerable<MpaWinlossRecordDto> data, MpaWinLossRequest request)
     {
         var exceptTicketStatus = new List<int>();
 

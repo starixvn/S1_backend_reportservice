@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Diagnostics.Eventing.Reader;
 using Newtonsoft.Json;
 using ReportService.Core.Extensions;
 using ReportService.Core.Library;
@@ -14,7 +15,7 @@ public class MpaWinLossBLL
     private readonly MpaWinLossService _mpaWinLossService;
     private readonly MpaCommonBLL _mpaCommonBll;
     private readonly ICacheHelper _redisHelper;
-    private readonly ILogger<MpaWinLossBLL> _logger;
+    private readonly ILogger<MpaWinLossImproveBLL> _logger;
     private readonly Dictionary<MpaWinLossGroupByTypeEnum, Func<MpaWinLossRequest, Task<(IEnumerable<MpaWinLossGroupByModel>, int)>>> _dicPreProcessMapper;
 
     public MpaWinLossBLL(IServiceProvider provider)
@@ -22,7 +23,7 @@ public class MpaWinLossBLL
         _mpaWinLossService = provider.GetRequiredService<MpaWinLossService>();
         _mpaCommonBll = provider.GetRequiredService<MpaCommonBLL>();
         _redisHelper = provider.GetRequiredService<ICacheHelper>();
-        _logger = provider.GetRequiredService<ILogger<MpaWinLossBLL>>();
+        _logger = provider.GetRequiredService<ILogger<MpaWinLossImproveBLL>>();
 
         _dicPreProcessMapper = new Dictionary<MpaWinLossGroupByTypeEnum, Func<MpaWinLossRequest, Task<(IEnumerable<MpaWinLossGroupByModel>, int)>>>
         {
@@ -818,6 +819,7 @@ public class MpaWinLossBLL
             x.ChildKey
         });
 
+
         if (groupByType == MpaWinLossGroupByTypeEnum.DateDownload || groupByType == MpaWinLossGroupByTypeEnum.MonthDownload)
             return source;
 
@@ -963,7 +965,6 @@ public class MpaWinLossBLL
             case MpaWinLossGroupByTypeEnum.DateDownload:
             case MpaWinLossGroupByTypeEnum.MonthDownload:
                 return "%m/%d/%Y %H:00";
-
 
             case MpaWinLossGroupByTypeEnum.GameType:
             case MpaWinLossGroupByTypeEnum.TpCategory:
