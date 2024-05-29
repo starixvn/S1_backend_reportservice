@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using System.Diagnostics.Eventing.Reader;
 using Newtonsoft.Json;
 using ReportService.Core.Extensions;
 using ReportService.Core.Library;
@@ -16,7 +15,7 @@ public class MpaWinLossImproveBLL
     private readonly MpaWinLossService _mpaWinLossService;
     private readonly MpaCommonBLL _mpaCommonBll;
     private readonly ICacheHelper _redisHelper;
-    private readonly ILogger<MpaWinLossBLL> _logger;
+    private readonly ILogger<MpaWinLossImproveBLL> _logger;
     private readonly Dictionary<MpaWinLossGroupByTypeEnum, Func<MpaWinLossRequest, Task<(IEnumerable<MpaWinLossGroupByModel>, int)>>> _dicPreProcessMapper;
 
     public MpaWinLossImproveBLL(IServiceProvider provider)
@@ -24,7 +23,7 @@ public class MpaWinLossImproveBLL
         _mpaWinLossService = provider.GetRequiredService<MpaWinLossService>();
         _mpaCommonBll = provider.GetRequiredService<MpaCommonBLL>();
         _redisHelper = provider.GetRequiredService<ICacheHelper>();
-        _logger = provider.GetRequiredService<ILogger<MpaWinLossBLL>>();
+        _logger = provider.GetRequiredService<ILogger<MpaWinLossImproveBLL>>();
 
         _dicPreProcessMapper = new Dictionary<MpaWinLossGroupByTypeEnum, Func<MpaWinLossRequest, Task<(IEnumerable<MpaWinLossGroupByModel>, int)>>>
         {
@@ -39,7 +38,6 @@ public class MpaWinLossImproveBLL
             {MpaWinLossGroupByTypeEnum.DateDownload, PreProcessMpaWinLossGroupByDateDownloadResult},
             {MpaWinLossGroupByTypeEnum.MonthDownload, PreProcessMpaWinLossGroupByDateDownloadResult}
         };
-
     }
 
     private async Task<MpaWinLoseResponse> GetMpaWinLossReport(MpaWinLossRequest request)
@@ -884,7 +882,7 @@ public class MpaWinLossImproveBLL
         return result;
     }
 
-    private async Task<IEnumerable<MpaTpBetRecordDto>> GetTpBetRecords(MpaWinLossRequest request)
+    private async Task<IEnumerable<MpaWinlossRecordDto>> GetTpBetRecords(MpaWinLossRequest request)
     {
         var sw = Stopwatch.StartNew();  //add test
         sw.Start();  //add test
@@ -893,14 +891,12 @@ public class MpaWinLossImproveBLL
         var data = await GetTpBetRecordsWithCache(request);
 
         var tpBetRecordRelayResult = data
-            .Filter(request)
-            .SetCommissionByNineW(request, format, _mpaWinLossService.Get9WCommission)
-            .SetBAdata();
+            .Filter(request);
 
         return tpBetRecordRelayResult;
     }
 
-    private async Task<IEnumerable<MpaTpBetRecordDto>> GetTpBetRecordsWithCache(MpaWinLossRequest request)
+    private async Task<IEnumerable<MpaWinlossRecordDto>> GetTpBetRecordsWithCache(MpaWinLossRequest request)
     {
         var format = MapMpaWinLossGroupByTypeEnumFormat(request.GroupByType);
         var p = new GetTpBetRecordParam(request, string.Empty, request.StartTime, request.EndTime);
@@ -944,15 +940,15 @@ public class MpaWinLossImproveBLL
         return claimBonusResult;
     }
 
-    private async Task<IEnumerable<MpaTpBetRecordDto>> GetMapTpBetRecordByDate(MpaWinLossRequest request)
+    private async Task<IEnumerable<MpaWinlossRecordDto>> GetMapTpBetRecordByDate(MpaWinLossRequest request)
     {
         var format = MapMpaWinLossGroupByTypeEnumFormat(request.GroupByType);
         var startDate = request.StartTime;
         var endDate = request.EndTime;
         var interval = TimeSpan.FromDays(11);
         var segmentCount = (int)Math.Ceiling((endDate - startDate).TotalDays / interval.TotalDays);
-        var data = new List<MpaTpBetRecordDto>();
-        var tasks = new List<Task<IEnumerable<MpaTpBetRecordDto>>>();
+        var data = new List<MpaWinlossRecordDto>();
+        var tasks = new List<Task<IEnumerable<MpaWinlossRecordDto>>>();
         var sw = Stopwatch.StartNew();
 
         _logger.LogInformation($"GetMapTpBetRecordByDate SegmentCount={segmentCount}");
@@ -967,7 +963,7 @@ public class MpaWinLossImproveBLL
             _logger.LogInformation($"SegmentStart={segmentStart:yyyy-MM-dd HH:mm:ss}, SegmentEnd={segmentEnd:yyyy-MM-dd HH:mm:ss}");
 
             tasks.Add(Task.Run(() => _mpaWinLossService
-                .GetTpBetRecord<MpaTpBetRecordDto>(new GetTpBetRecordParam(request, format, segmentStart, segmentEnd))));
+                .GetWinLossSummary<MpaWinlossRecordDto>(new GetTpBetRecordParam(request, format, segmentStart, segmentEnd))));
         }
 
         await Task.WhenAll(tasks)
@@ -1007,19 +1003,19 @@ public class MpaWinLossImproveBLL
         }
     }
 
-    private static decimal CalculateGgr(int gameType, decimal winLossSummary, decimal progressiveWin, decimal progressiveBet, IEnumerable<MpaTpBetRecordDto> records)
+    private static decimal CalculateGgr(int gameType, decimal winLossSummary, decimal progressiveWin, decimal progressiveBet, IEnumerable<MpaWinlossRecordDto> records)
     {
         switch (gameType)
         {
             case (int)MpaGgrCustomizeGameTypeEnum.NineW:
                 //GGR for 9W = -PlayerWinLoss + Commission
-                var nineWCommission = records.Sum(x => x.RevenueSummary);
+                var nineWCommission = records.Sum(x => x.Revenue);
                 return GetGgr(winLossSummary, progressiveWin, progressiveBet) + nineWCommission;
 
             case (int)MpaGgrCustomizeGameTypeEnum.OneGamingPoker:
             case (int)MpaGgrCustomizeGameTypeEnum.V8Poker:
                 //若為 Poker，commission: GGR = sum(revenue)
-                winLossSummary = records.Sum(x => x.RevenueSummary) * -1; // 因為GetGgr內計算會 * -1所以乘回來
+                winLossSummary = records.Sum(x => x.Revenue) * -1; // 因為GetGgr內計算會 * -1所以乘回來
                 return GetGgr(winLossSummary, progressiveWin, progressiveBet);
 
             default:
@@ -1027,12 +1023,12 @@ public class MpaWinLossImproveBLL
         }
     }
 
-    private static decimal CalculateCommission(MpaTpBetRecordDto x)
+    private static decimal CalculateCommission(MpaWinlossRecordDto x)
     {
         //目前除9W外，其他commission皆為0
         if (x.TpId == (int)MpaCommissionCustomizeTpIdEnum.NineW)
         {
-            return x.RevenueSummary * -1;
+            return x.Revenue * -1;
         }
 
         return 0;
@@ -1061,20 +1057,22 @@ public class MpaWinLossImproveBLL
         }
     }
 
-    private static MpaWinLossGroupByModel GetSummary(IEnumerable<MpaTpBetRecordDto> records, int gameType, int currencyId)
+    private static MpaWinLossGroupByModel GetSummary(IEnumerable<MpaWinlossRecordDto> records, int gameType, int currencyId)
     {
         var r = records.ToList();
-        var totalStakeSummary = r.Sum(x => x.StakeSummary);
-        var totalValidBetSummary = r.Sum(x => x.ValidBetSummary);
-        var totalWinLossSummary = r.Sum(x => x.WinLossSummary);
-        var totalProgressiveWinSummary = r.Sum(x => x.ProgressiveWinSummary);
-        var totalProgressiveBetSummary = r.Sum(x => x.ProgressiveBetSummary);
+        var totalStakeSummary = r.Sum(x => x.Stake);
+        var totalValidBetSummary = r.Sum(x => x.ValidBet);
+        var totalWinLossSummary = r.Sum(x => x.WinLoss);
+        var totalProgressiveWinSummary = r.Sum(x => x.ProgressiveWin);
+        var totalProgressiveBetSummary = r.Sum(x => x.ProgressiveBet);
         var totalRowCount = r.Sum(x => x.RowCount);
-        var totalBaCommission = r.Sum(x => x.BaValidBetSummary) * 0.0025m; // BACommission = ValidTurnOver * 0.25%
-        var totalBaWinLossSummary = r.Sum(x => x.BaWinLossSummary);
+        var totalBaCommission = r.Sum(x => x.BaValidBet) * 0.0025m; // BACommission = ValidTurnOver * 0.25%
+        var totalBaWinLossSummary = r.Sum(x => x.BaWinLoss);
         var totalWinLossSummaryWithoutBa = totalWinLossSummary - totalBaWinLossSummary;
-        var ggr = CalculateGgr(gameType, totalWinLossSummaryWithoutBa, totalProgressiveWinSummary,
-            totalProgressiveBetSummary, r) + totalBaCommission;
+        var ggr = r.Sum(x => x.GGR);
+        //var ggr = CalculateGgr(gameType, totalWinLossSummaryWithoutBa, totalProgressiveWinSummary,
+        //    totalProgressiveBetSummary, r) + totalBaCommission;
+        var totalCommission = r.Sum(x => x.Revenue);
 
         return new MpaWinLossGroupByModel
         {
@@ -1086,7 +1084,7 @@ public class MpaWinLossImproveBLL
             BaPlayerWinLoss = totalBaWinLossSummary,
             ProgressiveWin = totalProgressiveWinSummary,
             ProgressiveBet = totalProgressiveBetSummary,
-            Commission = r.Sum(CalculateCommission),
+            Commission = totalCommission,
             BaCommission = totalBaCommission,
             BetCount = totalRowCount
         };

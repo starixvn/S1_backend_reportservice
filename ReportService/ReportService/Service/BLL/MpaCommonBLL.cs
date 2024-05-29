@@ -9,7 +9,7 @@ public class MpaCommonBLL
 {
     private readonly MpaCommonService _mpaCommonService;
     private readonly ICacheHelper _redisHelper;
-    private readonly ILogger<MpaWinLossBLL> _logger;
+    private readonly ILogger<MpaWinLossImproveBLL> _logger;
     private readonly IReadOnlyDictionary<int, string> _dicServerInfo;
     private readonly IReadOnlyDictionary<int, string> _dicCurrencyInfo;
    
@@ -17,7 +17,7 @@ public class MpaCommonBLL
     {
         _mpaCommonService = provider.GetRequiredService<MpaCommonService>();
         _redisHelper = provider.GetRequiredService<ICacheHelper>();
-        _logger = provider.GetRequiredService<ILogger<MpaWinLossBLL>>();
+        _logger = provider.GetRequiredService<ILogger<MpaWinLossImproveBLL>>();
         _dicServerInfo = provider.GetRequiredService<IEnumerable<ServerInfo>>()
             .ToDictionary(x => x.SiteId, x => x.SiteName);
         _dicCurrencyInfo = provider.GetRequiredService<IEnumerable<CurrencyInfo>>()

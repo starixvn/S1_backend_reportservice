@@ -23,7 +23,7 @@ public static class ServiceCollectionExtension
         {
             // 設定ReportDB連線順序，ReportService優先使用1c，備援1b
             services.AddSingleton(provider => new MySqlClient(provider, DataBase.Report, reportBackupDb1, new List<string>
-            {                
+            {
                 reportBackupDb1,
                 reportDbConn
             }));
@@ -32,15 +32,17 @@ public static class ServiceCollectionExtension
         {
             services.AddSingleton(provider => new MySqlClient(provider, DataBase.Report, reportDbConn));
         }
-        
+
+        services.AddSingleton(provider => new MySqlClient(provider, DataBase.ReportCenter, configuration.GetConnectionString($"{serviceType}_ReportCenter")));
+
         return services;
     }
-    
+
     public static IServiceCollection RegisterServices(this IServiceCollection services, IConfiguration configuration)
     {
         var redisConnection = ConnectionMultiplexer.Connect(configuration.GetValue<string>("RedisConnection"));
         services.AddSingleton<IConnectionMultiplexer>(redisConnection);
-        
+
         // DAL
         var dalAssemblies = AppDomain.CurrentDomain.GetAssemblies();
 
@@ -70,34 +72,34 @@ public static class ServiceCollectionExtension
                 services.AddSingleton(type, type);
             });
         }
-        
+
         services.AddOptionListByDb<ServerInfo>("ServerInfoList_Get");
         services.AddOptionListByDb<CurrencyInfo>("Common_Currency_Get");
         services.AddOptionListByDb<Config>("SiteConfig_Get", new { ConfigGroup = "PaymentService" });
         services.AddSiteConfig();
         services.AddSingleton<ConfigBLL>();
-        
+
         // Filters
         services.AddMvc(config =>
         {
             config.Filters.Add<ExceptionFilter>();
         });
-        
+
         return services
             .AddSingleton<ICacheHelper, RedisCacheHelper>()
             .AddHostedService<GarbageCollectCheckWorker>();
     }
-    
+
     private static IServiceCollection AddOptionListByDb<T>(this IServiceCollection services, string sql, object parameters = null)
     {
         var provider = services.BuildServiceProvider();
         var configService = provider.GetRequiredService<ConfigService>();
         var option = configService.Query<T>(sql, parameters);
         services.AddSingleton(typeof(IEnumerable<T>), p => option);
-        
+
         return services;
     }
-    
+
     private static IServiceCollection AddSiteConfig(this IServiceCollection services)
     {
         var provider = services.BuildServiceProvider();
