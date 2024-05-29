@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Diagnostics.Eventing.Reader;
 using Newtonsoft.Json;
 using ReportService.Core.Extensions;
 using ReportService.Core.Library;
@@ -38,7 +39,6 @@ public class MpaWinLossBLL
             {MpaWinLossGroupByTypeEnum.DateDownload, PreProcessMpaWinLossGroupByDateDownloadResult},
             {MpaWinLossGroupByTypeEnum.MonthDownload, PreProcessMpaWinLossGroupByDateDownloadResult}
         };
-
     }
 
     private async Task<MpaWinLoseResponse> GetMpaWinLossReport(MpaWinLossRequest request)

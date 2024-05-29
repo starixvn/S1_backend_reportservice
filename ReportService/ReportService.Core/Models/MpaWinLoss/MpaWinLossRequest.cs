@@ -41,7 +41,7 @@ public class MpaWinLossRequest : IMultiSiteApiRequest
     public bool NoDraw { get; set; }
 
     public int BaseCurrencyId { get; set; }
-    
+
     /// <summary>
     /// SettledDate = 1,
     /// CreatedDate = 2
@@ -63,13 +63,15 @@ public class MpaWinLossRequest : IMultiSiteApiRequest
     /// </summary>
     public IEnumerable<int>? TpCategorys { get; set; }
     public IEnumerable<int> SiteIds { get; set; }
-    
+
     /// <summary>
     /// 代理帳號
     /// </summary>
     public IEnumerable<string>? AffiliateNames { get; set; }
 
     public MpaWinLossGroupByTypeEnum GroupByType { get; set; }
-    
+
     public bool DisplayGroupBreakdownInOriginalCurrency;
+
+    public int Version { get; set; }
 }
