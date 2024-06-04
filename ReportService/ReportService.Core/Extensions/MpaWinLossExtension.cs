@@ -37,36 +37,6 @@ public static class MpaWinLossExtension
             .FilterTestUser(request.IncludeTest);
     }
 
-    /// <summary>
-    /// 優化版本使用
-    /// </summary>
-    /// <param name="data"></param>
-    /// <param name="request"></param>
-    /// <returns></returns>
-    public static IEnumerable<MpaWinlossRecordDto> Filter(this IEnumerable<MpaWinlossRecordDto> data, MpaWinLossRequest request)
-    {
-        var exceptTicketStatus = new List<int>();
-
-        if (!request.NoDraw)
-        {
-            exceptTicketStatus.Add((int)TicketStatusEnum.Draw);
-        }
-
-        if (!request.IncludeFreeSpins)
-        {
-            exceptTicketStatus.Add((int)TicketStatusEnum.FreeBetWin);
-        }
-
-        if (exceptTicketStatus.Any())
-        {
-            data = data.Where(x => !exceptTicketStatus.Contains(x.TicketStatus));
-        }
-
-        return data
-            .FilterAffiliate(request)
-            .FilterTestUser(request.IncludeTest);
-    }
-
     public static IEnumerable<T> FilterTestUser<T>(this IEnumerable<T> data, bool includeTest) where T : IFilterMpaWinLoss
         => includeTest ? data : data.Where(x => x.IsTest == 0);
 
