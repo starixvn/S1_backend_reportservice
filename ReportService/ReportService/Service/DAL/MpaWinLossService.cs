@@ -58,6 +58,8 @@ public class MpaWinLossService
         p.Add("_CurrencyIds", input.CurrencyIdsJson, dbType: DbType.String);
         p.Add("_CategoryIds", input.CategoryIdsJson, dbType: DbType.String);
         p.Add("_AffiliateNames", input.AffiliateNamesJson, dbType: DbType.String);
+        p.Add("_IncludeTestData", input.IncludeTestData, dbType: DbType.Boolean);
+        p.Add("_ExceptTicketStatuses", input.ExceptTicketStatusesJson, dbType: DbType.String);
 
         return _reportCenterDbClient.QueryAsync<TResult>("Service_WinLossSummaryGroupByDate_Get", p, 60);
     }
