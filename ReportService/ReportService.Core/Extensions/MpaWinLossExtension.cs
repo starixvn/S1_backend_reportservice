@@ -114,4 +114,124 @@ public static class MpaWinLossExtension
                 return data;
         }
     }
+
+    /// <summary>
+    /// 優化版本使用
+    /// </summary>
+    public static readonly Func<MpaWinlossRecordDto, object>[] SumSelectors = new Func<MpaWinlossRecordDto, object>[]
+    {
+        x => x.Stake,
+        x => x.ValidBet,
+        x => x.WinLoss,
+        x => x.ProgressiveWin,
+        x => x.ProgressiveBet,
+        x => x.RowCount,
+        x => x.BaValidBet,
+        x => x.BaWinLoss,
+        x => x.GGR,
+        x => x.Revenue
+    };
+
+    /// <summary>
+    /// 優化版本使用
+    /// </summary>
+    public static readonly Func<MpaWinLossGroupByModel, object>[] SumSelectorsTest = new Func<MpaWinLossGroupByModel, object>[]
+    {
+        x => x.TurnOver,
+        x => x.ValidTurnOver,
+        x => x.Ggr,
+        x => x.PlayerWinLoss,
+        x => x.BaPlayerWinLoss,
+        x => x.ProgressiveWin,
+        x => x.ProgressiveBet,
+        x => x.Commission,
+        x => x.BaCommission,
+        x => x.BetCount,
+        x => x.UniquePlayers,
+        x => x.DepositCount,
+        x => x.TotalDepositAmount,
+        x => x.WithdrawalCount,
+        x => x.TotalWithdrawalAmount,
+        x => x.TotalBonus
+    };
+
+    /// <summary>
+    /// 優化版本使用
+    /// </summary>
+    /// <typeparam name="TSource"></typeparam>
+    /// <typeparam name="TKey"></typeparam>
+    /// <param name="source"></param>
+    /// <param name="keySelector"></param>
+    /// <param name="sumSelectors"></param>
+    /// <returns></returns>
+    public static IEnumerable<GroupedSummary<TKey>> GroupAndSummarize<TKey>(
+    this IEnumerable<MpaWinlossRecordDto> source,
+    Func<MpaWinlossRecordDto, TKey> keySelector)
+    {
+        var groupedData = source
+            .GroupBy(keySelector)
+            .AsParallel() //平行處理
+            .Select(g => new GroupedSummary<TKey>
+            {
+                GroupKey = g.Key,
+                Records = g,
+                Summaries = new SummariesModel
+                {
+                    TotalStakeSummary = g.Sum(x => Convert.ToDecimal(MpaWinLossExtension.SumSelectors[0](x))),
+                    TotalValidBetSummary = g.Sum(x => Convert.ToDecimal(MpaWinLossExtension.SumSelectors[1](x))),
+                    TotalWinLossSummary = g.Sum(x => Convert.ToDecimal(MpaWinLossExtension.SumSelectors[2](x))),
+                    TotalProgressiveWinSummary = g.Sum(x => Convert.ToDecimal(MpaWinLossExtension.SumSelectors[3](x))),
+                    TotalProgressiveBetSummary = g.Sum(x => Convert.ToDecimal(MpaWinLossExtension.SumSelectors[4](x))),
+                    TotalRowCount = g.Sum(x => Convert.ToInt16(MpaWinLossExtension.SumSelectors[5](x))),
+                    TotalBaCommission = g.Sum(x => Convert.ToDecimal(MpaWinLossExtension.SumSelectors[6](x))),
+                    TotalBaWinLossSummary = g.Sum(x => Convert.ToDecimal(MpaWinLossExtension.SumSelectors[7](x))),
+                    GGR = g.Sum(x => Convert.ToDecimal(MpaWinLossExtension.SumSelectors[8](x))),
+                    TotalCommission = g.Sum(x => Convert.ToDecimal(MpaWinLossExtension.SumSelectors[9](x))),
+                }
+            });
+
+        return groupedData;
+    }
+
+    /// <summary>
+    /// 優化版本使用
+    /// </summary>
+    /// <typeparam name="TSource"></typeparam>
+    /// <typeparam name="TKey"></typeparam>
+    /// <param name="source"></param>
+    /// <param name="keySelector"></param>
+    /// <param name="sumSelectors"></param>
+    /// <returns></returns>
+    public static IEnumerable<GroupedSummaryTest<TKey>> GroupAndSummarizeTest<TKey>(
+        this IEnumerable<MpaWinLossGroupByModel> source,
+        Func<MpaWinLossGroupByModel, TKey> keySelector)
+    {
+        return source
+            .GroupBy(keySelector)
+            .AsParallel() //平行處理
+            .Select(g => new GroupedSummaryTest<TKey>
+            {
+                GroupKey = g.Key,
+                Records = g,
+                Summaries = new SummariesMpaModel
+                {
+                    TurnOver = g.Sum(x => Convert.ToDecimal(SumSelectorsTest[0](x))),
+                    ValidTurnOver = g.Sum(x => Convert.ToDecimal(SumSelectorsTest[1](x))),
+                    Ggr = g.Sum(x => Convert.ToDecimal(SumSelectorsTest[2](x))),
+                    PlayerWinLoss = g.Sum(x => Convert.ToDecimal(SumSelectorsTest[3](x))),
+                    BaPlayerWinLoss = g.Sum(x => Convert.ToDecimal(SumSelectorsTest[4](x))),
+                    ProgressiveWin = g.Sum(x => Convert.ToInt16(SumSelectorsTest[5](x))),
+                    ProgressiveBet = g.Sum(x => Convert.ToDecimal(SumSelectorsTest[6](x))),
+                    Commission = g.Sum(x => Convert.ToDecimal(SumSelectorsTest[7](x))),
+                    BaCommission = g.Sum(x => Convert.ToDecimal(SumSelectorsTest[8](x))),
+                    BetCount = g.Sum(x => Convert.ToInt16(SumSelectorsTest[9](x))),
+                    UniquePlayers = g.Sum(x => Convert.ToInt16(SumSelectorsTest[10](x))),
+                    DepositCount = g.Sum(x => Convert.ToInt16(SumSelectorsTest[11](x))),
+                    TotalDepositAmount = g.Sum(x => Convert.ToDecimal(SumSelectorsTest[12](x))),
+                    WithdrawalCount = g.Sum(x => Convert.ToInt16(SumSelectorsTest[13](x))),
+                    TotalWithdrawalAmount = g.Sum(x => Convert.ToDecimal(SumSelectorsTest[14](x))),
+                    TotalBonus = g.Sum(x => Convert.ToDecimal(SumSelectorsTest[15](x))),
+                }
+            });
+    }
 }
