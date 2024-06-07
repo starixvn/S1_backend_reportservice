@@ -138,18 +138,23 @@ public class MpaWinLossImproveBLL
         var combineData = betRecordResult
             .Concat(transactionTask.Result)
             .Concat(claimBonusTask.Result)
-            .AsParallel();
+            .AsParallel()
+            .Select(item =>
+            {
+                // 處理時區
+                item.Date = item.Date.ToOffSetReturnDate(request.StartTime.Offset);
+                return item;
+            }).ToList();
 
         // 處理時區
-        combineData.ForAll(item =>
-        {
-            item.Date = item.Date.ToOffSetReturnDate(request.StartTime.Offset);
-        });
+        //combineData.ForEach(item =>
+        //{
+        //    item.Date = item.Date.ToOffSetReturnDate(request.StartTime.Offset);
+        //});
 
         var preProcessedGroupsTest = combineData.GroupAndSummarizeTest(
             x => new { x.CurrencyId, x.Date, x.CustId }
             );
-
         var isSummaryTransaction = IsSummaryTransaction(request.GroupByType);
 
         var combineResult = preProcessedGroupsTest
@@ -167,7 +172,6 @@ public class MpaWinLossImproveBLL
 
         sw.Stop();  //add test
         _logger.LogInformation($"{MethodExtension.GetCurrentMethod()} Elapsed={sw.Elapsed:c}");  //add test
-
 
         return (combineResult, uniquePlayersCount);
     }
@@ -956,7 +960,6 @@ public class MpaWinLossImproveBLL
     private IEnumerable<MpaWinLossGroupByModel> GroupByResult(IEnumerable<MpaWinLossGroupByModel> source,
         MpaWinLossGroupByTypeEnum groupByType)
     {
-
         var hasPlayerInfo = MpaWinLossDefinition.HasPlayerInfo.Contains(groupByType);
 
         var preProcessedGroupsTest = source.GroupAndSummarizeTest(
@@ -998,7 +1001,6 @@ public class MpaWinLossImproveBLL
                     groupSummary.UniquePlayers = 1;
                     return groupSummary;
                 });
-
         return result;
     }
 
@@ -1071,7 +1073,7 @@ public class MpaWinLossImproveBLL
 
         if (string.IsNullOrEmpty(p.UserNamesJson) && string.IsNullOrEmpty(p.AffiliateNamesJson))
         {
-            var key = $"{p.StartTime:yyyyMMddHHmmss}{p.EndTime:yyyyMMddHHmmss}{format}" +
+            var key = $"WinLossSummary{p.StartTime:yyyyMMddHHmmss}{p.EndTime:yyyyMMddHHmmss}{format}" +
                       $"{request.DateType}{p.SiteIdsJson}{p.CurrencyIdsJson}{p.MemberTypesJson}" +
                       $"{p.CategoryIdsJson}{p.GameTypesJson}";
 
