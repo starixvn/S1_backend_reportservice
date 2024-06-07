@@ -1,8 +1,13 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ReportService", "ReportService\ReportService.csproj", "{0AFBDEED-B151-4E6B-8851-884480C760C0}"
+# Visual Studio Version 17
+VisualStudioVersion = 17.8.34322.80
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ReportService", "ReportService\ReportService.csproj", "{0AFBDEED-B151-4E6B-8851-884480C760C0}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ReportService.Core", "ReportService.Core\ReportService.Core.csproj", "{5A3BA5E6-5785-4EBB-92E7-270BEE930474}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ReportService.Core", "ReportService.Core\ReportService.Core.csproj", "{5A3BA5E6-5785-4EBB-92E7-270BEE930474}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ReportService.UnitTest", "ReportService.UnitTest\ReportService.UnitTest.csproj", "{4583E84A-388E-48BF-AB80-F78B9DB353A5}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -18,5 +23,15 @@ Global
 		{5A3BA5E6-5785-4EBB-92E7-270BEE930474}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5A3BA5E6-5785-4EBB-92E7-270BEE930474}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5A3BA5E6-5785-4EBB-92E7-270BEE930474}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4583E84A-388E-48BF-AB80-F78B9DB353A5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4583E84A-388E-48BF-AB80-F78B9DB353A5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4583E84A-388E-48BF-AB80-F78B9DB353A5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4583E84A-388E-48BF-AB80-F78B9DB353A5}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {C27D3125-A336-436A-A5F7-16437E956FCD}
 	EndGlobalSection
 EndGlobal
