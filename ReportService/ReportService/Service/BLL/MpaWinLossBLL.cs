@@ -1040,6 +1040,7 @@ public class MpaWinLossBLL
         var totalProgressiveWinSummary = r.Sum(x => x.ProgressiveWinSummary);
         var totalProgressiveBetSummary = r.Sum(x => x.ProgressiveBetSummary);
         var totalRowCount = r.Sum(x => x.RowCount);
+        var totalRowCountBa = r.Sum(x => x.BaRowCount);
         var totalBaCommission = r.Sum(x => x.BaValidBetSummary) * 0.0025m; // BACommission = ValidTurnOver * 0.25%
         var totalBaWinLossSummary = r.Sum(x => x.BaWinLossSummary);
         var totalWinLossSummaryWithoutBa = totalWinLossSummary - totalBaWinLossSummary;
@@ -1058,7 +1059,7 @@ public class MpaWinLossBLL
             ProgressiveBet = totalProgressiveBetSummary,
             Commission = r.Sum(CalculateCommission),
             BaCommission = totalBaCommission,
-            BetCount = totalRowCount
+            BetCount = totalRowCount - totalRowCountBa
         };
     }
 
