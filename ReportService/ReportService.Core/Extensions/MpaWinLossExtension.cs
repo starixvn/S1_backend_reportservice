@@ -128,7 +128,7 @@ public static class MpaWinLossExtension
         x => x.ProgressiveWin,
         x => x.ProgressiveBet,
         x => x.RowCount,
-        x => x.BaValidBet,
+        x => x.BaCommission,
         x => x.BaWinLoss,
         x => x.GGR,
         x => x.Revenue
