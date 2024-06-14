@@ -1223,7 +1223,7 @@ public class MpaWinLossImproveBLL
         var totalProgressiveWinSummary = r.Sum(x => x.ProgressiveWin);
         var totalProgressiveBetSummary = r.Sum(x => x.ProgressiveBet);
         var totalRowCount = r.Sum(x => x.RowCount);
-        var totalBaCommission = r.Sum(x => x.BaValidBet);
+        var totalBaCommission = r.Sum(x => x.BaCommision);
         var totalBaWinLossSummary = r.Sum(x => x.BaWinLoss);
         var totalWinLossSummaryWithoutBa = totalWinLossSummary - totalBaWinLossSummary;
         var ggr = r.Sum(x => x.GGR);
