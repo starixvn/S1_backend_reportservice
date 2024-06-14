@@ -36,5 +36,6 @@ public class MpaTpBetRecordDto : IFilterMpaWinLoss
     public decimal BaRevenueSummary { get; set; }
     public decimal BaProgressiveWinSummary { get; set; }
     public decimal BaProgressiveBetSummary { get; set; }
+    public int BaRowCount { get; set; }
 }
 

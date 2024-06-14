@@ -60,12 +60,14 @@ public static class MpaWinLossExtension
             item.BaWinLossSummary = item.WinLossSummary;
             item.BaProgressiveBetSummary = item.ProgressiveBetSummary;
             item.BaProgressiveWinSummary = item.ProgressiveWinSummary;
+            item.BaRowCount = item.RowCount;
             item.StakeSummary = 0;
             item.ValidBetSummary = 0;
             item.RevenueSummary = 0;
             item.WinLossSummary = 0;
             item.ProgressiveBetSummary = 0;
             item.ProgressiveWinSummary = 0;
+            item.RowCount = 0;
         }
         return data;
     }
