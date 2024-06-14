@@ -34,7 +34,7 @@ public class MpaWinlossRecordDto : IFilterMpaWinLoss
     public decimal BaValidBet { get; set; }
     public decimal BaWinLoss { get; set; }
     public decimal BaRevenue { get; set; }
-    public decimal BaCommision { get; set; }
+    public decimal BaCommission { get; set; }
     public decimal BaProgressiveWin { get; set; }
     public decimal BaProgressiveBet { get; set; }
 
