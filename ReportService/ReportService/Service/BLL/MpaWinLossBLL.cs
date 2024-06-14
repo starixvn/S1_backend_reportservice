@@ -1076,6 +1076,7 @@ public class MpaWinLossBLL
         var totalWinLossSummaryWithoutBa = totalWinLossSummary - totalBaWinLossSummary;
         var ggr = CalculateGgr(gameType, totalWinLossSummaryWithoutBa, totalProgressiveWinSummary,
             totalProgressiveBetSummary, r) + totalBaCommission;
+        var totalRowCountWithoutBa = totalRowCount - totalRowCountBa;
 
         return new MpaWinLossGroupByModel
         {
@@ -1089,7 +1090,7 @@ public class MpaWinLossBLL
             ProgressiveBet = totalProgressiveBetSummary,
             Commission = r.Sum(CalculateCommission),
             BaCommission = totalBaCommission,
-            BetCount = totalRowCount - totalRowCountBa
+            BetCount = totalRowCountWithoutBa + totalRowCountBa
         };
     }
 
