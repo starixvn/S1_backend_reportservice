@@ -20,8 +20,8 @@ public class MpaCommonService
     public Task<IEnumerable<MpaRateDto>> GetExchangeRate(DateTimeOffset starTime, DateTimeOffset endTime)
     {
         var p = new DynamicParameters();
-        p.Add("_RateDateStart", starTime.Date.AddDays(-1), dbType: DbType.DateTime);
-        p.Add("_RateDateEnd", endTime.Date.AddMonths(1), dbType: DbType.DateTime);
+        p.Add("_RateDateStart", starTime.Date.AddDays(-2), dbType: DbType.DateTime);
+        p.Add("_RateDateEnd", endTime.Date.AddDays(2), dbType: DbType.DateTime);
 
         return _reportDbClient.QueryAsync<MpaRateDto>("Admin_ExchangeRate_Get", p);
     }
