@@ -3,7 +3,7 @@ using ReportService.Extensions;
 using Serilog;
 using Serilog.Exceptions;
 using Serilog.Formatting.Json;
-
+ 
 var builder = WebApplication.CreateBuilder(args);
 
 var remoteUrls = builder.Configuration.GetSection("ConfigService").Get<string[]>();
