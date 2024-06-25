@@ -137,7 +137,7 @@ public static class MpaWinLossExtension
     /// <summary>
     /// 優化版本使用
     /// </summary>
-    public static readonly Func<MpaWinLossGroupByModel, object>[] SumSelectorsTest = new Func<MpaWinLossGroupByModel, object>[]
+    public static readonly Func<MpaWinLossGroupByModel, object>[] MpaSumSelectors = new Func<MpaWinLossGroupByModel, object>[]
     {
         x => x.TurnOver,
         x => x.ValidTurnOver,
@@ -204,7 +204,7 @@ public static class MpaWinLossExtension
     /// <param name="keySelector"></param>
     /// <param name="sumSelectors"></param>
     /// <returns></returns>
-    public static IEnumerable<GroupedSummaryTest<TKey>> GroupAndSummarizeTest<TKey>(
+    public static IEnumerable<GroupedSummaryTest<TKey>> MpaGroupAndSummarize<TKey>(
         this IEnumerable<MpaWinLossGroupByModel> source,
         Func<MpaWinLossGroupByModel, TKey> keySelector)
     {
@@ -217,22 +217,22 @@ public static class MpaWinLossExtension
                 Records = g,
                 Summaries = new SummariesMpaModel
                 {
-                    TurnOver = g.Sum(x => Convert.ToDecimal(SumSelectorsTest[0](x))),
-                    ValidTurnOver = g.Sum(x => Convert.ToDecimal(SumSelectorsTest[1](x))),
-                    Ggr = g.Sum(x => Convert.ToDecimal(SumSelectorsTest[2](x))),
-                    PlayerWinLoss = g.Sum(x => Convert.ToDecimal(SumSelectorsTest[3](x))),
-                    BaPlayerWinLoss = g.Sum(x => Convert.ToDecimal(SumSelectorsTest[4](x))),
-                    ProgressiveWin = g.Sum(x => Convert.ToInt16(SumSelectorsTest[5](x))),
-                    ProgressiveBet = g.Sum(x => Convert.ToDecimal(SumSelectorsTest[6](x))),
-                    Commission = g.Sum(x => Convert.ToDecimal(SumSelectorsTest[7](x))),
-                    BaCommission = g.Sum(x => Convert.ToDecimal(SumSelectorsTest[8](x))),
-                    BetCount = g.Sum(x => Convert.ToInt16(SumSelectorsTest[9](x))),
-                    UniquePlayers = g.Sum(x => Convert.ToInt16(SumSelectorsTest[10](x))),
-                    DepositCount = g.Sum(x => Convert.ToInt16(SumSelectorsTest[11](x))),
-                    TotalDepositAmount = g.Sum(x => Convert.ToDecimal(SumSelectorsTest[12](x))),
-                    WithdrawalCount = g.Sum(x => Convert.ToInt16(SumSelectorsTest[13](x))),
-                    TotalWithdrawalAmount = g.Sum(x => Convert.ToDecimal(SumSelectorsTest[14](x))),
-                    TotalBonus = g.Sum(x => Convert.ToDecimal(SumSelectorsTest[15](x))),
+                    TurnOver = g.Sum(x => Convert.ToDecimal(MpaSumSelectors[0](x))),
+                    ValidTurnOver = g.Sum(x => Convert.ToDecimal(MpaSumSelectors[1](x))),
+                    Ggr = g.Sum(x => Convert.ToDecimal(MpaSumSelectors[2](x))),
+                    PlayerWinLoss = g.Sum(x => Convert.ToDecimal(MpaSumSelectors[3](x))),
+                    BaPlayerWinLoss = g.Sum(x => Convert.ToDecimal(MpaSumSelectors[4](x))),
+                    ProgressiveWin = g.Sum(x => Convert.ToInt16(MpaSumSelectors[5](x))),
+                    ProgressiveBet = g.Sum(x => Convert.ToDecimal(MpaSumSelectors[6](x))),
+                    Commission = g.Sum(x => Convert.ToDecimal(MpaSumSelectors[7](x))),
+                    BaCommission = g.Sum(x => Convert.ToDecimal(MpaSumSelectors[8](x))),
+                    BetCount = g.Sum(x => Convert.ToInt16(MpaSumSelectors[9](x))),
+                    UniquePlayers = g.Sum(x => Convert.ToInt16(MpaSumSelectors[10](x))),
+                    DepositCount = g.Sum(x => Convert.ToInt16(MpaSumSelectors[11](x))),
+                    TotalDepositAmount = g.Sum(x => Convert.ToDecimal(MpaSumSelectors[12](x))),
+                    WithdrawalCount = g.Sum(x => Convert.ToInt16(MpaSumSelectors[13](x))),
+                    TotalWithdrawalAmount = g.Sum(x => Convert.ToDecimal(MpaSumSelectors[14](x))),
+                    TotalBonus = g.Sum(x => Convert.ToDecimal(MpaSumSelectors[15](x))),
                 }
             });
     }

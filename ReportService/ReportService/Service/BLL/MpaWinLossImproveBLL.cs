@@ -152,12 +152,12 @@ public class MpaWinLossImproveBLL
         //    item.Date = item.Date.ToOffSetReturnDate(request.StartTime.Offset);
         //});
 
-        var preProcessedGroupsTest = combineData.GroupAndSummarizeTest(
+        var preProcessedMpaGroups = combineData.MpaGroupAndSummarize(
             x => new { x.CurrencyId, x.Date, x.CustId }
             );
         var isSummaryTransaction = IsSummaryTransaction(request.GroupByType);
 
-        var combineResult = preProcessedGroupsTest
+        var combineResult = preProcessedMpaGroups
             .Select(g =>
             {
                 var summary = GetMpaGroupSummary(g.GroupKey.CurrencyId, g.Summaries, isSummaryTransaction);
@@ -904,11 +904,11 @@ public class MpaWinLossImproveBLL
             || groupByType == MpaWinLossGroupByTypeEnum.MonthDownload)
             return source;
 
-        var preProcessedGroupsTest = source.GroupAndSummarizeTest(
+        var preProcessedMpaGroups = source.MpaGroupAndSummarize(
             x => new { x.Key }
             );
         var isSummaryTransaction = IsSummaryTransaction(groupByType);
-        return preProcessedGroupsTest
+        return preProcessedMpaGroups
             .Select(g =>
             {
                 var groupSummary = GetMpaGroupSummary(baseCurrencyId, g.Summaries, isSummaryTransaction);
@@ -962,7 +962,7 @@ public class MpaWinLossImproveBLL
     {
         var hasPlayerInfo = MpaWinLossDefinition.HasPlayerInfo.Contains(groupByType);
 
-        var preProcessedGroupsTest = source.GroupAndSummarizeTest(
+        var preProcessedMpaGroups = source.MpaGroupAndSummarize(
               x => new { x.CurrencyId, x.Key, x.ChildKey }
               );
 
@@ -973,7 +973,7 @@ public class MpaWinLossImproveBLL
 
         if (!hasPlayerInfo)
         {
-            return preProcessedGroupsTest
+            return preProcessedMpaGroups
                 .Select(g =>
                 {
                     var groupSummary = GetMpaGroupSummary(g.GroupKey.CurrencyId, g.Summaries, isSummaryTransaction);
@@ -985,7 +985,7 @@ public class MpaWinLossImproveBLL
                 });
         }
 
-        var result = preProcessedGroupsTest
+        var result = preProcessedMpaGroups
                 .Select(g =>
                 {
                     var groupSummary = GetMpaGroupSummary(g.GroupKey.CurrencyId, g.Summaries, isSummaryTransaction);
