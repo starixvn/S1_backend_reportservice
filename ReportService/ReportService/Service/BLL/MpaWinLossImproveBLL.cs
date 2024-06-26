@@ -1073,7 +1073,7 @@ public class MpaWinLossImproveBLL
 
         if (string.IsNullOrEmpty(p.UserNamesJson) && string.IsNullOrEmpty(p.AffiliateNamesJson))
         {
-            var key = $"WinLossSummary{p.StartTime:yyyyMMddHHmmss}{p.EndTime:yyyyMMddHHmmss}{format}" +
+            var key = $"WinLossSummaryImprove{p.StartTime:yyyyMMddHHmmss}{p.EndTime:yyyyMMddHHmmss}{format}" +
                       $"{request.DateType}{p.SiteIdsJson}{p.CurrencyIdsJson}{p.MemberTypesJson}" +
                       $"{p.CategoryIdsJson}{p.GameTypesJson}";
 
