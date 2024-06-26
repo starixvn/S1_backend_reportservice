@@ -44,6 +44,7 @@ public class MpaWinLossImproveBLL
     public async Task<MpaWinLoseResponse> GetMpaWinLossReportWithCache(MpaWinLossRequest request)
     {
         var key = JsonConvert.SerializeObject(request);
+        _logger.LogInformation($"TestKey={key}");
         var min = MpaWinLossDefinition.UseLongerCache.Contains(request.GroupByType) ? 20 : 5; // Player類有分頁，分頁是在後台做所以給長點時間
 
         return await _redisHelper.TryGetOrCreateAsync(key, TimeSpan.FromMinutes(min),
