@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Diagnostics.Eventing.Reader;
 using Newtonsoft.Json;
 using ReportService.Core.Extensions;
 using ReportService.Core.Library;
@@ -14,7 +15,7 @@ public class MpaWinLossBLL
     private readonly MpaWinLossService _mpaWinLossService;
     private readonly MpaCommonBLL _mpaCommonBll;
     private readonly ICacheHelper _redisHelper;
-    private readonly ILogger<MpaWinLossBLL> _logger;
+    private readonly ILogger<MpaWinLossImproveBLL> _logger;
     private readonly Dictionary<MpaWinLossGroupByTypeEnum, Func<MpaWinLossRequest, Task<(IEnumerable<MpaWinLossGroupByModel>, int)>>> _dicPreProcessMapper;
 
     public MpaWinLossBLL(IServiceProvider provider)
@@ -22,7 +23,7 @@ public class MpaWinLossBLL
         _mpaWinLossService = provider.GetRequiredService<MpaWinLossService>();
         _mpaCommonBll = provider.GetRequiredService<MpaCommonBLL>();
         _redisHelper = provider.GetRequiredService<ICacheHelper>();
-        _logger = provider.GetRequiredService<ILogger<MpaWinLossBLL>>();
+        _logger = provider.GetRequiredService<ILogger<MpaWinLossImproveBLL>>();
 
         _dicPreProcessMapper = new Dictionary<MpaWinLossGroupByTypeEnum, Func<MpaWinLossRequest, Task<(IEnumerable<MpaWinLossGroupByModel>, int)>>>
         {
@@ -1052,11 +1053,13 @@ public class MpaWinLossBLL
         var totalProgressiveWinSummary = r.Sum(x => x.ProgressiveWinSummary);
         var totalProgressiveBetSummary = r.Sum(x => x.ProgressiveBetSummary);
         var totalRowCount = r.Sum(x => x.RowCount);
+        var totalRowCountBa = r.Sum(x => x.BaRowCount);
         var totalBaCommission = r.Sum(x => x.BaValidBetSummary) * 0.0025m; // BACommission = ValidTurnOver * 0.25%
         var totalBaWinLossSummary = r.Sum(x => x.BaWinLossSummary);
         var totalWinLossSummaryWithoutBa = totalWinLossSummary - totalBaWinLossSummary;
         var ggr = CalculateGgr(gameType, totalWinLossSummaryWithoutBa, totalProgressiveWinSummary,
             totalProgressiveBetSummary, r) + totalBaCommission;
+        var totalRowCountWithoutBa = totalRowCount - totalRowCountBa;
 
         return new MpaWinLossGroupByModel
         {
@@ -1070,7 +1073,7 @@ public class MpaWinLossBLL
             ProgressiveBet = totalProgressiveBetSummary,
             Commission = r.Sum(CalculateCommission),
             BaCommission = totalBaCommission,
-            BetCount = totalRowCount
+            BetCount = totalRowCountWithoutBa + totalRowCountBa
         };
     }
 
