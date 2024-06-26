@@ -21,7 +21,7 @@ public class MpaCommonService
     {
         var p = new DynamicParameters();
         p.Add("_RateDateStart", starTime.Date.AddDays(-1), dbType: DbType.DateTime);
-        p.Add("_RateDateEnd", endTime.Date.AddMonths(1), dbType: DbType.DateTime);
+        p.Add("_RateDateEnd", endTime.Date.AddMonths(1).AddDays(3), dbType: DbType.DateTime);
 
         return _reportDbClient.QueryAsync<MpaRateDto>("Admin_ExchangeRate_Get", p);
     }
