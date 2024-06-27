@@ -222,7 +222,7 @@ public static class MpaWinLossExtension
                     Ggr = g.Sum(x => Convert.ToDecimal(MpaSumSelectors[2](x))),
                     PlayerWinLoss = g.Sum(x => Convert.ToDecimal(MpaSumSelectors[3](x))),
                     BaPlayerWinLoss = g.Sum(x => Convert.ToDecimal(MpaSumSelectors[4](x))),
-                    ProgressiveWin = g.Sum(x => Convert.ToInt32(MpaSumSelectors[5](x))),
+                    ProgressiveWin = g.Sum(x => Convert.ToDecimal(MpaSumSelectors[5](x))),
                     ProgressiveBet = g.Sum(x => Convert.ToDecimal(MpaSumSelectors[6](x))),
                     Commission = g.Sum(x => Convert.ToDecimal(MpaSumSelectors[7](x))),
                     BaCommission = g.Sum(x => Convert.ToDecimal(MpaSumSelectors[8](x))),
