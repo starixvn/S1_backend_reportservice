@@ -255,7 +255,7 @@ public static class MpaWinLossExtension
                     foreach (var d in data.Where(x =>
                                 x.TpId == (int)MpaCommissionCustomizeTpIdEnum.NineW))
                     {
-                        d.GGR = d.GGR - d.Revenue;
+                        d.GGR = d.GGR + d.Revenue;
                     }
 
                     return data;
