@@ -1096,7 +1096,8 @@ public class MpaWinLossImproveBLL
         var data = await _mpaWinLossService.GetWinLossSummary<MpaWinlossRecordDto>(new GetTpBetRecordParam(request, format));
 
         var tpBetRecordResult = data
-            .FilterAffiliate(request);
+            .FilterAffiliate(request)
+            .SetCommissionAndGGRByNineWImprove(request);
 
         return tpBetRecordResult;
     }
