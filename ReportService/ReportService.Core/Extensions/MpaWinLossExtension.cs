@@ -236,4 +236,44 @@ public static class MpaWinLossExtension
                 }
             });
     }
+
+    /// <summary>
+    /// 優化版本使用
+    /// </summary>
+    /// <param name="data"></param>
+    /// <param name="request"></param>
+    /// <param name="format"></param>
+    /// <param name="getCommission"></param>
+    /// <returns></returns>
+    public static IEnumerable<MpaWinlossRecordDto> SetCommissionAndGGRByNineWImprove(this IEnumerable<MpaWinlossRecordDto> data,
+    MpaWinLossRequest request)
+    {
+        switch (request.DateType)
+        {
+            case MpaDateType.SettledDate:
+                {
+                    foreach (var d in data.Where(x =>
+                                x.TpId == (int)MpaCommissionCustomizeTpIdEnum.NineW))
+                    {
+                        d.GGR = d.GGR - d.Revenue;
+                    }
+
+                    return data;
+                }
+            case MpaDateType.CreatedDate:
+                {
+                    foreach (var d in data.Where(x =>
+                                 x.TpId == (int)MpaCommissionCustomizeTpIdEnum.NineW))
+                    {
+                        d.Revenue = 0;
+                    }
+
+                    return data;
+                }
+
+            default:
+                return data;
+        }
+    }
+
 }
