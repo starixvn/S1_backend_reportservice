@@ -1014,7 +1014,7 @@ public class MpaWinLossBLL
             case (int)MpaGgrCustomizeGameTypeEnum.NineW:
                 //GGR for 9W = -PlayerWinLoss + Commission
                 var nineWCommission = records.Sum(x => x.RevenueSummary);
-                return GetGgr(winLossSummary, progressiveWin, progressiveBet) + nineWCommission;
+                return GetGgr(winLossSummary, progressiveWin, progressiveBet) - nineWCommission;
 
             case (int)MpaGgrCustomizeGameTypeEnum.OneGamingPoker:
             case (int)MpaGgrCustomizeGameTypeEnum.V8Poker:
