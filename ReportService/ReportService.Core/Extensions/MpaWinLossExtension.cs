@@ -17,7 +17,7 @@ public static class MpaWinLossExtension
     {
         var exceptTicketStatus = new List<int>();
 
-        if (!request.NoDraw)
+        if (request.NoDraw)
         {
             exceptTicketStatus.Add((int)TicketStatusEnum.Draw);
         }

@@ -81,7 +81,7 @@ public class GetTpBetRecordParam : GetTransactionParam
     {
         var exceptTicketStatus = new List<int>();
 
-        if (!noDraw)
+        if (noDraw)
         {
             exceptTicketStatus.Add((int)TicketStatusEnum.Draw);
         }
