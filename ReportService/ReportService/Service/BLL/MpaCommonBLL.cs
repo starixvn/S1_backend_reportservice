@@ -1,5 +1,6 @@
 using ReportService.Core.Library;
 using ReportService.Core.Models;
+using ReportService.Core.Models.Enums;
 using ReportService.Models;
 using ReportService.Service.DAL;
 
@@ -12,7 +13,7 @@ public class MpaCommonBLL
     private readonly ILogger<MpaWinLossImproveBLL> _logger;
     private readonly IReadOnlyDictionary<int, string> _dicServerInfo;
     private readonly IReadOnlyDictionary<int, string> _dicCurrencyInfo;
-   
+
     public MpaCommonBLL(IServiceProvider provider)
     {
         _mpaCommonService = provider.GetRequiredService<MpaCommonService>();
@@ -23,24 +24,47 @@ public class MpaCommonBLL
         _dicCurrencyInfo = provider.GetRequiredService<IEnumerable<CurrencyInfo>>()
             .ToDictionary(x => x.CurrencyId, x => x.IsoCode);
     }
-    
-    public async Task<Dictionary<string, decimal>> GetMapRate(DateTimeOffset starTime, DateTimeOffset endTime, int baseCurrencyId)
+
+    /// <summary>
+    /// 一般版本使用
+    /// </summary>
+    /// <param name="starTime"></param>
+    /// <param name="endTime"></param>
+    /// <param name="baseCurrencyId"></param>
+    /// <returns></returns>
+    public async Task<Dictionary<string, decimal>> GetMapDailyRate(DateTimeOffset starTime, DateTimeOffset endTime, int baseCurrencyId)
     {
-        return (await GetMpaExchangeRate(starTime, endTime, baseCurrencyId))
+        return (await GetMpaExchangeRate(starTime, endTime, ExchangeRateTypeEnum.Daily, baseCurrencyId))
             .Where(x => x.TargetCurrencyId == baseCurrencyId)
             .ToDictionary(k =>
                 $"{k.RateDate.ToString("yyyy-MM-dd")}{k.CurrencyId}{k.TargetCurrencyId}", v => v.Rate);
     }
-   
-    private async Task<IEnumerable<MpaRateDto>> GetMpaExchangeRate(DateTimeOffset starTime, DateTimeOffset endTime, int baseCurrencyId = 0)
+
+    /// <summary>
+    /// 優化版本使用
+    /// </summary>
+    /// <param name="starTime"></param>
+    /// <param name="endTime"></param>
+    /// <param name="rateType"></param>
+    /// <param name="baseCurrencyId"></param>
+    /// <returns></returns>
+    public async Task<Dictionary<string, decimal>> GetMapMonthRate(DateTimeOffset starTime, DateTimeOffset endTime, int baseCurrencyId)
     {
-        var redisKey = $"MpaExchangeRate:{starTime:yyyy-MM-dd HH:mm:ss}:{endTime:yyyy-MM-dd HH:mm:ss}:{baseCurrencyId}";
+        return (await GetMpaExchangeRate(starTime, endTime, ExchangeRateTypeEnum.Monthly, baseCurrencyId))
+            .Where(x => x.TargetCurrencyId == baseCurrencyId)
+            .ToDictionary(k =>
+                $"{k.RateDate.ToString("yyyy-MM")}{k.CurrencyId}{k.TargetCurrencyId}", v => v.Rate);
+    }
+
+    private async Task<IEnumerable<MpaRateDto>> GetMpaExchangeRate(DateTimeOffset starTime, DateTimeOffset endTime, ExchangeRateTypeEnum rateType, int baseCurrencyId = 0)
+    {
+        var redisKey = $"MpaExchangeRate:{starTime:yyyy-MM-dd HH:mm:ss}:{endTime:yyyy-MM-dd HH:mm:ss}:{(int)rateType}:{baseCurrencyId}";
 
         if (baseCurrencyId == 0)
         {
             var exchangeRate = await _redisHelper.TryGetOrCreateAsync(redisKey,
                 TimeSpan.FromMinutes(10),
-                () => _mpaCommonService.GetExchangeRate(starTime, endTime));
+                () => _mpaCommonService.GetExchangeRate(starTime, endTime, rateType));
 
             return exchangeRate;
         }
@@ -48,13 +72,13 @@ public class MpaCommonBLL
         {
             var exchangeRate = await _redisHelper.TryGetOrCreateAsync(redisKey,
                 TimeSpan.FromMinutes(10),
-                async () => (await _mpaCommonService.GetExchangeRate(starTime, endTime))
+                async () => (await _mpaCommonService.GetExchangeRate(starTime, endTime, rateType))
                     .Where(x => x.TargetCurrencyId == baseCurrencyId));
 
             return exchangeRate;
         }
     }
-    
+
     public async Task<Dictionary<int, string>> GetTpGameTypeMapper()
     {
         const string redisKey = "MpaTpGameTypeMapper";
@@ -78,7 +102,7 @@ public class MpaCommonBLL
 
     public string ToSiteName(int siteId)
         => _dicServerInfo[siteId];
-    
+
     public string ToCurrencyIsoCode(int currencyId)
         => _dicCurrencyInfo[currencyId];
 }
