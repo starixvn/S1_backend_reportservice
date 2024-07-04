@@ -1333,7 +1333,7 @@ public class MpaWinLossImproveBLL
             Commission = summaries.Commission,
             BaCommission = summaries.BaCommission,
             BetCount = summaries.BetCount,
-            AvgBetAmount = summaries.BetCount != 0 ? summaries.TurnOver / summaries.BetCount : 0.00m,
+            AvgBetAmount = summaries.BetCount != 0 ? summaries.ValidTurnOver / summaries.BetCount : 0.00m,
             Margin = summaries.ValidTurnOver != 0 ? summaries.Ggr / summaries.ValidTurnOver : 0.00m,
             UniquePlayers = summaries.UniquePlayers,
         };
