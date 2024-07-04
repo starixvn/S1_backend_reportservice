@@ -16,17 +16,18 @@ public class MpaCommonService
         _reportDbClient = provider.GetServices<MySqlClient>().First(p => p.DataBase == DataBase.Report);
         _logger = provider.GetRequiredService<ILogger<MpaCommonService>>();
     }
-    
-    public Task<IEnumerable<MpaRateDto>> GetExchangeRate(DateTimeOffset starTime, DateTimeOffset endTime)
+
+    public Task<IEnumerable<MpaRateDto>> GetExchangeRate(DateTimeOffset starTime, DateTimeOffset endTime, ExchangeRateTypeEnum rateType)
     {
         var p = new DynamicParameters();
         p.Add("_RateDateStart", starTime.Date.AddDays(-1), dbType: DbType.DateTime);
         p.Add("_RateDateEnd", endTime.Date.AddMonths(1).AddDays(3), dbType: DbType.DateTime);
+        p.Add("_RateType", (int)rateType, dbType: DbType.Int32);
 
-        return _reportDbClient.QueryAsync<MpaRateDto>("Admin_ExchangeRate_Get", p);
+        return _reportDbClient.QueryAsync<MpaRateDto>("Admin_ExchangeRate_Get_V2", p);
     }
 
-    
+
     public Task<IEnumerable<TpGameTypeOptionDto>> GetTpGameTypeOption()
     {
         return _reportDbClient.QueryAsync<TpGameTypeOptionDto>("Common_TpGameType_Get");

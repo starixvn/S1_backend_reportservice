@@ -810,7 +810,7 @@ public class MpaWinLossBLL
         var sw = Stopwatch.StartNew(); //add test
         sw.Start();  //add test
 
-        var mapRate = await _mpaCommonBll.GetMapRate(request.StartTime, request.EndTime, request.BaseCurrencyId);
+        var mapRate = await _mpaCommonBll.GetMapDailyRate(request.StartTime, request.EndTime, request.BaseCurrencyId);
         var exchangedResult = source
             .Select(r =>
             {

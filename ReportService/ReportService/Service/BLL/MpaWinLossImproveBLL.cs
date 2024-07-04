@@ -944,11 +944,11 @@ public class MpaWinLossImproveBLL
         MpaWinLossRequest request)
     {
 
-        var mapRate = await _mpaCommonBll.GetMapRate(request.StartTime, request.EndTime, request.BaseCurrencyId);
+        var mapRate = await _mpaCommonBll.GetMapMonthRate(request.StartTime, request.EndTime, request.BaseCurrencyId);
         var exchangedResult = source
             .Select(r =>
             {
-                var rate = mapRate[$"{r.Date.DateMapperToRateDate()}{r.CurrencyId}{request.BaseCurrencyId}"];
+                var rate = mapRate[$"{r.Date.DateMapperToRateMonth()}{r.CurrencyId}{request.BaseCurrencyId}"];
                 r.ExchangeMpaWinLossGroupBySummary(rate);
 
                 return r;

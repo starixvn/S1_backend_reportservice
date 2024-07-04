@@ -16,4 +16,14 @@ public static class DateTimeExtension
             ? DateTime.UtcNow.ToString("yyyy-MM-dd")
             : date.AddMonths(1).AddDays(-date.AddMonths(1).Day).ToString("yyyy-MM-dd");
     }
+
+    public static string DateMapperToRateMonth(this DateTime date)
+    {
+        if (date == DateTime.Today)
+            return date.ToString("yyyy-MM");
+
+        return date.ToString("yyyy-MM") == DateTime.Now.ToString("yyyy-MM")
+            ? DateTime.UtcNow.ToString("yyyy-MM")
+            : date.AddMonths(1).AddDays(-date.AddMonths(1).Day).ToString("yyyy-MM");
+    }
 }
