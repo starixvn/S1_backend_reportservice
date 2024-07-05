@@ -59,7 +59,7 @@ public class MpaWinLossBLL
             return new MpaWinLoseResponse
             {
                 Result = request.DisplayGroupBreakdownInOriginalCurrency
-                ? childResult.Result
+                ? _mpaCommonBll.ConvertToOriginalCurrency(childResult.Result)
                 : childResult.ExchangedResult,
                 ChildResult = new List<MpaWinLossGroupByModel>(),
                 Total = total
@@ -70,7 +70,7 @@ public class MpaWinLossBLL
         {
             Result = result,
             ChildResult = request.DisplayGroupBreakdownInOriginalCurrency
-                ? childResult.Result
+                ? _mpaCommonBll.ConvertToOriginalCurrency(childResult.Result)
                 : childResult.ExchangedResult,
             Total = total
         };
