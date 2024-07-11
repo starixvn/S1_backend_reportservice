@@ -807,7 +807,8 @@ public class MpaWinLossBLL
     private async Task<IEnumerable<MpaWinLossGroupByModel>> ExchangeRate(IEnumerable<MpaWinLossGroupByModel> source,
         MpaWinLossRequest request)
     {
-        var mapRate = await _mpaCommonBll.GetMapRate(request.StartTime, request.EndTime, request.BaseCurrencyId);
+        var mapRate = await _mpaCommonBll.GetMapDailyRate(request.StartTime, request.EndTime, request.BaseCurrencyId);
+
         var exchangedResult = source
             .Select(r =>
             {
