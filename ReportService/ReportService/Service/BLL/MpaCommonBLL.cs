@@ -1,6 +1,7 @@
 using ReportService.Core.Library;
 using ReportService.Core.Models;
 using ReportService.Core.Models.Enums;
+using ReportService.Core.Models.MpaWinLoss;
 using ReportService.Models;
 using ReportService.Service.DAL;
 
@@ -10,19 +11,19 @@ public class MpaCommonBLL
 {
     private readonly MpaCommonService _mpaCommonService;
     private readonly ICacheHelper _redisHelper;
-    private readonly ILogger<MpaWinLossImproveBLL> _logger;
     private readonly IReadOnlyDictionary<int, string> _dicServerInfo;
     private readonly IReadOnlyDictionary<int, string> _dicCurrencyInfo;
+    private readonly IReadOnlyDictionary<int, string> _dicKCurrencyInfo;
 
     public MpaCommonBLL(IServiceProvider provider)
     {
         _mpaCommonService = provider.GetRequiredService<MpaCommonService>();
         _redisHelper = provider.GetRequiredService<ICacheHelper>();
-        _logger = provider.GetRequiredService<ILogger<MpaWinLossImproveBLL>>();
         _dicServerInfo = provider.GetRequiredService<IEnumerable<ServerInfo>>()
             .ToDictionary(x => x.SiteId, x => x.SiteName);
         _dicCurrencyInfo = provider.GetRequiredService<IEnumerable<CurrencyInfo>>()
             .ToDictionary(x => x.CurrencyId, x => x.IsoCode);
+        _dicKCurrencyInfo = new Dictionary<int, string>() { { 15, "IDR" }, {51, "VND" } }; //轉圜成OriginalCurrency的時候，這些幣別要用1000分位去顯示
     }
 
     /// <summary>
@@ -77,6 +78,19 @@ public class MpaCommonBLL
 
             return exchangeRate;
         }
+    }
+    public IEnumerable<MpaWinLossGroupByModel> ConvertToOriginalCurrency(IEnumerable<MpaWinLossGroupByModel> source)
+    {
+        var kCurrencyResult = source
+            .Where(x => _dicKCurrencyInfo.ContainsKey(x.CurrencyId))
+             .Select(r =>
+             {
+                 r.ExchangeMpaWinLossGroupBySummary(0.001m);
+
+                 return r;
+             });
+
+        return source.Where(x => !_dicKCurrencyInfo.ContainsKey(x.CurrencyId)).Concat(kCurrencyResult);
     }
 
     public async Task<Dictionary<int, string>> GetTpGameTypeMapper()

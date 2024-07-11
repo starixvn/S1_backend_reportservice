@@ -64,7 +64,7 @@ public class MpaWinLossImproveBLL
             return new MpaWinLoseResponse
             {
                 Result = request.DisplayGroupBreakdownInOriginalCurrency
-                ? childResult.Result
+                ? _mpaCommonBll.ConvertToOriginalCurrency(childResult.Result)
                 : childResult.ExchangedResult,
                 ChildResult = new List<MpaWinLossGroupByModel>(),
                 Total = total
@@ -75,7 +75,7 @@ public class MpaWinLossImproveBLL
         {
             Result = result,
             ChildResult = request.DisplayGroupBreakdownInOriginalCurrency
-                ? childResult.Result
+                ? _mpaCommonBll.ConvertToOriginalCurrency(childResult.Result)
                 : childResult.ExchangedResult,
             Total = total
         };
@@ -1334,7 +1334,7 @@ public class MpaWinLossImproveBLL
             Commission = summaries.Commission,
             BaCommission = summaries.BaCommission,
             BetCount = summaries.BetCount,
-            AvgBetAmount = summaries.BetCount != 0 ? summaries.TurnOver / summaries.BetCount : 0.00m,
+            AvgBetAmount = summaries.BetCount != 0 ? summaries.ValidTurnOver / summaries.BetCount : 0.00m,
             Margin = summaries.ValidTurnOver != 0 ? summaries.Ggr / summaries.ValidTurnOver : 0.00m,
             UniquePlayers = summaries.UniquePlayers,
         };
