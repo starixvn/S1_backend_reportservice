@@ -58,7 +58,7 @@ public class MpaWinLossBLL
             return new MpaWinLoseResponse
             {
                 Result = request.DisplayGroupBreakdownInOriginalCurrency
-                ? childResult.Result
+                ? _mpaCommonBll.ConvertToOriginalCurrency(childResult.Result)
                 : childResult.ExchangedResult,
                 ChildResult = new List<MpaWinLossGroupByModel>(),
                 Total = total
@@ -69,7 +69,7 @@ public class MpaWinLossBLL
         {
             Result = result,
             ChildResult = request.DisplayGroupBreakdownInOriginalCurrency
-                ? childResult.Result
+                ? _mpaCommonBll.ConvertToOriginalCurrency(childResult.Result)
                 : childResult.ExchangedResult,
             Total = total
         };
@@ -985,7 +985,7 @@ public class MpaWinLossBLL
             case (int)MpaGgrCustomizeGameTypeEnum.NineW:
                 //GGR for 9W = -PlayerWinLoss + Commission
                 var nineWCommission = records.Sum(x => x.RevenueSummary);
-                return GetGgr(winLossSummary, progressiveWin, progressiveBet) + nineWCommission;
+                return GetGgr(winLossSummary, progressiveWin, progressiveBet) - nineWCommission;
 
             case (int)MpaGgrCustomizeGameTypeEnum.OneGamingPoker:
             case (int)MpaGgrCustomizeGameTypeEnum.V8Poker:
@@ -1088,7 +1088,7 @@ public class MpaWinLossBLL
             Commission = r.Sum(x => x.Commission),
             BaCommission = r.Sum(x => x.BaCommission),
             BetCount = betCountSum,
-            AvgBetAmount = betCountSum != 0 ? turnOverSum / betCountSum : 0.00m,
+            AvgBetAmount = betCountSum != 0 ? validTurnOverSum / betCountSum : 0.00m,
             Margin = validTurnOverSum != 0 ? ggrSum / validTurnOverSum : 0.00m,
             UniquePlayers = r.Sum(x => x.UniquePlayers)
         };

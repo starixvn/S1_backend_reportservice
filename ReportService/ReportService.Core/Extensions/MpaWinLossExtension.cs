@@ -15,9 +15,9 @@ public static class MpaWinLossExtension
     /// <returns></returns>
     public static IEnumerable<MpaTpBetRecordDto> Filter(this IEnumerable<MpaTpBetRecordDto> data, MpaWinLossRequest request)
     {
-        var exceptTicketStatus = new List<int>();
+        var exceptTicketStatus = new List<int>() { (int)TicketStatusEnum.Refund }; //TicketStatus=3 不計算
 
-        if (!request.NoDraw)
+        if (request.NoDraw)
         {
             exceptTicketStatus.Add((int)TicketStatusEnum.Draw);
         }

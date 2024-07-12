@@ -79,9 +79,9 @@ public class GetTpBetRecordParam : GetTransactionParam
 
     private List<int> ExceptTicketStatusList(bool noDraw, bool includeFreeSpins)
     {
-        var exceptTicketStatus = new List<int>();
+        var exceptTicketStatus = new List<int>() { (int)TicketStatusEnum.Refund }; //TicketStatus=3 不計算
 
-        if (!noDraw)
+        if (noDraw)
         {
             exceptTicketStatus.Add((int)TicketStatusEnum.Draw);
         }

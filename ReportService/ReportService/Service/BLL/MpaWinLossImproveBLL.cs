@@ -63,7 +63,7 @@ public class MpaWinLossImproveBLL
             return new MpaWinLoseResponse
             {
                 Result = request.DisplayGroupBreakdownInOriginalCurrency
-                ? childResult.Result
+                ? _mpaCommonBll.ConvertToOriginalCurrency(childResult.Result)
                 : childResult.ExchangedResult,
                 ChildResult = new List<MpaWinLossGroupByModel>(),
                 Total = total
@@ -74,7 +74,7 @@ public class MpaWinLossImproveBLL
         {
             Result = result,
             ChildResult = request.DisplayGroupBreakdownInOriginalCurrency
-                ? childResult.Result
+                ? _mpaCommonBll.ConvertToOriginalCurrency(childResult.Result)
                 : childResult.ExchangedResult,
             Total = total
         };
@@ -145,12 +145,6 @@ public class MpaWinLossImproveBLL
                 item.Date = item.Date.ToOffSetReturnDate(request.StartTime.Offset);
                 return item;
             }).ToList();
-
-        // 處理時區
-        //combineData.ForEach(item =>
-        //{
-        //    item.Date = item.Date.ToOffSetReturnDate(request.StartTime.Offset);
-        //});
 
         var preProcessedMpaGroups = combineData.MpaGroupAndSummarize(
             x => new { x.CurrencyId, x.Date, x.CustId }
@@ -1182,14 +1176,19 @@ public class MpaWinLossImproveBLL
             case MpaWinLossGroupByTypeEnum.Brand:
             case MpaWinLossGroupByTypeEnum.DateDownload:
             case MpaWinLossGroupByTypeEnum.MonthDownload:
-                return "%m/%d/%Y %H:00";
-
             case MpaWinLossGroupByTypeEnum.GameType:
             case MpaWinLossGroupByTypeEnum.TpCategory:
             case MpaWinLossGroupByTypeEnum.Player:
             case MpaWinLossGroupByTypeEnum.Currency:
             case MpaWinLossGroupByTypeEnum.Affiliate:
-                return "%Y-%m-%d";
+                return "%m/%d/%Y %H:00";
+
+            //case MpaWinLossGroupByTypeEnum.GameType:
+            //case MpaWinLossGroupByTypeEnum.TpCategory:
+            //case MpaWinLossGroupByTypeEnum.Player:
+            //case MpaWinLossGroupByTypeEnum.Currency:
+            //case MpaWinLossGroupByTypeEnum.Affiliate:
+            //    return "%Y-%m-%d";
             default:
                 return string.Empty;
         }
@@ -1333,7 +1332,7 @@ public class MpaWinLossImproveBLL
             Commission = summaries.Commission,
             BaCommission = summaries.BaCommission,
             BetCount = summaries.BetCount,
-            AvgBetAmount = summaries.BetCount != 0 ? summaries.TurnOver / summaries.BetCount : 0.00m,
+            AvgBetAmount = summaries.BetCount != 0 ? summaries.ValidTurnOver / summaries.BetCount : 0.00m,
             Margin = summaries.ValidTurnOver != 0 ? summaries.Ggr / summaries.ValidTurnOver : 0.00m,
             UniquePlayers = summaries.UniquePlayers,
         };
