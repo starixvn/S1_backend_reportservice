@@ -943,7 +943,7 @@ public class MpaWinLossImproveBLL
         var exchangedResult = source
             .Select(r =>
             {
-                var rate = mapRate[$"{r.Date.AddHours(-4).DateMapperToRateMonth()}{r.CurrencyId}{request.BaseCurrencyId}"];
+                var rate = mapRate[$"{r.Date.AddHours(-12).DateMapperToRateMonth()}{r.CurrencyId}{request.BaseCurrencyId}"];
                 r.ExchangeMpaWinLossGroupBySummary(rate);
 
                 return r;
