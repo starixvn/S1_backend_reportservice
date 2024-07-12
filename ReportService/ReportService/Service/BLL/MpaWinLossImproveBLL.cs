@@ -147,12 +147,6 @@ public class MpaWinLossImproveBLL
                 return item;
             }).ToList();
 
-        // 處理時區
-        //combineData.ForEach(item =>
-        //{
-        //    item.Date = item.Date.ToOffSetReturnDate(request.StartTime.Offset);
-        //});
-
         var preProcessedMpaGroups = combineData.MpaGroupAndSummarize(
             x => new { x.CurrencyId, x.Date, x.CustId }
             );
@@ -949,7 +943,7 @@ public class MpaWinLossImproveBLL
         var exchangedResult = source
             .Select(r =>
             {
-                var rate = mapRate[$"{r.Date.DateMapperToRateMonth()}{r.CurrencyId}{request.BaseCurrencyId}"];
+                var rate = mapRate[$"{r.Date.AddHours(-4).DateMapperToRateMonth()}{r.CurrencyId}{request.BaseCurrencyId}"];
                 r.ExchangeMpaWinLossGroupBySummary(rate);
 
                 return r;
@@ -1183,14 +1177,19 @@ public class MpaWinLossImproveBLL
             case MpaWinLossGroupByTypeEnum.Brand:
             case MpaWinLossGroupByTypeEnum.DateDownload:
             case MpaWinLossGroupByTypeEnum.MonthDownload:
-                return "%m/%d/%Y %H:00";
-
             case MpaWinLossGroupByTypeEnum.GameType:
             case MpaWinLossGroupByTypeEnum.TpCategory:
             case MpaWinLossGroupByTypeEnum.Player:
             case MpaWinLossGroupByTypeEnum.Currency:
             case MpaWinLossGroupByTypeEnum.Affiliate:
-                return "%Y-%m-%d";
+                return "%m/%d/%Y %H:00";
+
+            //case MpaWinLossGroupByTypeEnum.GameType:
+            //case MpaWinLossGroupByTypeEnum.TpCategory:
+            //case MpaWinLossGroupByTypeEnum.Player:
+            //case MpaWinLossGroupByTypeEnum.Currency:
+            //case MpaWinLossGroupByTypeEnum.Affiliate:
+            //    return "%Y-%m-%d";
             default:
                 return string.Empty;
         }
