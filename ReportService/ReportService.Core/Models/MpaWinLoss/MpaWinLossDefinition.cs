@@ -18,14 +18,22 @@ public struct MpaWinLossDefinition
     {
         MpaWinLossGroupByTypeEnum.Player,
         MpaWinLossGroupByTypeEnum.Affiliate,
-        //MpaWinLossGroupByTypeEnum.DateDownload,
-        //MpaWinLossGroupByTypeEnum.MonthDownload
+        MpaWinLossGroupByTypeEnum.DateDownload,
+        MpaWinLossGroupByTypeEnum.MonthDownload
     };
 
     public static readonly IEnumerable<MpaWinLossGroupByTypeEnum> HasPlayerInfo = new[]
     {
         MpaWinLossGroupByTypeEnum.Player,
         MpaWinLossGroupByTypeEnum.Affiliate,
+        MpaWinLossGroupByTypeEnum.DateDownload,
+        MpaWinLossGroupByTypeEnum.MonthDownload
+    };
+
+    public static readonly IEnumerable<MpaWinLossGroupByTypeEnum> HasDateTimeConvert = new[]
+{
+        MpaWinLossGroupByTypeEnum.Date,
+        MpaWinLossGroupByTypeEnum.Month,
         MpaWinLossGroupByTypeEnum.DateDownload,
         MpaWinLossGroupByTypeEnum.MonthDownload
     };

@@ -1,3 +1,4 @@
+using System;
 using System.Diagnostics;
 using MySqlX.XDevAPI.Common;
 using Newtonsoft.Json;
@@ -113,9 +114,6 @@ public class MpaWinLossImproveBLL
 
     private async Task<(IEnumerable<MpaWinLossGroupByModel>, int)> PreProcessMpaWinLossGroupByDateResult(MpaWinLossRequest request)
     {
-        var sw = Stopwatch.StartNew(); //add test
-        sw.Start();  //add test
-
         var betRecordTask = GetTpBetRecords(request);
         var transactionTask = GetTransactionGroupByDateResult(request);
         var claimBonusTask = GetClaimBonusGroupByDateResult(request);
@@ -142,7 +140,7 @@ public class MpaWinLossImproveBLL
             .Select(item =>
             {
                 // 處理時區
-                item.Date = item.Date.ToOffSetReturnDate(request.StartTime.Offset);
+                item.Date = item.Date.ToOffSetReturnDate(request.StartTime.Offset, true);
                 return item;
             }).ToList();
 
@@ -163,9 +161,6 @@ public class MpaWinLossImproveBLL
             });
 
         var uniquePlayersCount = new HashSet<int>(betRecordTask.Result.Select(x => x.CustId)).Count;
-
-        sw.Stop();  //add test
-        _logger.LogInformation($"{MethodExtension.GetCurrentMethod()} Elapsed={sw.Elapsed:c}");  //add test
 
         return (combineResult, uniquePlayersCount);
     }
@@ -204,7 +199,7 @@ public class MpaWinLossImproveBLL
         // 處理時區
         foreach (var item in combineData)
         {
-            item.Date = item.Date.ToOffSetReturnDate(request.StartTime.Offset);
+            item.Date = item.Date.ToOffSetReturnDate(request.StartTime.Offset, true);
         }
 
         var combineResult = combineData
@@ -315,8 +310,17 @@ public class MpaWinLossImproveBLL
                 return groupBySummary;
             });
 
+        var ProcessResult = preProcessResult
+            .AsParallel()
+            .Select(item =>
+            {
+                // 處理時區
+                item.Date = item.Date.ToOffSetReturnDate(request.StartTime.Offset, true);
+                return item;
+            }).ToList();
+
         var uniquePlayersCount = new HashSet<int>(betRecordResult.Select(x => x.CustId)).Count;
-        return (preProcessResult, uniquePlayersCount);
+        return (ProcessResult, uniquePlayersCount);
     }
 
 
@@ -360,7 +364,7 @@ public class MpaWinLossImproveBLL
         // 處理時區
         foreach (var item in combineData)
         {
-            item.Date = item.Date.ToOffSetReturnDate(request.StartTime.Offset);
+            item.Date = item.Date.ToOffSetReturnDate(request.StartTime.Offset, true);
         }
 
         var combineResult = combineData
@@ -370,7 +374,7 @@ public class MpaWinLossImproveBLL
                    x.Brand,
                    x.CurrencyId,
                    x.CustId,
-                   x.TpGameType, // GGR計算需用gameType分組
+                   x.TpGameType,
                    x.TpCategory,
                    x.TpUserName,
                    x.UserName
@@ -937,17 +941,22 @@ public class MpaWinLossImproveBLL
     private async Task<IEnumerable<MpaWinLossGroupByModel>> ExchangeRate(IEnumerable<MpaWinLossGroupByModel> source,
         MpaWinLossRequest request)
     {
-
+        var adjustHour = 0;
+        var hasDateTimeConvert = MpaWinLossDefinition.HasDateTimeConvert.Contains(request.GroupByType);
+        if (hasDateTimeConvert)
+        {
+            adjustHour = (int)request.StartTime.Offset.TotalHours * -1;
+        }
         var mapRate = await _mpaCommonBll.GetMapMonthRate(request.StartTime, request.EndTime, request.BaseCurrencyId);
         var exchangedResult = source
             .Select(r =>
             {
-                var rate = mapRate[$"{r.Date.AddHours(-12).DateMapperToRateMonth()}{r.CurrencyId}{request.BaseCurrencyId}"];
+                //OANDA exchange rate is based on GMT -4
+                var rate = mapRate[$"{r.Date.AddHours(adjustHour).AddHours(-4).DateMapperToRateMonth()}{r.CurrencyId}{request.BaseCurrencyId}"];
                 r.ExchangeMpaWinLossGroupBySummary(rate);
 
                 return r;
             });
-
         return exchangedResult;
     }
 
