@@ -315,7 +315,7 @@ public class MpaWinLossImproveBLL
             .Select(item =>
             {
                 // 處理時區
-                item.Date = item.Date.ToOffSetReturnDate(request.StartTime.Offset, true);
+                item.Date = item.Date.ToOffSetReturnDate(request.StartTime.Offset);
                 return item;
             }).ToList();
 
