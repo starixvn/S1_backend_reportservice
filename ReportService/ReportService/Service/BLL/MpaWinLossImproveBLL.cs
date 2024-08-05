@@ -338,8 +338,9 @@ public class MpaWinLossImproveBLL
             .Select(g =>
             {
                 var groupBySummary = GetMpaGroupSummary(g.GroupKey.CurrencyId, g.Summaries, isSummaryTransaction);
+                groupBySummary.Key = GetDateString(g.GroupKey.Date, request.GroupByType);
                 groupBySummary.ChildKey = _mpaCommonBll.ToCurrencyIsoCode(g.GroupKey.CurrencyId);
-                groupBySummary.Date = GetStringDate(GetDateString(g.GroupKey.Date, request.GroupByType), g.GroupKey.Date, request.GroupByType);
+                groupBySummary.Date = g.GroupKey.Date;
                 groupBySummary.CustId = g.GroupKey.CustId;
                 groupBySummary.Brand = g.GroupKey.Brand;
                 groupBySummary.TpCategory = g.GroupKey.TpCategory;
