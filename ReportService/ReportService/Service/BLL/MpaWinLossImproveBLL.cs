@@ -282,32 +282,26 @@ public class MpaWinLossImproveBLL
         var betRecordResult = await GetTpBetRecords(request);
 
         var preProcessedGroups = betRecordResult.GroupAndSummarize(
-            x => new
-            {
-                x.Date,
-                x.SiteId,
-                x.CurrencyId,
-                x.CustId,
-                x.GameType, // GGR計算需用gameType分組
-                x.CategoryId,
-                x.TpUserName,
-                x.UserName
-            }
-        );
+           x => new
+           {
+               x.Date,
+               x.SiteId,
+               x.CurrencyId,
+               x.CustId,
+               x.GameType,
+               x.CategoryId,
+               x.TpUserName,
+               x.UserName
+           }
+           );
 
         var preProcessResult = preProcessedGroups
             .Select(g =>
             {
-                var groupBySummary = GetSummary(g.GroupKey.CurrencyId, g.Summaries);
-                groupBySummary.ChildKey = _mpaCommonBll.ToCurrencyIsoCode(g.GroupKey.CurrencyId);
-                groupBySummary.Date = g.GroupKey.Date;
-                groupBySummary.CustId = g.GroupKey.CustId;
-                groupBySummary.Brand = _mpaCommonBll.ToSiteName(g.GroupKey.SiteId);
-                groupBySummary.TpCategory = tpCategoryMap[g.GroupKey.CategoryId];
-                groupBySummary.UserName = g.GroupKey.UserName;
-                groupBySummary.TpUserName = g.GroupKey.TpUserName;
-                groupBySummary.TpGameType = tpGameTypeMap[g.GroupKey.GameType];
-                return groupBySummary;
+                var summary = GetSummary(g.GroupKey.CurrencyId, g.Summaries);
+                summary.Date = g.GroupKey.Date;
+                summary.CustId = g.GroupKey.CustId;
+                return summary;
             });
 
         var ProcessResult = preProcessResult
@@ -319,8 +313,38 @@ public class MpaWinLossImproveBLL
                 return item;
             }).ToList();
 
+        var preProcessedMpaGroups = ProcessResult.MpaGroupAndSummarize(
+            x => new
+            {
+                Date = GetStringDate(GetDateString(x.Date, request.GroupByType), x.Date, request.GroupByType),
+                x.Brand,
+                x.CurrencyId,
+                x.CustId,
+                x.TpGameType, // GGR計算需用gameType分組
+                x.TpCategory,
+                x.TpUserName,
+                x.UserName
+            }
+            );
+        var isSummaryTransaction = IsSummaryTransaction(request.GroupByType);
+
+        var combineResult = preProcessedMpaGroups
+            .Select(g =>
+            {
+                var groupBySummary = GetMpaGroupSummary(g.GroupKey.CurrencyId, g.Summaries, isSummaryTransaction);
+                groupBySummary.ChildKey = _mpaCommonBll.ToCurrencyIsoCode(g.GroupKey.CurrencyId);
+                groupBySummary.Date = GetStringDate(GetDateString(g.GroupKey.Date, request.GroupByType), g.GroupKey.Date, request.GroupByType);
+                groupBySummary.CustId = g.GroupKey.CustId;
+                groupBySummary.Brand = g.GroupKey.Brand;
+                groupBySummary.TpCategory = g.GroupKey.TpCategory;
+                groupBySummary.UserName = g.GroupKey.UserName;
+                groupBySummary.TpUserName = g.GroupKey.TpUserName;
+                groupBySummary.TpGameType = g.GroupKey.TpGameType;
+                return groupBySummary;
+            });
+
         var uniquePlayersCount = new HashSet<int>(betRecordResult.Select(x => x.CustId)).Count;
-        return (ProcessResult, uniquePlayersCount);
+        return (combineResult, uniquePlayersCount);
     }
 
 

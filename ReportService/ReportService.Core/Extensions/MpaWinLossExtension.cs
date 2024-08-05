@@ -170,7 +170,7 @@ public static class MpaWinLossExtension
     this IEnumerable<MpaWinlossRecordDto> source,
     Func<MpaWinlossRecordDto, TKey> keySelector)
     {
-        var groupedData = source
+        return source
             .GroupBy(keySelector)
             .AsParallel() //平行處理
             .Select(g => new GroupedSummary<TKey>
@@ -191,8 +191,6 @@ public static class MpaWinLossExtension
                     TotalCommission = g.Sum(x => Convert.ToDecimal(MpaWinLossExtension.SumSelectors[9](x))),
                 }
             });
-
-        return groupedData;
     }
 
     /// <summary>
