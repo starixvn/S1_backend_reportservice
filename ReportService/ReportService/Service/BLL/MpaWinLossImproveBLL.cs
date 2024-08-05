@@ -301,6 +301,11 @@ public class MpaWinLossImproveBLL
                 var summary = GetSummary(g.GroupKey.CurrencyId, g.Summaries);
                 summary.Date = g.GroupKey.Date;
                 summary.CustId = g.GroupKey.CustId;
+                summary.Brand = _mpaCommonBll.ToSiteName(g.GroupKey.SiteId);
+                summary.TpCategory = tpCategoryMap[g.GroupKey.CategoryId];
+                summary.UserName = g.GroupKey.UserName;
+                summary.TpUserName = g.GroupKey.TpUserName;
+                summary.TpGameType = tpGameTypeMap[g.GroupKey.GameType];
                 return summary;
             });
 
