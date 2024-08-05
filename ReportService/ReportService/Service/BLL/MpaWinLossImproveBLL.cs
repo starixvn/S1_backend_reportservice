@@ -299,6 +299,7 @@ public class MpaWinLossImproveBLL
             .Select(g =>
             {
                 var summary = GetSummary(g.GroupKey.CurrencyId, g.Summaries);
+                summary.ChildKey = _mpaCommonBll.ToCurrencyIsoCode(g.GroupKey.CurrencyId);
                 summary.Date = g.GroupKey.Date;
                 summary.CustId = g.GroupKey.CustId;
                 summary.Brand = _mpaCommonBll.ToSiteName(g.GroupKey.SiteId);
@@ -345,6 +346,7 @@ public class MpaWinLossImproveBLL
                 groupBySummary.UserName = g.GroupKey.UserName;
                 groupBySummary.TpUserName = g.GroupKey.TpUserName;
                 groupBySummary.TpGameType = g.GroupKey.TpGameType;
+                groupBySummary.UniquePlayers = 1;
                 return groupBySummary;
             });
 
