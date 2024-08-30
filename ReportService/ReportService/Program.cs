@@ -6,7 +6,7 @@ using Serilog.Formatting.Json;
  
 var builder = WebApplication.CreateBuilder(args);
 
-var remoteUrls = builder.Configuration.GetSection("ConfigService").Get<string[]>();
+var remoteUrls = GetRemoteUrls();
 remoteUrls = builder.Configuration.CheckLocalConfig(builder.Environment, args, remoteUrls);
 builder.Configuration.AddRemoteJsonConfig(remoteUrls);
 
@@ -70,3 +70,13 @@ void OverrideLoggerWriteToLFile(LoggerConfiguration configuration)
             fileSizeLimitBytes: 10485760,
             rollOnFileSizeLimit: true);
 }
+
+string[] GetRemoteUrls()
+{
+    // 如果有 Runtime Environment Variable 優先使用
+    // 沒有則使用預設 AppSetting
+    return Environment.GetEnvironmentVariable("ConfigServiceUrl") is null
+        ? builder.Configuration.GetSection("ConfigService").Get<string[]>()
+        : new List<string>() { Environment.GetEnvironmentVariable("ConfigServiceUrl") }.ToArray();
+}
+
