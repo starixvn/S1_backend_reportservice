@@ -1,0 +1,4 @@
+include:
+  - project: "sre/gitlab-ci-configs"
+    ref: "main"
+    file: "/reportservice/.gitlab-ci.yaml"
