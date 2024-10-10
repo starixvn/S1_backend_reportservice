@@ -1,4 +1,4 @@
 include:
-  - project: "sre/gitlab-ci-configs"
-    ref: "main"
-    file: "/reportservice/.gitlab-ci.yaml"
+  - project: ci/core-cicd
+    ref: main
+    file: nexcel.gitlab-ci.yml
