@@ -7,11 +7,17 @@ using Serilog.Formatting.Json;
 var builder = WebApplication.CreateBuilder(args);
 
 var remoteUrls = GetRemoteUrls();
-remoteUrls = builder.Configuration.CheckLocalConfig(builder.Environment, args, remoteUrls);
+builder.Configuration.AddJsonFile("appsettings.json",
+        optional: true,
+        reloadOnChange: false);
+//remoteUrls = builder.Configuration.CheckLocalConfig(builder.Environment, args, remoteUrls);
 builder.Configuration.AddRemoteJsonConfig(remoteUrls);
 
 var excludesMessage = builder.Configuration.GetSection("ExcludesMessage").Get<string[]>();
 var excludesApiEndpoints = builder.Configuration.GetSection("ExcludesApiEndpoint").Get<string[]>();
+
+Console.WriteLine(builder.Configuration.GetValue<string>("ENV"));
+
 builder.Host.UseSerilog((context, Configuration) =>
 {
     Configuration
@@ -37,6 +43,7 @@ builder.Services
             NullValueHandling = NullValueHandling.Ignore
         };
     });
+builder.Services.AddHealthChecks();
 
 var app = builder.Build();
 app.MapControllers();
@@ -50,6 +57,7 @@ app.UseEndpoints(endpoints =>
         await context.Response.WriteAsync($"{Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT")}-{DateTime.Now:yyyy/MM/dd HH:mm:ss}");
     });
 });
+app.MapHealthChecks("/");
 
 app.Run();
 return;
@@ -75,8 +83,10 @@ string[] GetRemoteUrls()
 {
     // 如果有 Runtime Environment Variable 優先使用
     // 沒有則使用預設 AppSetting
-    return Environment.GetEnvironmentVariable("ConfigServiceUrl") is null
-        ? builder.Configuration.GetSection("ConfigService").Get<string[]>()
-        : new List<string>() { Environment.GetEnvironmentVariable("ConfigServiceUrl") }.ToArray();
+    //return Environment.GetEnvironmentVariable("ConfigServiceUrl") is null
+    //    ? builder.Configuration.GetSection("ConfigService").Get<string[]>()
+    //    : new List<string>() { Environment.GetEnvironmentVariable("ConfigServiceUrl") }.ToArray();
+
+    return builder.Configuration.GetSection("ConfigService").Get<string[]>();
 }
 
