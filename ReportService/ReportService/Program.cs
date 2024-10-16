@@ -6,6 +6,8 @@ using Serilog.Formatting.Json;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.WebHost.UseSentry();
+
 var remoteUrls = GetRemoteUrls();
 builder.Configuration.AddJsonFile("appsettings.json",
         optional: true,
@@ -58,6 +60,8 @@ app.UseEndpoints(endpoints =>
     });
 });
 app.MapHealthChecks("/");
+
+SentrySdk.CaptureMessage($"Started result Report Service at {DateTime.Now.ToString()}");
 
 app.Run();
 return;
