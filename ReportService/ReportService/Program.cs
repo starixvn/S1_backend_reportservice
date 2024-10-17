@@ -19,20 +19,21 @@ var excludesMessage = builder.Configuration.GetSection("ExcludesMessage").Get<st
 var excludesApiEndpoints = builder.Configuration.GetSection("ExcludesApiEndpoint").Get<string[]>();
 
 Console.WriteLine(builder.Configuration.GetValue<string>("ENV"));
+Console.WriteLine(builder.Configuration.GetValue<string>("Sentry:Dsn"));
 
-builder.Host.UseSerilog((context, Configuration) =>
-{
-    Configuration
-        .ReadFrom.Configuration(builder.Configuration)
-        .Enrich.FromLogContext()
-        .Filter.ByExcluding(c =>
-            c.Properties.Any(p =>
-                excludesApiEndpoints.Any(item => p.Value.ToString().Contains(item))
-                || excludesMessage.Any(item => c.MessageTemplate.ToString().Contains(item))))
-        .Enrich.WithExceptionDetails();
+//builder.Host.UseSerilog((context, Configuration) =>
+//{
+//    Configuration
+//        .ReadFrom.Configuration(builder.Configuration)
+//        .Enrich.FromLogContext()
+//        .Filter.ByExcluding(c =>
+//            c.Properties.Any(p =>
+//                excludesApiEndpoints.Any(item => p.Value.ToString().Contains(item))
+//                || excludesMessage.Any(item => c.MessageTemplate.ToString().Contains(item))))
+//        .Enrich.WithExceptionDetails();
 
-    OverrideLoggerWriteToLFile(Configuration);
-});
+//    OverrideLoggerWriteToLFile(Configuration);
+//});
 
 builder.Services
     .AddDatabaseConnection(builder.Configuration)
@@ -63,7 +64,9 @@ app.MapHealthChecks("/");
 
 SentrySdk.CaptureMessage($"Started result Report Service at {DateTime.Now.ToString()}");
 
+
 app.Run();
+
 return;
 
 void OverrideLoggerWriteToLFile(LoggerConfiguration configuration)
