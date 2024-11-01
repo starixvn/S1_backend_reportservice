@@ -16,11 +16,14 @@ public static class EncryptHelper
         using Aes aes = Aes.Create();
         aes.Key = Encoding.UTF8.GetBytes(key);
         aes.IV = Encoding.UTF8.GetBytes(iv);
+        aes.Mode = CipherMode.CBC;
         aes.Padding = PaddingMode.PKCS7;
 
         using MemoryStream output = new();
         using CryptoStream cryptoStream = new(output, aes.CreateEncryptor(), CryptoStreamMode.Write);
-        await cryptoStream.WriteAsync(Encoding.Unicode.GetBytes(value));
+
+        var bytes = Encoding.UTF8.GetBytes(value);
+        await cryptoStream.WriteAsync(bytes.AsMemory(0, bytes.Length));
         await cryptoStream.FlushFinalBlockAsync();
 
         return output.ToArray();
@@ -31,14 +34,17 @@ public static class EncryptHelper
         using Aes aes = Aes.Create();
         aes.Key = Encoding.UTF8.GetBytes(key);
         aes.IV = Encoding.UTF8.GetBytes(iv);
+        aes.Mode = CipherMode.CBC;
         aes.Padding = PaddingMode.PKCS7;
 
         using MemoryStream output = new();
         using CryptoStream cryptoStream = new(output, aes.CreateDecryptor(), CryptoStreamMode.Write);
-        await cryptoStream.WriteAsync(Convert.FromHexString(message));
+
+        var bytes = Convert.FromHexString(message);
+        await cryptoStream.WriteAsync(bytes.AsMemory(0, bytes.Length));
         await cryptoStream.FlushFinalBlockAsync();
 
-        return JsonSerializer.Deserialize<T>((Encoding.UTF8.GetString(output.ToArray()).Replace("\0", "")), new JsonSerializerOptions
+        return JsonSerializer.Deserialize<T>((Encoding.UTF8.GetString(output.ToArray())), new JsonSerializerOptions
         {
             WriteIndented = false,
             
