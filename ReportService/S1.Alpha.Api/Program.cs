@@ -3,7 +3,8 @@ using S1.Alpha.Api.DependencyInjection;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-builder.Services.AddMySqlClient();
+builder.Services.AddMySqlClient(builder.Configuration);
+builder.Services.AddServices();
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();

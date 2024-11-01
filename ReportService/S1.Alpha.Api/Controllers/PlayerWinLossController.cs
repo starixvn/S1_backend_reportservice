@@ -8,7 +8,7 @@ namespace S1.Alpha.Api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class PlayerWinLossController() : ControllerBase
+    public class PlayerWinLossController : ControllerBase
     {
         [HttpGet]
         public async Task<IEnumerable<PlayerWinLossModel>> GetWinLossReportByReferenceAsync(
