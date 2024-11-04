@@ -25,7 +25,7 @@ namespace S1.Alpha.Api.Controllers
             p.Add("TimeZone", timeZone, dbType: DbType.String);
             p.Add("ReferenceIds", $"[{refIds}]", dbType: DbType.String);
 
-            var result = await connection.QueryAsync<PlayerWinLossModel>("Relay_TpBetRecord_Get_xtest", p,commandType: CommandType.StoredProcedure);
+            var result = await connection.QueryAsync<PlayerWinLossModel>("API_ProductPerformanceByRefID_Get", p,commandType: CommandType.StoredProcedure);
 
             foreach (var item in result)
             {
