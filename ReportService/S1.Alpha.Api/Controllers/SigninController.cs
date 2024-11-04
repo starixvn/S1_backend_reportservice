@@ -22,7 +22,7 @@ public class SigninController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<string> GetSsoUrl(
+    public async Task<SsoModel> GetSsoUrl(
         IConfiguration configuration,
         [FromQuery] SsoSignInRequest request,
         CancellationToken cancellationToken)
@@ -37,10 +37,11 @@ public class SigninController : ControllerBase
                 var url = configuration["BackOfficeUrl"];
                 var timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
                 var token = await EncryptHelper.EncryptMessage(key, iv, new SsoEncrypt { ReferenceId = request.ReferenceId, Timestamp = timestamp});
-                return await Task.FromResult($"{url}/login?referenceId={request.ReferenceId}&token={Convert.ToHexString(token)}");
+                var returlUrl = $"{url}/login?referenceId={request.ReferenceId}&token={Convert.ToHexString(token)}";
+                return new SsoModel { ReturnUrl = returlUrl };  
             }
         }
 
-        return await Task.FromResult("");
+        return new SsoModel { ReturnUrl = "" };
     }
 }
