@@ -13,7 +13,7 @@
         public int NewRegister { get; set; } // 新註冊用戶數
         public int ActiveUsers { get; set; } // 活躍用戶數
         public int ActiveNewRegister { get; set; } // 活躍新註冊用戶數
-        public decimal ActiveNRCR { get; set; } // 活躍新註冊轉化率
+        public string ActiveNRCR { get; set; } // 活躍新註冊轉化率
         public int ActiveExistingUsers { get; set; } // 活躍舊用戶數
         public int FTDUsers { get; set; } // 首次存款用戶數
         public int TotalDepositUsers { get; set; } // 總存款用戶數
