@@ -17,15 +17,25 @@ public static class ServiceCollectionExtension
 
         var reportDbConn = configuration.GetConnectionString($"{serviceType}_ReportDB");
         var reportBackupDb1 = configuration.GetConnectionString($"{serviceType}_ReportBackupDB1");
-
+        var reportBackupDb2 = configuration.GetConnectionString($"{serviceType}_ReportBackupDB2");
+        
         //檢查是否有BackupDB連線字串
-        if (!string.IsNullOrEmpty(reportBackupDb1))
+        if (!string.IsNullOrEmpty(reportBackupDb1) && !string.IsNullOrEmpty(reportBackupDb2))
         {
-            // 設定ReportDB連線順序，ReportService優先使用1c，備援1b
-            services.AddSingleton(provider => new MySqlClient(provider, DataBase.Report, reportBackupDb1, new List<string>
+            // 設定ReportDB連線順序
+            services.AddSingleton(provider => new MySqlClient(provider, DataBase.Report, reportDbConn, new List<string>()
             {
-                reportBackupDb1,
-                reportDbConn
+                reportDbConn,   //1b
+                reportBackupDb1,//1c
+                reportBackupDb2,//1a
+            }));
+
+            // 設定ReportBackupDB連線順序
+            services.AddSingleton(provider => new MySqlClient(provider, DataBase.ReportBackupDB, reportBackupDb1, new List<string>()
+            {                    
+                reportBackupDb1,//1c
+                reportDbConn,   //1b
+                reportBackupDb2,//1a
             }));
         }
         else

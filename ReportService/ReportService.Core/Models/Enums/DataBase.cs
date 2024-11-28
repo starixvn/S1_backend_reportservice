@@ -3,5 +3,6 @@ namespace ReportService.Core.Models.Enums;
 public enum DataBase
 {
     Report,
-    ReportCenter
+    ReportCenter,
+    ReportBackupDB
 }
