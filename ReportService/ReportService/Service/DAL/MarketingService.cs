@@ -14,12 +14,12 @@ namespace ReportService.Service.DAL;
 
 public class MarketingService
 {
-    private readonly MySqlClient _reportDbClient;
+    private readonly MySqlClient _reportbackupDbClient;
     private readonly ILogger<MarketingService> _logger;
 
     public MarketingService(IServiceProvider provider)
     {
-        _reportDbClient = provider.GetServices<MySqlClient>().First(p => p.DataBase == DataBase.Report);
+        _reportbackupDbClient = provider.GetServices<MySqlClient>().First(p => p.DataBase == DataBase.ReportBackupDB);
         _logger = provider.GetRequiredService<ILogger<MarketingService>>();
     }
 
@@ -29,7 +29,7 @@ public class MarketingService
         p.Add("_SiteId", request.SiteId, dbType: DbType.Int32);
         p.Add("_StartTime", request.StartTime, dbType: DbType.DateTime);
         p.Add("_EndTime", request.EndTime, dbType: DbType.DateTime);
-        var result = await _reportDbClient.QueryAsync<MarketingReportResponse>("Service_MarketingDailyReport_Export_Get", p, 60);
+        var result = await _reportbackupDbClient.QueryAsync<MarketingReportResponse>("Service_MarketingDailyReport_Export_Get", p, 60);
         return result.First();
     }
 
