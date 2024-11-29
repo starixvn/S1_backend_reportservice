@@ -109,4 +109,11 @@ public class MpaWinLossService
 
         return _reportDbClient.Query<Commission9WDto>("Admin_9WCommission_Get", p);
     }
+
+    public async Task<Dictionary<(int, int), string>> GetAllCustVipLevelAsync()
+    {
+        var vipLevels = await _reportDbClient.QueryAsync<(int CustId, int SiteId, int VipLevel, string LevelName)>("Service_CustVipLevel_GetAll");
+
+        return vipLevels.ToDictionary(x => (x.CustId, x.SiteId), x => x.LevelName);
+    }
 }

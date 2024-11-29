@@ -71,6 +71,8 @@ public class MpaWinLossGroupByModel
 
     public string TpGameType { get; set; }
     public string TpCategory { get; set; }
-
+    public int SiteId { get; set; }
     public string Brand { get; set; }
+
+    public string VIPLevel { get; set; }
 }
