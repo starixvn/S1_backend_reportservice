@@ -1,5 +1,6 @@
 using System;
 using System.Diagnostics;
+using System.Linq;
 using MySqlX.XDevAPI.Common;
 using Newtonsoft.Json;
 using ReportService.Core.Extensions;
@@ -555,11 +556,12 @@ public class MpaWinLossImproveBLL
         var betRecordTask = GetTpBetRecords(request);
         var transactionTask = GetTransactionGroupByPlayerResult(request);
         var claimBonusTask = GetClaimBonusGroupByPlayerResult(request);
+        var custVipLevelMappingTask = GetAllCustVipLevelAsync();
 
-        await Task.WhenAll(betRecordTask, transactionTask, claimBonusTask);
-
+        await Task.WhenAll(betRecordTask, transactionTask, claimBonusTask, custVipLevelMappingTask);
+        var vipMappingList = custVipLevelMappingTask.Result;
         var preProcessedGroups = betRecordTask.Result.GroupAndSummarize(
-            x => new { x.CurrencyId, x.CustId, x.Date, x.TpUserName, x.UserName });
+            x => new { x.CurrencyId, x.SiteId, x.CustId, x.Date, x.TpUserName, x.UserName });
 
         var betRecordResult = preProcessedGroups
             .Select(g =>
@@ -570,13 +572,24 @@ public class MpaWinLossImproveBLL
                 summary.Key = g.GroupKey.TpUserName;
                 summary.UserName = g.GroupKey.UserName;
                 summary.TpUserName = g.GroupKey.TpUserName;
+                summary.SiteId = g.GroupKey.SiteId;
                 summary.ChildKey = _mpaCommonBll.ToCurrencyIsoCode(g.GroupKey.CurrencyId);
+
                 return summary;
             });
 
         var combineData = betRecordResult
             .Concat(transactionTask.Result)
-            .Concat(claimBonusTask.Result);
+            .Concat(claimBonusTask.Result)
+            .Select(item =>
+            {
+                var lookupKey = (item.CustId, item.SiteId);
+                item.VIPLevel = vipMappingList.ContainsKey(lookupKey)
+                    ? vipMappingList[lookupKey]
+                    : vipMappingList[(-1, item.SiteId)];
+
+                return item;
+            });
 
         var uniquePlayersCount = new HashSet<int>(betRecordTask.Result.Select(x => x.CustId)).Count;
 
@@ -632,7 +645,8 @@ public class MpaWinLossImproveBLL
                 x.CurrencyId,
                 x.TpUserName,
                 x.UserName,
-                x.CustId
+                x.CustId,
+                x.SiteId,
             })
             .Select(r => new MpaWinLossGroupByModel
             {
@@ -642,6 +656,7 @@ public class MpaWinLossImproveBLL
                 UserName = r.Key.UserName,
                 TpUserName = r.Key.TpUserName,
                 Key = r.Key.TpUserName,
+                SiteId = r.Key.SiteId,
                 ChildKey = _mpaCommonBll.ToCurrencyIsoCode(r.Key.CurrencyId),
                 TotalBonus = r.Sum(x => x.BonusAmountClaim)
             });
@@ -657,6 +672,7 @@ public class MpaWinLossImproveBLL
             {
                 x.Date,
                 x.CustId,
+                x.SiteId,
                 x.CurrencyId,
                 x.SummaryType,
                 x.TpUserName,
@@ -672,6 +688,7 @@ public class MpaWinLossImproveBLL
                     Key = r.Key.TpUserName,
                     UserName = r.Key.UserName,
                     TpUserName = r.Key.TpUserName,
+                    SiteId = r.Key.SiteId,
                     ChildKey = _mpaCommonBll.ToCurrencyIsoCode(r.Key.CurrencyId),
                 };
 
@@ -682,6 +699,8 @@ public class MpaWinLossImproveBLL
 
         return result;
     }
+
+
 
     #endregion
 
@@ -1190,6 +1209,7 @@ public class MpaWinLossImproveBLL
                     groupSummary.TpGameType = f.TpGameType;
                     groupSummary.TpCategory = f.TpCategory;
                     groupSummary.Brand = f.Brand;
+                    groupSummary.VIPLevel = f.VIPLevel;
                     groupSummary.UniquePlayers = 1;
                     return groupSummary;
                 });
@@ -1363,6 +1383,15 @@ public class MpaWinLossImproveBLL
             .FilterAffiliate(request);
 
         return claimBonusResult;
+    }
+
+    public async Task<Dictionary<(int, int), string>> GetAllCustVipLevelAsync()
+    {
+        var key = "WinLossReport:GroupByPlayer:CustVipLevelList";
+        var min = 20;
+
+        return await _redisHelper.TryGetOrCreateAsync(key, TimeSpan.FromMinutes(min),
+                () => _mpaWinLossService.GetAllCustVipLevelAsync());
     }
 
     private static string MapMpaWinLossGroupByTypeEnumFormat(MpaWinLossGroupByTypeEnum groupByType)

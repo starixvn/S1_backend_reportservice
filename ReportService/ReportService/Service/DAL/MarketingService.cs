@@ -30,7 +30,7 @@ public class MarketingService
         p.Add("_StartTime", request.StartTime, dbType: DbType.DateTime);
         p.Add("_EndTime", request.EndTime, dbType: DbType.DateTime);
         var result = await _reportbackupDbClient.QueryAsync<MarketingReportResponse>("Service_MarketingDailyReport_Export_Get", p, 60);
-        return result.First();
+        return result.FirstOrDefault();
     }
 
 }
