@@ -12,15 +12,17 @@ public class ConfigBLL
     private readonly IEnumerable<SiteConfig> _siteConfigs;
     private readonly ILogger<ConfigBLL> _logger;
     private readonly string _env;
+    private readonly IConfiguration _configuration;
 
-    public ConfigBLL(IServiceProvider provider)
+    public ConfigBLL(IServiceProvider provider, IConfiguration configuration)
     {
         var environment = provider.GetRequiredService<IWebHostEnvironment>();
         _configService = provider.GetRequiredService<ConfigService>();
         _redisHelper = provider.GetRequiredService<ICacheHelper>();
         _siteConfigs = provider.GetServices<SiteConfig>();
         _logger = provider.GetRequiredService<ILogger<ConfigBLL>>();
-        _env = environment.EnvironmentName;
+        _env = configuration.GetSection("ENV").Get<string>();
+        _configuration = configuration;
     }
 
     public string GetConfigValue(string configKey, int siteId = 0)
@@ -68,6 +70,12 @@ public class ConfigBLL
         var json = GetConfigValue($"{configKey}.{_env}.json", siteId);
 
         return JsonConvert.DeserializeObject<T>(json);
+    }
+
+    public ServiceHostConfig GetServiceHostConfig()
+    {
+        var serviceHostConfig = _configuration.GetSection("serviceHosts").Get<ServiceHostConfig>();
+        return serviceHostConfig;
     }
 
     public T GetConfigValueFromDbByEnvironment<T>(string configKey, int siteId = 0, string configType = "")
