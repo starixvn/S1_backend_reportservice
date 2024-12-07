@@ -12,7 +12,7 @@ var remoteUrls = GetRemoteUrls();
 builder.Configuration.AddJsonFile("appsettings.json",
         optional: true,
         reloadOnChange: false);
-//remoteUrls = builder.Configuration.CheckLocalConfig(builder.Environment, args, remoteUrls);
+
 builder.Configuration.AddRemoteJsonConfig(remoteUrls);
 
 var excludesMessage = builder.Configuration.GetSection("ExcludesMessage").Get<string[]>();
