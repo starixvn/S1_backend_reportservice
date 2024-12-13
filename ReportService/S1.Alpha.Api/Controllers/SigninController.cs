@@ -24,7 +24,7 @@ public class SigninController : ControllerBase
     [HttpPost]
     public async Task<SsoModel> GetSsoUrl(
         IConfiguration configuration,
-        [FromQuery] SsoSignInRequest request,
+        [FromBody] SsoSignInRequest request,
         CancellationToken cancellationToken)
     {
         if (!string.IsNullOrEmpty(request.ReferenceId))
