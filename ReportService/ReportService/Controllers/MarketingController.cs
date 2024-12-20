@@ -11,7 +11,7 @@ namespace ReportService.Controllers;
 [ApiController]
 public class MarketingController : ControllerBase
 {
-    private readonly MarketingBLL _marketingBLL;
+    //private readonly MarketingBLL _marketingBLL;
     public MarketingController(IServiceProvider provider)
     {
         _marketingBLL = provider.GetRequiredService<MarketingBLL>();
