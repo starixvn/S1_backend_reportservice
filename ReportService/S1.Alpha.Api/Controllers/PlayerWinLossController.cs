@@ -20,8 +20,8 @@ namespace S1.Alpha.Api.Controllers
             var refIds = string.IsNullOrEmpty(request.ReferenceIds) ? string.Empty : request.ReferenceIds;
 
             var p = new DynamicParameters();
-            p.Add("StartTime", request.From, dbType: DbType.DateTime);
-            p.Add("EndTime", request.To, dbType: DbType.DateTime);
+            p.Add("StartTime", request.From.ToUniversalTime(), dbType: DbType.DateTime);
+            p.Add("EndTime", request.To.ToUniversalTime().AddDays(1), dbType: DbType.DateTime);
             p.Add("TimeZone", timeZone, dbType: DbType.String);
             p.Add("ReferenceIds", $"[{refIds}]", dbType: DbType.String);
 
